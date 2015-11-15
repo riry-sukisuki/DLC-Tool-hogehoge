@@ -62,6 +62,7 @@
                 dgvChars.Columns.RemoveAt(dgvChars.Columns.Count - 1);
             }
 
+            btnCmpSave.Text = Program.dicLanguage["SaveCompressedDLC"];
 
             ClearCharsUI();
             tbBCMVer.Text = string.Empty;
@@ -322,6 +323,7 @@
             lbFiles.EndUpdate();
             btnFilesDelete.Enabled = false;
         }
+        
 
         private void SaveDLC(bool Compression)
         {
@@ -5248,13 +5250,15 @@ RAIDOU = RAIDOU
             {
                 try
                 {
-                    if (File.Exists(tbSavePath.Text))
+                    if (Directory.Exists(tbSavePath.Text))
                     {
                         btnSave.Text = Program.dicLanguage["OverwriteDLC"];
+                        btnCmpSave.Text = Program.dicLanguage["OverwriteCompressedDLC"];
                     }
                     else
                     {
                         btnSave.Text = Program.dicLanguage["SaveDLC"];
+                        btnCmpSave.Text = Program.dicLanguage["SaveCompressedDLC"];
                     }
                 }
                 catch

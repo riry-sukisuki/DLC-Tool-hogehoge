@@ -971,6 +971,88 @@
         {
             try
             {
+                // 確実に存在しない保存用フォルダパスの作成
+                string saveTempPathBase = savePath + "_temp";
+                string saveTempPath = saveTempPathBase;
+                for (int i = 2; Directory.Exists(saveTempPath); i++)
+                {
+                    saveTempPath = saveTempPathBase + "_" + i;
+                }
+
+                // 一旦そこに出力
+                bool success = SaveDLC_core(dlcData, saveTempPath, dlcName, compressDLC);
+
+                // 成功していれば、その中身を実際の保存フォルダへ移動
+                if (success)
+                {
+                    if(!Directory.Exists(savePath))
+                    {
+                        Directory.Move(saveTempPath, savePath);
+                    }
+                    else
+                    {
+                        // 明確に把握できているもののみ移動
+
+                        // bcm
+                        string bcmTemp = Path.Combine(saveTempPath, dlcName + ".bcm");
+                        string bcm = Path.Combine(savePath, dlcName + ".bcm");
+                        if(File.Exists(bcm))
+                        {
+                            File.Delete(bcm);
+                        }
+                        File.Move(bcmTemp, bcm);
+
+                        // data フォルダ
+                        string datafolder = Path.Combine(savePath, "data");
+                        string dataTempfolder = Path.Combine(saveTempPath, "data");
+                        if (!Directory.Exists(datafolder))
+                        {
+                            Directory.CreateDirectory(datafolder);
+                        }
+
+                        // データファイル三つ
+                        string[] exts = new string[] {".lnk", ".bin", ".blp"};
+                        for(int i = 0; i < exts.Length; i++)
+                        {
+                            string data = Path.Combine(datafolder, dlcName + exts[i]);
+                            string dataTemp = Path.Combine(dataTempfolder, dlcName + exts[i]);
+
+                            if (File.Exists(data))
+                            {
+                                File.Delete(data);
+                            }
+                            File.Move(dataTemp, data);
+                        }
+
+                        // Temp Delete
+                        Directory.Delete(dataTempfolder);
+                        Directory.Delete(saveTempPath);
+                    }
+
+
+
+                }
+                else
+                {
+                    // saveTempPath を削除。savePath に手を出してはいけない。
+                    Directory.Delete(saveTempPath, true);
+                }
+
+
+                return success;
+            }
+            catch (Exception e)
+            {
+                // ここに到達することは実際には想定できない
+                MessageBox.Show("Unknown error.", dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+        public static bool SaveDLC_core(DLCData dlcData, string savePath, string dlcName, bool compressDLC)
+        {
+            try
+            {
                 Directory.CreateDirectory(savePath + @"\data\");
                 SaveBCM(dlcData, savePath + @"\" + dlcName + ".bcm", dlcName);
                 List<FileData> fileData = CollectFileData(dlcData, compressDLC);
