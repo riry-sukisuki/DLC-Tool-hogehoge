@@ -482,7 +482,7 @@ namespace DLC_Tool
             this.cb4H.AutoCheck = false;
             this.cb4H.AutoSize = true;
             this.cb4H.Enabled = false;
-            this.cb4H.Location = new System.Drawing.Point(208, 38);
+            this.cb4H.Location = new System.Drawing.Point(205, 38);
             this.cb4H.Name = "cb4H";
             this.cb4H.Size = new System.Drawing.Size(63, 22);
             this.cb4H.TabIndex = 16;
@@ -497,7 +497,7 @@ namespace DLC_Tool
             this.cb3H.AutoCheck = false;
             this.cb3H.AutoSize = true;
             this.cb3H.Enabled = false;
-            this.cb3H.Location = new System.Drawing.Point(141, 38);
+            this.cb3H.Location = new System.Drawing.Point(139, 38);
             this.cb3H.Name = "cb3H";
             this.cb3H.Size = new System.Drawing.Size(63, 22);
             this.cb3H.TabIndex = 15;
@@ -512,7 +512,7 @@ namespace DLC_Tool
             this.cb2H.AutoCheck = false;
             this.cb2H.AutoSize = true;
             this.cb2H.Enabled = false;
-            this.cb2H.Location = new System.Drawing.Point(74, 38);
+            this.cb2H.Location = new System.Drawing.Point(73, 38);
             this.cb2H.Name = "cb2H";
             this.cb2H.Size = new System.Drawing.Size(63, 22);
             this.cb2H.TabIndex = 14;
@@ -542,7 +542,7 @@ namespace DLC_Tool
             this.cbTMCL.AutoCheck = false;
             this.cbTMCL.AutoSize = true;
             this.cbTMCL.Enabled = false;
-            this.cbTMCL.Location = new System.Drawing.Point(208, 20);
+            this.cbTMCL.Location = new System.Drawing.Point(205, 20);
             this.cbTMCL.Name = "cbTMCL";
             this.cbTMCL.Size = new System.Drawing.Size(60, 22);
             this.cbTMCL.TabIndex = 12;
@@ -557,7 +557,7 @@ namespace DLC_Tool
             this.cbTMC.AutoCheck = false;
             this.cbTMC.AutoSize = true;
             this.cbTMC.Enabled = false;
-            this.cbTMC.Location = new System.Drawing.Point(141, 20);
+            this.cbTMC.Location = new System.Drawing.Point(139, 20);
             this.cbTMC.Name = "cbTMC";
             this.cbTMC.Size = new System.Drawing.Size(53, 22);
             this.cbTMC.TabIndex = 11;
@@ -572,7 +572,7 @@ namespace DLC_Tool
             this.cbP.AutoCheck = false;
             this.cbP.AutoSize = true;
             this.cbP.Enabled = false;
-            this.cbP.Location = new System.Drawing.Point(74, 20);
+            this.cbP.Location = new System.Drawing.Point(73, 20);
             this.cbP.Name = "cbP";
             this.cbP.Size = new System.Drawing.Size(44, 22);
             this.cbP.TabIndex = 10;
@@ -1151,7 +1151,7 @@ namespace DLC_Tool
             // 
             this.cbDAT.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.cbDAT.FormattingEnabled = true;
-            this.cbDAT.Location = new System.Drawing.Point(411, 10);
+            this.cbDAT.Location = new System.Drawing.Point(411, 9);
             this.cbDAT.Name = "cbDAT";
             this.cbDAT.Size = new System.Drawing.Size(121, 26);
             this.cbDAT.TabIndex = 23;
@@ -1212,7 +1212,7 @@ namespace DLC_Tool
             this.MinimumSize = new System.Drawing.Size(640, 640);
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "DLC Tool ほげほげば～じょん 2015.11.15.2";
+            this.Text = "DLC Tool ほげほげば～じょん 2015.11.16.1";
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.MainForm_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.MainForm_DragEnter);
             this.gbChars.ResumeLayout(false);

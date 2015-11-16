@@ -969,15 +969,19 @@
 
         public static bool SaveDLC(DLCData dlcData, string savePath, string dlcName, bool compressDLC)
         {
+            string saveTempPath = "";
+            bool saveTempPathOK = false;
             try
             {
                 // 確実に存在しない保存用フォルダパスの作成
                 string saveTempPathBase = savePath + "_temp";
-                string saveTempPath = saveTempPathBase;
+                saveTempPath = saveTempPathBase;
                 for (int i = 2; Directory.Exists(saveTempPath); i++)
                 {
                     saveTempPath = saveTempPathBase + "_" + i;
                 }
+
+                saveTempPathOK = true;
 
                 // 一旦そこに出力
                 bool success = SaveDLC_core(dlcData, saveTempPath, dlcName, compressDLC);
@@ -1043,8 +1047,19 @@
             }
             catch (Exception e)
             {
-                // ここに到達することは実際には想定できない
-                MessageBox.Show("Unknown error.", dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // ファイルの移動時にエラーが起こるとここに移動
+                if(saveTempPathOK)
+                {
+                    try
+                    {
+                        // saveTempPath を削除。savePath に手を出してはいけない。
+                        Directory.Delete(saveTempPath, true);
+                    }
+                    catch { }
+                }
+
+                MessageBox.Show(e.Message, dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+
                 return false;
             }
         }

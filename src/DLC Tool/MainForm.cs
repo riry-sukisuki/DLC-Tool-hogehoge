@@ -363,6 +363,7 @@
                     if(!DirectoryIsPureDLC(tbSavePath.Text))
                     {
                         MessageBox.Show(Program.dicLanguage["NotPureDLCFolder"], Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        tbSavePath_TextChanged(null, null);//念のため
                         return;
                     }
 
@@ -381,7 +382,7 @@
                     {
                         slotCount[dlcData.Chars[i]]++;
                     }
-                    int k = 0;
+                    //int k = 0;
                     for (int i = 0; i < dlcData.Chars.Count; i++)
                     {
                         if (CheckCharFile(dlcData.Chars[i]) && slotCount[dlcData.Chars[i]] == 1 && dlcData.Chars[i].AddTexsCount <= getAvailableTextsCount(dlcData.Chars[i]))
@@ -397,6 +398,7 @@
                         // DLC Tool 1.1 より
                         if (!Program.SaveDLC(dlcData4Save, tbSavePath.Text, dlcName, comp))
                         {
+                            tbSavePath_TextChanged(null, null);//念のため
                             return;
                         }
 
@@ -492,6 +494,7 @@
                     if (!DirectoryIsPureDLC(Path.GetDirectoryName(tbSavePath.Text)))
                     {
                         MessageBox.Show(Program.dicLanguage["NotPureDLCFolder"], Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        tbSavePath_TextChanged(null, null);//念のため
                         return;
                     }
 
@@ -512,6 +515,7 @@
                     MessageBox.Show(ex.Message, Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
+            tbSavePath_TextChanged(null, null);//これは念のためじゃなくて必須
         }
 
         private void btnSave_Click(object sender, EventArgs e)
@@ -1991,12 +1995,9 @@
                         e.Effect = DragDropEffects.None;
                         return;
                     }
-                    e.Effect = DragDropEffects.Copy;
-                    return;
                 }
+                e.Effect = DragDropEffects.Copy;
             }
-
-            e.Effect = DragDropEffects.None;
         }
 
         private void dgvChars_MouseMove(object sender, MouseEventArgs e)
@@ -3630,6 +3631,7 @@ OverwriteBCM=Overwrite
 SaveDLC=Save DLC
 OverwriteDLC=Overwrite
 SaveCompressedDLC=Save Cmp.
+OverwriteCompressedDLC=Ovwt Cmp.
 Characters=Characters
 Hairstyles=Hairstyles
 CopyC=Copy (Ctrl+C)
@@ -3673,40 +3675,40 @@ NotFoundSomeOfFilesXOfCharY=Unable to found some of $1 files for $2.
 SkippedBadNameX=$1 was skipped because of its unsupported name.
 NeedDAT=This program requires at least one ""DAT\*.dat"" file.
 NotPureDLCFolder = Save path has unknown items. DLC is not saved.
-ZACK = ZACK
-TINA = TINA
-JANNLEE = JANNLEE
-EIN = EIN
-HAYABUSA = HAYABUSA
-KASUMI = KASUMI
-GENFU = GENFU
-HELENA = HELENA
-LEON = LEON
-BASS = BASS
-KOKORO = KOKORO
-HAYATE = HAYATE
-LEIFANG = LEIFANG
-AYANE = AYANE
-ELIOT = ELIOT
-LISA = LISA
-ALPHA152 = ALPHA152
-BRAD = BRAD
-CHRISTIE = CHRISTIE
-HITOMI = HITOMI
-BAYMAN = BAYMAN
-RIG = RIG
-MILA = MILA
-AKIRA = AKIRA
-SARAH = SARAH
-PAI = PAI
-MOMIJI = MOMIJI
-RACHEL = RACHEL
-JACKY = JACKY
-MARIE = MARIE
-PHASE4 = PHASE4
-NYOTENGU = NYOTENGU
-HONOKA = HONOKA
-RAIDOU = RAIDOU
+ZACK=ZACK
+TINA=TINA
+JANNLEE=JANNLEE
+EIN=EIN
+HAYABUSA=HAYABUSA
+KASUMI=KASUMI
+GENFU=GENFU
+HELENA=HELENA
+LEON=LEON
+BASS=BASS
+KOKORO=KOKORO
+HAYATE=HAYATE
+LEIFANG=LEIFANG
+AYANE=AYANE
+ELIOT=ELIOT
+LISA=LISA
+ALPHA152=ALPHA152
+BRAD=BRAD
+CHRISTIE=CHRISTIE
+HITOMI=HITOMI
+BAYMAN=BAYMAN
+RIG=RIG
+MILA=MILA
+AKIRA=AKIRA
+SARAH=SARAH
+PAI=PAI
+MOMIJI=MOMIJI
+RACHEL=RACHEL
+JACKY=JACKY
+MARIE=MARIE
+PHASE4=PHASE4
+NYOTENGU=NYOTENGU
+HONOKA=HONOKA
+RAIDOU=RAIDOU
 ";
 
             if (!File.Exists(lngPath) && !File.Exists(lngPathDefault))
@@ -3898,6 +3900,15 @@ RAIDOU = RAIDOU
             from = "OverwriteDLC"; def = "Overwrite";
             if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
 
+
+            // 圧縮して保存
+            from = "SaveCompressedDLC"; def = "Save Cmp.";
+            if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
+
+            // 圧縮して上書
+            from = "OverwriteCompressedDLC"; def = "Ovwt Cmp.";
+            if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
+
             // BCM上書き
             from = "OverwriteBCM"; def = "Overwrite";
             if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
@@ -4078,7 +4089,7 @@ RAIDOU = RAIDOU
         private void dgvHStyles_MouseDown(object sender, MouseEventArgs e)
         {
             // 左クリック
-            if (e.Button == MouseButtons.Left && btnCharsAdd.Enabled)
+            if (e.Button == MouseButtons.Left && dgvHStyles.Rows.Count > 0)
             {
 
                 int CharSelected;
@@ -4112,7 +4123,7 @@ RAIDOU = RAIDOU
                 }
             }
             // 右クリック
-            else if (e.Button == MouseButtons.Right && btnCharsAdd.Enabled)
+            else if (e.Button == MouseButtons.Right && dgvHStyles.Rows.Count > 0)
             {
 
 
@@ -5217,7 +5228,7 @@ RAIDOU = RAIDOU
                     bool found = false;
                     for (int j = 0; j < files.Length; j++)
                     {
-                        if (name == Path.GetFileNameWithoutExtension(files[j]).ToLower())
+                        if (Path.GetExtension(files[j]).ToLower() == ".bcm" && name == Path.GetFileNameWithoutExtension(files[j]).ToLower())
                         {
                             found = true;
                             break;
