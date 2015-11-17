@@ -72,10 +72,6 @@ namespace DLC_Tool
             this.btnFilesDelete = new System.Windows.Forms.Button();
             this.lbFiles = new System.Windows.Forms.ListBox();
             this.dgvChars = new System.Windows.Forms.DataGridView();
-            this.clmName = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.clmCos = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.clmInner = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.clmComment = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnSaveState = new System.Windows.Forms.Button();
             this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
             this.contextMenuStrip = new System.Windows.Forms.ContextMenuStrip(this.components);
@@ -133,6 +129,10 @@ namespace DLC_Tool
             this.cmsAddDelCom = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.smiAddComColumn = new System.Windows.Forms.ToolStripMenuItem();
             this.smiDelComColumn = new System.Windows.Forms.ToolStripMenuItem();
+            this.clmName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clmCos = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clmInner = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clmComment = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.gbChars.SuspendLayout();
             this.gbHairs2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvHStyles)).BeginInit();
@@ -697,47 +697,6 @@ namespace DLC_Tool
             this.dgvChars.MouseMove += new System.Windows.Forms.MouseEventHandler(this.dgvChars_MouseMove);
             this.dgvChars.MouseUp += new System.Windows.Forms.MouseEventHandler(this.dgvChars_MouseUp);
             // 
-            // clmName
-            // 
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            this.clmName.DefaultCellStyle = dataGridViewCellStyle4;
-            this.clmName.Frozen = true;
-            this.clmName.HeaderText = "名前";
-            this.clmName.Name = "clmName";
-            this.clmName.ReadOnly = true;
-            this.clmName.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.clmName.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Programmatic;
-            this.clmName.Width = 106;
-            // 
-            // clmCos
-            // 
-            this.clmCos.Frozen = true;
-            this.clmCos.HeaderText = "ｽﾛｯﾄ";
-            this.clmCos.Name = "clmCos";
-            this.clmCos.ReadOnly = true;
-            this.clmCos.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.clmCos.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Programmatic;
-            this.clmCos.Width = 40;
-            // 
-            // clmInner
-            // 
-            this.clmInner.Frozen = true;
-            this.clmInner.HeaderText = "ｲﾝﾅｰ";
-            this.clmInner.Name = "clmInner";
-            this.clmInner.ReadOnly = true;
-            this.clmInner.Resizable = System.Windows.Forms.DataGridViewTriState.False;
-            this.clmInner.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
-            this.clmInner.Width = 40;
-            // 
-            // clmComment
-            // 
-            this.clmComment.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            this.clmComment.DefaultCellStyle = dataGridViewCellStyle5;
-            this.clmComment.HeaderText = "コメント";
-            this.clmComment.Name = "clmComment";
-            this.clmComment.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Programmatic;
-            // 
             // btnSaveState
             // 
             this.btnSaveState.Enabled = false;
@@ -1189,6 +1148,47 @@ namespace DLC_Tool
             this.smiDelComColumn.Text = "コメント列を削除";
             this.smiDelComColumn.Click += new System.EventHandler(this.smiDelComColumn_Click);
             // 
+            // clmName
+            // 
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            this.clmName.DefaultCellStyle = dataGridViewCellStyle4;
+            this.clmName.Frozen = true;
+            this.clmName.HeaderText = "名前";
+            this.clmName.Name = "clmName";
+            this.clmName.ReadOnly = true;
+            this.clmName.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.clmName.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Programmatic;
+            this.clmName.Width = 106;
+            // 
+            // clmCos
+            // 
+            this.clmCos.Frozen = true;
+            this.clmCos.HeaderText = "ｽﾛｯﾄ";
+            this.clmCos.Name = "clmCos";
+            this.clmCos.ReadOnly = true;
+            this.clmCos.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.clmCos.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Programmatic;
+            this.clmCos.Width = 40;
+            // 
+            // clmInner
+            // 
+            this.clmInner.Frozen = true;
+            this.clmInner.HeaderText = "ｲﾝﾅｰ";
+            this.clmInner.Name = "clmInner";
+            this.clmInner.ReadOnly = true;
+            this.clmInner.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.clmInner.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.clmInner.Width = 40;
+            // 
+            // clmComment
+            // 
+            this.clmComment.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            this.clmComment.DefaultCellStyle = dataGridViewCellStyle5;
+            this.clmComment.HeaderText = "コメント";
+            this.clmComment.Name = "clmComment";
+            this.clmComment.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Programmatic;
+            // 
             // MainForm
             // 
             this.AllowDrop = true;
@@ -1212,7 +1212,7 @@ namespace DLC_Tool
             this.MinimumSize = new System.Drawing.Size(640, 640);
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "DLC Tool ほげほげば～じょん 2015.11.16.1";
+            this.Text = "DLC Tool ほげほげば～じょん 2015.11.17.1";
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.MainForm_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.MainForm_DragEnter);
             this.gbChars.ResumeLayout(false);

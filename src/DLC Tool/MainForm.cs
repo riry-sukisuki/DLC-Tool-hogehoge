@@ -27,6 +27,10 @@
         private static int DatSelectedIndex = 0;
         public static string DAT { get { return DATs[DatSelectedIndex]; } }
 
+        private int dragStartIndex = -1;
+        private int dragPrevIndex = -1;
+
+        private bool NeedShowChar = true;
 
         public MainForm()
         {
@@ -76,8 +80,16 @@
             btnFilesAdd.Enabled = false;
             btnFilesDelete.Enabled = false;
             dgvChars.BackgroundColor = System.Drawing.SystemColors.Window;
-            dgvChars.DefaultCellStyle.BackColor = System.Drawing.SystemColors.Window;
-            dgvChars.DefaultCellStyle.ForeColor = System.Drawing.SystemColors.ControlText;
+            //dgvChars.DefaultCellStyle.BackColor = System.Drawing.SystemColors.Window;
+            //dgvChars.DefaultCellStyle.ForeColor = System.Drawing.SystemColors.ControlText;
+
+            dgvChars.Columns[0].DefaultCellStyle.BackColor = System.Drawing.SystemColors.Window;
+            dgvChars.Columns[0].DefaultCellStyle.ForeColor = System.Drawing.SystemColors.ControlText;
+            dgvChars.Columns[1].DefaultCellStyle.BackColor = System.Drawing.SystemColors.Window;
+            dgvChars.Columns[1].DefaultCellStyle.ForeColor = System.Drawing.SystemColors.ControlText;
+            dgvChars.Columns[2].DefaultCellStyle.BackColor = System.Drawing.SystemColors.Window;
+            dgvChars.Columns[2].DefaultCellStyle.ForeColor = System.Drawing.SystemColors.ControlText;
+
 
             cbC.CheckState = cbP.CheckState = cbTMC.CheckState = cbTMCL.CheckState = cb1H.CheckState = cb2H.CheckState = cb3H.CheckState = cb4H.CheckState = CheckState.Unchecked;
             cbC.Enabled = cbP.Enabled = cbTMC.Enabled = cbTMCL.Enabled = cb1H.Enabled = cb2H.Enabled = cb3H.Enabled = cb4H.Enabled = false;
@@ -140,9 +152,17 @@
                 btnHStylesAdd.Enabled = true;
                 //clmCos.ReadOnly = true;
                 clmInner.ReadOnly = true;
+
                 dgvChars.BackgroundColor = System.Drawing.SystemColors.MenuBar;
-                dgvChars.DefaultCellStyle.BackColor = System.Drawing.SystemColors.MenuBar;
-                dgvChars.DefaultCellStyle.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
+                //dgvChars.DefaultCellStyle.BackColor = System.Drawing.SystemColors.MenuBar;
+                //dgvChars.DefaultCellStyle.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
+                dgvChars.Columns[0].DefaultCellStyle.BackColor = System.Drawing.SystemColors.MenuBar;
+                dgvChars.Columns[0].DefaultCellStyle.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
+                dgvChars.Columns[1].DefaultCellStyle.BackColor = System.Drawing.SystemColors.MenuBar;
+                dgvChars.Columns[1].DefaultCellStyle.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
+                dgvChars.Columns[2].DefaultCellStyle.BackColor = System.Drawing.SystemColors.MenuBar;
+                dgvChars.Columns[2].DefaultCellStyle.ForeColor = System.Drawing.SystemColors.ControlDarkDark;
+
                 tbBCMVer.Text = dlcData.BcmVer.ToString();
                 dlcData.SavePath = fileName;
 
@@ -252,6 +272,11 @@
 
         private void ShowCharacter(int idx)
         {
+            if(!NeedShowChar)
+            {
+                return;
+            }
+
             ClearCharsUI();
 
             ShowHairstyles(idx);
@@ -291,8 +316,8 @@
 
             if (dgvHStyles.Rows.Count > 0)
             {
-                dgvHStyles.Rows[0].Selected = true;
-                btnHStylesDelete.Enabled = true;
+                dgvHStyles.Rows[0].Selected = false;
+                btnHStylesDelete.Enabled = false;
             }
             
             if (dgvHStyles.Rows.Count <= 1)
@@ -1756,7 +1781,6 @@
                 if(eb == MouseButtons.Right && btnCharsAdd.Enabled)
                 {
 
-
                     // MouseDownイベント発生時の (x,y)座標を取得
                     DataGridView.HitTestInfo hit = dgvChars.HitTest(e.X, e.Y);
                     int index = hit.RowIndex;
@@ -1768,10 +1792,17 @@
                             return;
                         }
 
+
                         index = dgvChars.Rows.Count - 1;
                     }
 
-                    
+
+                    // 編集状態で、なおかつそこをクリックした場合は何もしない
+                    var cc = dgvChars.CurrentCell;
+                    if (dgvChars.IsCurrentCellInEditMode && hit.ColumnIndex == cc.ColumnIndex && hit.RowIndex == cc.RowIndex)
+                    {
+                        return;
+                    }
 
                     // 間違っでもこれはやらないように
                     //mouseDownPoint = new System.Drawing.Point(e.X, e.Y); ;
@@ -1812,6 +1843,53 @@
 
         }
 
+        private void slideChar(int fromIndex, int toIndex)
+        {
+
+
+            //dgvChars.Rows[toIndex].Selected = true;
+
+
+            Character temp = dlcData.Chars[fromIndex];
+            int step = (toIndex > fromIndex ? 1 : -1);
+            for (int i = fromIndex; i != toIndex; i += step)
+            {
+                dlcData.Chars[i] = dlcData.Chars[i + step];
+                dgvChars.Rows[i].Cells[0].Value = Program.CharNamesJpn[dlcData.Chars[i].ID];
+                dgvChars.Rows[i].Cells[1].Value = dlcData.Chars[i].CostumeSlot.ToString();
+                dgvChars.Rows[i].Cells[2].Value = dlcData.Chars[i].AddTexsCount.ToString();
+                //dgvChars.Rows[i].Cells[3].Value = dlcData.Chars[i].Comment;
+                showComment(i);
+            }
+            dlcData.Chars[toIndex] = temp;
+            dgvChars.Rows[toIndex].Cells[0].Value = Program.CharNamesJpn[dlcData.Chars[toIndex].ID];
+            dgvChars.Rows[toIndex].Cells[1].Value = dlcData.Chars[toIndex].CostumeSlot.ToString();
+            dgvChars.Rows[toIndex].Cells[2].Value = dlcData.Chars[toIndex].AddTexsCount.ToString();
+            //dgvChars.Rows[ind2].Cells[3].Value = dlcData.Chars[toIndex].Comment;
+            showComment(toIndex);
+
+
+
+            // 移動した行をフォーカスしキャラを再描画
+            //ShowCharacter(toIndex);
+            NeedShowChar = false;
+            dgvChars.CurrentCell = dgvChars[1, toIndex];
+            NeedShowChar = true;
+
+            // ソートが崩れたことを記憶
+            //dgvChars.Columns[0].HeaderCell.SortGlyphDirection = SortOrder.None;
+            //dgvChars.Columns[1].HeaderCell.SortGlyphDirection = SortOrder.None;
+            for (int i = 0; i < dgvChars.Columns.Count; i++)
+            {
+                dgvChars.Columns[i].HeaderCell.SortGlyphDirection = SortOrder.None;
+            }
+
+            // 色を再描画
+            setEgvCharsSlotColor();
+            setEgvCharsNameColor();
+            setEgvCharsTextsColor();
+        }
+
         private void dgvChars_DragDrop(object sender, DragEventArgs e)
         {
 
@@ -1821,20 +1899,23 @@
             // ドラッグされているデーターが行番号（int型）で、かつ、
             // ドラッグ ソースのデータは、ドロップ先に複写するよう指示さ
             // れている場合（すなわち、移動等の別の指示ではない場合）
-            if (e.Data.GetDataPresent(typeof(int))
+            /*if (e.Data.GetDataPresent(typeof(int))
                 && (e.Effect == DragDropEffects.Move))
             {
 
                 // DragDropイベント発生時の (x,y)座標を取得
                 System.Drawing.Point clientPoint = dgvChars.PointToClient(new System.Drawing.Point(e.X, e.Y));
-                DataGridView.HitTestInfo hit =
-                dgvChars.HitTest(clientPoint.X, clientPoint.Y);
+                DataGridView.HitTestInfo hit = dgvChars.HitTest(clientPoint.X, clientPoint.Y);
                 try
                 {
                     dgvChars.Rows[hit.RowIndex].Selected = true;   // 該当行を選択状態に
                 }
                 catch
                 {
+
+                    slideChar(dragPrevIndex, dragStartIndex);
+                    dragPrevIndex = dragStartIndex = -1;
+
                     return; // 下過ぎた場合
                 }
 
@@ -1847,60 +1928,27 @@
                 // （x,y座標値の取得に成功している場合）
                 if (hit.RowIndex != -1 && hit.RowIndex != ind)
                 {
+
                     int ind2 = hit.RowIndex;
-
-                    dgvChars.Rows[hit.RowIndex].Selected = true;
-
-
-                    Character temp = dlcData.Chars[ind];
-                    int step = (ind2 > ind ? 1 : -1);
-                    for (int i = ind; i != ind2; i += step)
-                    {
-                        dlcData.Chars[i] = dlcData.Chars[i + step];
-                        dgvChars.Rows[i].Cells[0].Value = Program.CharNamesJpn[dlcData.Chars[i].ID];
-                        dgvChars.Rows[i].Cells[1].Value = dlcData.Chars[i].CostumeSlot.ToString();
-                        dgvChars.Rows[i].Cells[2].Value = dlcData.Chars[i].AddTexsCount.ToString();
-                        //dgvChars.Rows[i].Cells[3].Value = dlcData.Chars[i].Comment;
-                        showComment(i);
-                    }
-                    dlcData.Chars[ind2] = temp;
-                    dgvChars.Rows[ind2].Cells[0].Value = Program.CharNamesJpn[dlcData.Chars[ind2].ID];
-                    dgvChars.Rows[ind2].Cells[1].Value = dlcData.Chars[ind2].CostumeSlot.ToString();
-                    dgvChars.Rows[ind2].Cells[2].Value = dlcData.Chars[ind2].AddTexsCount.ToString();
-                    //dgvChars.Rows[ind2].Cells[3].Value = dlcData.Chars[ind2].Comment;
-                    showComment(ind2);
-
-
-
-                    // 移動した行をフォーカスしキャラを再描画
-                    ShowCharacter(ind2);
-                    dgvChars.CurrentCell = dgvChars[0, ind2];
-
-
-                    // ソートが崩れたことを記憶
-                    //dgvChars.Columns[0].HeaderCell.SortGlyphDirection = SortOrder.None;
-                    //dgvChars.Columns[1].HeaderCell.SortGlyphDirection = SortOrder.None;
-                    for (int i = 0; i < dgvChars.Columns.Count; i++)
-                    {
-                        dgvChars.Columns[i].HeaderCell.SortGlyphDirection = SortOrder.None;
-                    }
-
-                    // 色を再描画
-                    setEgvCharsSlotColor();
-                    setEgvCharsNameColor();
-                    setEgvCharsTextsColor();
+                    //slideChar(ind, ind2);
+                    slideChar(dragPrevIndex, ind2);
+                    dragPrevIndex = dragStartIndex = -1;
+                    
 
                 }
                 // ドロップ先としての指定位置が、有効でない場合
                 // （x,y座標値の取得に失敗した場合）
                 else
                 {
-                    //特に処理はなし
+                    //元に戻す
 
+
+                    slideChar(dragPrevIndex, dragStartIndex);
+                    dragPrevIndex = dragStartIndex = -1;
                 }
 
             }
-            else if (e.Data.GetDataPresent(DataFormats.FileDrop)
+            else */if (e.Data.GetDataPresent(DataFormats.FileDrop)
                 && (e.Effect == DragDropEffects.Copy))
             {
 
@@ -2003,6 +2051,39 @@
         private void dgvChars_MouseMove(object sender, MouseEventArgs e)
         {
 
+            // キャラのドラッグ中の操作
+            if (dragPrevIndex >= 0 && dragStartIndex >= 0)
+            {
+                // 現在のマウスの位置
+                DataGridView.HitTestInfo hitc = dgvChars.HitTest(e.X, e.Y);
+
+
+                // 現在の位置が、有効なセル上を選択している場合
+                if (hitc.Type == DataGridViewHitTestType.Cell
+                    && (dgvChars.NewRowIndex == -1
+                        || dgvChars.NewRowIndex != hitc.RowIndex))
+                {
+                    if (dragPrevIndex != hitc.RowIndex)
+                    {
+                        slideChar(dragPrevIndex, hitc.RowIndex);
+                        dragPrevIndex = hitc.RowIndex;
+
+                        this.Cursor = Cursors.NoMoveVert;
+                    }
+                }
+                else
+                {
+                    if (dragPrevIndex != dragStartIndex)
+                    {
+                        slideChar(dragPrevIndex, dragStartIndex);
+                        dragPrevIndex = dragStartIndex;
+
+                        //this.Cursor = Cursors.No;
+                        this.Cursor = Cursors.Default;
+                    }
+                }
+            }
+
             if (mouseDownPoint != System.Drawing.Point.Empty)
             {
                 //ドラッグとしないマウスの移動範囲を取得する
@@ -2025,17 +2106,29 @@
                         // ドラッグ元の行
                         int ind = hit.RowIndex;
 
-                        DoDragDrop(ind, DragDropEffects.Move);
+
+                        // 編集状態であれば解除
+                        gbChars.Focus();
+                        //dgvChars.Rows[dgvChars.SelectedRows[0].Index].Cells[0].Selected = true;
+
+                        // ドラッグスタート位置を記憶
+                        dragStartIndex = dragPrevIndex = ind;
+
+                        this.Cursor = Cursors.NoMoveVert;
+
+                        // ちょっとドラッグイベントを使うのをやめてみる
+                        //DoDragDrop(ind, DragDropEffects.Move);
                     }
                     // ドラッグ元の指定位置が、有効なセル上を選択していない場合
                     else
                     {
-                        // 指定行は、ドラッグ&ドロップaの対象ではないので、処理を終了
+                        // 指定行は、ドラッグ&ドロップの対象ではないので、処理を終了
                         return;
                     }
 
 
                     mouseDownPoint = System.Drawing.Point.Empty;
+
                 }
             }
         }
@@ -2043,6 +2136,35 @@
         private void dgvChars_MouseUp(object sender, MouseEventArgs e)
         {
             mouseDownPoint = System.Drawing.Point.Empty;
+
+            // ドラッグが終わった時の動作
+            if (dragPrevIndex >= 0 && dragStartIndex >= 0)
+            {
+                // 現在のマウスの位置
+                DataGridView.HitTestInfo hitc = dgvChars.HitTest(e.X, e.Y);
+
+
+                // 現在の位置が、有効なセル上を選択している場合
+                if (hitc.Type == DataGridViewHitTestType.Cell
+                    && (dgvChars.NewRowIndex == -1
+                        || dgvChars.NewRowIndex != hitc.RowIndex))
+                {
+                    if (dragPrevIndex != hitc.RowIndex)
+                    {
+                        slideChar(dragPrevIndex, hitc.RowIndex);
+                    }
+                }
+                else
+                {
+                    if (dragPrevIndex != dragStartIndex)
+                    {
+                        slideChar(dragPrevIndex, dragStartIndex);
+                    }
+                }
+
+                dragPrevIndex = dragStartIndex = -1;
+                this.Cursor = Cursors.Default;
+            }
 
 
             // マウスの左ボタンが押されている場合
@@ -4613,15 +4735,25 @@ RAIDOU=RAIDOU
 
         private void SelectFile(int Index, bool selectone)
         {
+            // ctrl または shift が押されていると selectone を無視する
+            bool ctsh = (((Control.ModifierKeys & Keys.Shift) == Keys.Shift || (Control.ModifierKeys & Keys.Control) == Keys.Control));
+
             string suf = FileOrder[Index];
             for (int i = 0; i < lbFiles.Items.Count; i++)
             {
                 string str = lbFiles.Items[i].ToString();
                 if (str.Substring(str.Length - suf.Length, suf.Length) == suf)
                 {
-                    lbFiles.SetSelected(i, true);
+                    if (ctsh)
+                    {
+                        lbFiles.SetSelected(i, !lbFiles.GetSelected(i));
+                    }
+                    else
+                    {
+                        lbFiles.SetSelected(i, true);
+                    }
                 }
-                else if(selectone)
+                else if(selectone && !ctsh)
                 {
                     lbFiles.SetSelected(i, false);
                 }
