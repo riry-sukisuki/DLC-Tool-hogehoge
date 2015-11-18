@@ -458,13 +458,31 @@
                             Program.SaveState(dlcData, path); //dlcData4Save とどっちか迷うところだけど、バックアップ機能を兼ねると思えばオリジナルのほうで良いのでは。
                         }
 
-                        string defaultLNK = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"default.lnk");
+                        // 色んな所からゲームを探す
                         string DOA5EXE = "";
                         System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\\DLC\\\d+$");
-                        if (File.Exists(defaultLNK))
+
+                        // ゲームフォルダ内のショートカットを探す
+                        if (DOA5EXE == "" && regex.IsMatch(tbSavePath.Text))
                         {
-                            DOA5EXE = defaultLNK;
+                            DOA5EXE = regex.Replace(tbSavePath.Text, @"\default.lnk");
+                            if (!File.Exists(DOA5EXE))
+                            {
+                                DOA5EXE = "";
+                            }
                         }
+
+                        // ツールフォルダ内のショートカットを探す
+                        if (DOA5EXE == "")
+                        {
+                            string defaultLNK = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"default.lnk");
+                            if (DOA5EXE == "" && File.Exists(defaultLNK))
+                            {
+                                DOA5EXE = defaultLNK;
+                            }
+                        }
+                        
+                        // ゲームそのものを探す
                         if (DOA5EXE == "" && regex.IsMatch(tbSavePath.Text))
                         {
                             DOA5EXE = regex.Replace(tbSavePath.Text, @"\game.exe");
@@ -473,6 +491,7 @@
                                 DOA5EXE = "";
                             }
                         }
+
                         if (DOA5EXE == "")
                         {
                             MessageBox.Show(message, "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -4373,16 +4392,26 @@ RAIDOU=RAIDOU
 
         private void CopyHStyles()
         {
-
-            string str = "";
             if(dgvHStyles.SelectedRows.Count <= 0)
             {
                 return;
             }
+
+            // SelectedRows は自動ではソートされない
+            int[] inds = new int[dgvHStyles.SelectedRows.Count];
+            Character Char = dlcData.Chars[dgvChars.SelectedRows[0].Index];
             for (int i = 0; i < dgvHStyles.SelectedRows.Count; i++)
             {
-                Character Char = dlcData.Chars[dgvChars.SelectedRows[0].Index];
-                str += Char.HStyles[dgvHStyles.SelectedRows[i].Index].Hair + "\t" + Char.HStyles[i].Face + "\n";
+                inds[i] = dgvHStyles.SelectedRows[i].Index;
+            }
+            Array.Sort(inds);
+            
+
+            string str = "";
+            for (int i = 0; i < dgvHStyles.SelectedRows.Count; i++)
+            {
+                var line = Char.HStyles[inds[i]];
+                str += line.Hair + "\t" + line.Face + "\n";
             }
             Clipboard.SetText(str);
         }

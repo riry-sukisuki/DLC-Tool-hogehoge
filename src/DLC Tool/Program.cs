@@ -973,6 +973,59 @@
             bool saveTempPathOK = false;
             try
             {
+                // DLC がロックされている、書き込み権限がないなどの理由で書き出せない場合に積極的にエラーを出す
+                // ここでチェックしなくても安全性には問題ないが出力失敗は早く分かったほうがユーザーに優しい
+                if (!Directory.Exists(savePath))
+                {
+                    // 作って消す。作ったままだとエラーが起きたときに消すのがめんどくさい
+                    //（元からあったのかプログラムが作ったのか判定しないといけないので）
+                    Directory.CreateDirectory(savePath);
+                    Directory.Delete(savePath);
+                }
+                else
+                {
+                    // 明確に把握できているもののみ移動
+
+                    // bcm
+                    string bcm = Path.Combine(savePath, dlcName + ".bcm");
+                    if (File.Exists(bcm))
+                    {
+                        File.Move(bcm, bcm);
+                    }
+                    
+
+                    // data フォルダ
+                    string datafolder = Path.Combine(savePath, "data");
+                    if (!Directory.Exists(datafolder))
+                    {
+                        // パス長の問題で savePath は作れても datafolder は作れないかもしれない
+                        // って言い出すとすべてのファイルを一回作ってみないとダメか
+                        // 別に安全性に関わる話じゃないのでそこまではやらなくていいでしょう
+                        /*
+                        Directory.CreateDirectory(datafolder);
+                        Directory.Delete(datafolder);
+                        */
+                    }
+                    else
+                    {
+
+                        // データファイル三つ
+                        string[] exts = new string[] { ".lnk", ".bin", ".blp" };
+                        for (int i = 0; i < exts.Length; i++)
+                        {
+                            string data = Path.Combine(datafolder, dlcName + exts[i]);
+
+                            if (File.Exists(data))
+                            {
+                                File.Move(data, data);
+                            }
+                        }
+                    }
+                    
+                }
+
+                //MessageBox.Show("ファイルの書き込みはできそう");
+
                 // 確実に存在しない保存用フォルダパスの作成
                 string saveTempPathBase = savePath + "_temp";
                 saveTempPath = saveTempPathBase;
