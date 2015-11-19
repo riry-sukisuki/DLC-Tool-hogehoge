@@ -1212,7 +1212,7 @@ namespace DLC_Tool
             this.MinimumSize = new System.Drawing.Size(640, 640);
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "DLC Tool ほげほげば～じょん 2015.11.18.1";
+            this.Text = "DLC Tool ほげほげば～じょん 2015.11.19.1";
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.MainForm_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.MainForm_DragEnter);
             this.gbChars.ResumeLayout(false);

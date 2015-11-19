@@ -458,6 +458,69 @@
                             Program.SaveState(dlcData, path); //dlcData4Save とどっちか迷うところだけど、バックアップ機能を兼ねると思えばオリジナルのほうで良いのでは。
                         }
 
+                        // ショートカットを探す
+                        System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\\DLC\\\d+$");
+                        string shortcut = "";
+
+                        // ゲームフォルダ内のショートカットを探す
+                        if (shortcut == "" && regex.IsMatch(tbSavePath.Text))
+                        {
+                            shortcut = regex.Replace(tbSavePath.Text, @"\game");
+                            if(!OpenWithShortcut(shortcut, "", true))
+                            {
+                                shortcut = "";
+                            }
+                        }
+
+
+                        // Applications フォルダ内のショートカットを探す
+                        if (shortcut == "")
+                        {
+                            shortcut = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"Applications\game");
+                            if (!OpenWithShortcut(shortcut, "", true))
+                            {
+                                shortcut = "";
+                            }
+                        }
+
+                        // ゲームそのものを探す
+                        string DOA5EXE = "";
+                        if (shortcut == "" && regex.IsMatch(tbSavePath.Text))
+                        {
+                            DOA5EXE = regex.Replace(tbSavePath.Text, @"\game.exe");
+                            if (!File.Exists(DOA5EXE))
+                            {
+                                DOA5EXE = "";
+                            }
+                        }
+
+
+                        if (shortcut == "" && DOA5EXE == "")
+                        {
+                            MessageBox.Show(message, "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                        else
+                        {
+                            if (MessageBox.Show(message + "\n\n" + Program.dicLanguage["DoYouStartDOA5"], "Info", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                            {
+                                //System.Diagnostics.Process.Start( "\"" + DOA5EXE + "\"");
+
+                                if (shortcut != "")
+                                {
+                                    OpenWithShortcut(shortcut, "", false);
+                                }
+                                else
+                                {
+                                    // 念のためカレントディレクトリを動かしておく
+                                    string sCD = System.Environment.CurrentDirectory;
+                                    System.Environment.CurrentDirectory = Path.GetDirectoryName(DOA5EXE); ;//System.IO.Path.GetDirectoryName(fileName);
+                                    System.Diagnostics.Process.Start("\"" + DOA5EXE + "\"");
+                                    System.Environment.CurrentDirectory = sCD;
+                                }
+                            }
+                        }
+
+                        /*
                         // 色んな所からゲームを探す
                         string DOA5EXE = "";
                         System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\\DLC\\\d+$");
@@ -509,6 +572,7 @@
                                 System.Environment.CurrentDirectory = sCD;
                             }
                         }
+                        */
                     }
                     else
                     {
@@ -2527,18 +2591,52 @@
 
         private void setEgvCharsNameColor()
         {
+            bool changed = false;
+            int selectedrow = -1;
+            try
+            {
+                selectedrow = dgvChars.SelectedRows[0].Index;
+            }
+            catch { }
             for (int i = 0; i < dgvChars.Rows.Count; i++)
             {
                 if ((!newDlc) || CheckCharFile(dlcData.Chars[i]))
                 {
-                    dgvChars[0, i].Style.BackColor = System.Drawing.Color.Empty;
-                    dgvChars[0, i].Style.SelectionBackColor = System.Drawing.Color.Empty;
+                    if(dgvChars[0, i].Style.BackColor != System.Drawing.Color.Empty)
+                    {
+                        changed = (changed || selectedrow == i);
+                        dgvChars[0, i].Style.BackColor = System.Drawing.Color.Empty;
+                        dgvChars[0, i].Style.SelectionBackColor = System.Drawing.Color.Empty;
+                    }
+
                 }
                 else
                 {
-                    dgvChars[0, i].Style.BackColor = System.Drawing.Color.LightGray;
-                    dgvChars[0, i].Style.SelectionBackColor = System.Drawing.Color.DimGray;
+                    if (dgvChars[0, i].Style.BackColor != System.Drawing.Color.LightGray)
+                    {
+                        changed = (changed || selectedrow == i);
+                        dgvChars[0, i].Style.BackColor = System.Drawing.Color.LightGray;
+                        dgvChars[0, i].Style.SelectionBackColor = System.Drawing.Color.DimGray;
+                    }
                 }
+            }
+            if (changed)
+            {
+                try
+                {
+                    bool[] selecteds = new bool[lbFiles.Items.Count];
+                    for(int i = 0; i < selecteds.Length; i++)
+                    {
+                        selecteds[i] = lbFiles.GetSelected(i);
+                    }
+                    ShowFiles(selectedrow);
+                    for (int i = 0; i < selecteds.Length; i++)
+                    {
+                         lbFiles.SetSelected(i, selecteds[i]);
+                    }
+                }
+                catch { }
+                
             }
         }
 
@@ -2760,21 +2858,36 @@
             //ListBoxが空のときにListBoxが選択されるとe.Indexが-1になる
             if (e.Index > -1)
             {
+                // バッドノウハウだが、
+                // このイベントは全ての行に対して同時に起こるようなので
+                // 一番上の行が書き換えられるときに
+                // 一緒にコスチュームリストも書き換えておく
+                if(e.Index == 0)
+                {
+                    setEgvCharsNameColor();
+                }
+
                 ListBox lbs = (ListBox)sender;
 
-                //描画する文字列の取得
+
                 string txt = lbs.Items[e.Index].ToString();
+                bool fileexists = System.IO.File.Exists(txt);
+                
+
+                //描画する文字列の取得
                 //文字を描画する色の選択
                 if ((e.State & DrawItemState.Selected) != DrawItemState.Selected)
                 {
-                    if (!System.IO.File.Exists(txt))
+                    // 選択されている場合
+                    if (!fileexists)
                     {
                         e.Graphics.FillRectangle(System.Drawing.Brushes.LightGray, new System.Drawing.RectangleF(e.Bounds.X, e.Bounds.Y, e.Bounds.Width, e.Bounds.Height));
                     }
                 }
                 else
                 {
-                    if (!System.IO.File.Exists(txt))
+                    // 選択されていいない場合
+                    if (!fileexists)
                     {
                         e.Graphics.FillRectangle(System.Drawing.Brushes.DimGray, new System.Drawing.RectangleF(e.Bounds.X, e.Bounds.Y, e.Bounds.Width, e.Bounds.Height));
                     }
@@ -2936,22 +3049,22 @@
             if (lbFiles.SelectedItems.Count == 1)
             {
                 string path = (string)lbFiles.SelectedItems[0];
-                OpenWithExplorer(path);
-                
+                //OpenWithExplorer(path);
+                OpenWithApplication(Path.GetExtension(path).Substring(1), path);
+
 
             }
         }
 
         private void OpenWithExplorer(string path)
         {
-
-            if (File.Exists(path))
+            try // path が間違っている可能性を考慮
             {
-                System.Diagnostics.Process.Start("EXPLORER.EXE", @"/select,""" + path + @"""");
-            }
-            else
-            {
-                try
+                if (File.Exists(path))
+                {
+                    System.Diagnostics.Process.Start("EXPLORER.EXE", @"/select,""" + path + @"""");
+                }
+                else
                 {
                     while (!String.IsNullOrEmpty(Path.GetDirectoryName(path)))
                     {
@@ -2963,8 +3076,8 @@
                         path = Path.GetDirectoryName(path);
                     }
                 }
-                catch { }
             }
+            catch { }
         }
 
         private void lbFiles_SizeChanged(object sender, EventArgs e)
@@ -5251,9 +5364,18 @@ RAIDOU=RAIDOU
         {
             try
             {
+                string bcm = Path.Combine(tbSavePath.Text, Path.GetFileName(tbSavePath.Text) + ".bcm");
+                OpenWithApplication("bcm", bcm);
+            }
+            catch { }
+
+            /*
+            try
+            {
                 OpenWithExplorer(tbSavePath.Text);
             }
             catch { }
+            */
         }
 
         private void tbListPath_DoubleClick(object sender, EventArgs e)
@@ -5261,6 +5383,11 @@ RAIDOU=RAIDOU
 
             try
             {
+                OpenWithApplication("lst", tbListPath.Text + ".lst");
+
+
+
+                /*
                 if (File.Exists(tbListPath.Text + ".rst") && !File.Exists(tbListPath.Text + ".lst"))
                 {
                     OpenWithExplorer(tbListPath.Text + ".rst");
@@ -5269,6 +5396,7 @@ RAIDOU=RAIDOU
                 {
                     OpenWithExplorer(tbListPath.Text + ".lst");
                 }
+                */
             }
             catch { }
         }
@@ -5459,5 +5587,87 @@ RAIDOU=RAIDOU
                 
             }
         }
+
+        // 拡張子のないパス scPath を渡されたとき、
+        // そのパスに適当な拡張子を付加したファイルを探索し、
+        // 最初に見つかったものに param を付け加えたコマンドを実行する
+        // scPath はダブルコーテーションを含んではならない
+        // param には必要に応じてダブルコーテーションを付加しなければならない
+        // param は空文字でもよい
+        // コマンを実行した場合のみ true を返す。
+        // この関数はいかなる場合もエラーを投げない。
+        // test == true の場合は、実際に実行せず実行可能かどうかのみ返す
+        private bool OpenWithShortcut(string scPath, string param, bool test)
+        {
+            string[] exts = new string[] { ".lnk", ".lnk.lnk", ".bat", ".vbs", ".js", "wsh" };
+                // .lnk.lnk は多くの環境でショートカットファイルの拡張子 .lnk が表示されないことを知らないユーザーへの配慮
+
+            try
+            {
+                string foundScPath = "";
+                for(int i = 0; i < exts.Length; i++)
+                {
+                    string scPathWithExt = scPath + exts[i];
+                    if (File.Exists(scPathWithExt))
+                    {
+                        foundScPath = scPathWithExt;
+                        break;
+                    }
+                }
+
+                if(foundScPath == "")
+                {
+                    return false;
+                }
+                else
+                {
+                    if (!test)
+                    {
+
+
+                        // 念のためカレントディレクトリを動かしておく
+                        string sCD = System.Environment.CurrentDirectory;
+                        System.Environment.CurrentDirectory = Path.GetDirectoryName(foundScPath);
+                        
+                        
+                        if (param != "")
+                        {
+                            System.Diagnostics.Process.Start("\"" + foundScPath + "\"", param);
+                        }
+                        else
+                        {
+                            System.Diagnostics.Process.Start("\"" + foundScPath + "\"");
+                        }
+
+                        // カレントディレクトリを元に戻す
+                        System.Environment.CurrentDirectory = sCD;
+                    }
+
+                    return true;
+                }
+            }
+            catch {}
+
+            return false;
+        }
+
+
+        private void OpenWithApplication(string scName, string param)
+        {
+            string path = Path.Combine(Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"Applications"), scName);
+
+            if (File.Exists(param))
+            {
+                if (!OpenWithShortcut(path, "\"" + param + "\"", false))
+                {
+                    OpenWithExplorer(param);
+                }
+            }
+            else
+            {
+                OpenWithExplorer(param);
+            }
+        }
     }
+
 }
