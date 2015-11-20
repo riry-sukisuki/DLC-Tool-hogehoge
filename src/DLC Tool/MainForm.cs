@@ -2506,9 +2506,17 @@
             // OpenStateFile のほぼのそのままコピー
             try
             {
+                string curDLCPath = "";
+                try
+                {
+                    curDLCPath = tbSavePath.Text;
+                }
+                catch { }
                 newDlc = true;
                 ClearMainUI();
+                tbSavePath.Text = curDLCPath;
                 // dlcData = Program.OpenState(fileName);
+                int cuoCount = dlcData.Chars.Count;
                 dlcData.Chars.AddRange(Program.OpenState(fileName).Chars);
                 //btnSave.Text = Program.dicLanguage["SaveDLC"];
                 setBtnSave();
@@ -2520,8 +2528,8 @@
                 clmInner.ReadOnly = false;
                 if (dlcData.Chars.Count > 0)
                 {
-                    tbSavePath.Text = dlcData.SavePath;
-                    tbBCMVer.Text = dlcData.BcmVer.ToString();
+                    //tbSavePath.Text = dlcData.SavePath;
+                    //tbBCMVer.Text = dlcData.BcmVer.ToString();
                     for (int i = 0; i < dlcData.Chars.Count; i++)
                     {
                         dgvChars.Rows.Add();
@@ -2532,7 +2540,14 @@
                         //dgvChars.Rows[i].Cells[3].Value = dlcData.Chars[i].Comment;
                         showComment(i);
                     }
-                    dgvChars.Rows[0].Selected = true;
+                    if (cuoCount < dlcData.Chars.Count)
+                    {
+                        dgvChars.Rows[cuoCount].Selected = true;
+                    }
+                    else
+                    {
+                        dgvChars.Rows[dlcData.Chars.Count - 1].Selected = true;
+                    }
 
                 }
 
@@ -3823,8 +3838,7 @@
             string lngPathDefault = Path.Combine(prtDir, @"Languages\default.lng");
 
             // en-US.lng を更新したらここに貼り付ける
-            string enUS = @"ProgramName=hogehoge
-Save=Save
+            string enUS = @"Save=Save
 NewDLC=New DLC
 Notice=Notice
 Error=Error
@@ -4051,16 +4065,18 @@ RAIDOU=RAIDOU
             if (Program.dicLanguage.ContainsKey(from)) { } else Program.dicLanguage[from] = def; ;
             this.openFileDialogState.Filter = "*.lst;*.rst|*.lst;*.rst|" + Program.dicLanguage[from] + "|*.*";
             this.saveFileDialogState.Filter = "*.lst|*.lst|" + Program.dicLanguage[from] + "|*.*";
+
+
             // 0.10.3 日本語版 ほげほげば～じょん
-            from = "ProgramName"; def = "hogehoge (based on Japanized version 0.10.3)";
-            if (! Program.dicLanguage.ContainsKey(from))
-            {
-                Program.dicLanguage[from] = def;
-            }
-            
-            System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"^.*?([0-9.\-]*)$");
-            string version = regex.Replace(this.Text, "$1");
-            this.Text = "DLC Tool " + Program.dicLanguage[from] + " " + version;
+            //from = "ProgramName"; def = "hogehoge (based on Japanized version 0.10.3)";
+            //if (! Program.dicLanguage.ContainsKey(from))
+            //{
+            //    Program.dicLanguage[from] = def;
+            //}
+            //
+            //System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"^.*?([0-9.\-]*)$");
+            //string version = regex.Replace(this.Text, "$1");
+            //this.Text = "DLC Tool " + Program.dicLanguage[from] + " " + version;
 
 
 
@@ -5655,6 +5671,9 @@ RAIDOU=RAIDOU
                 btnFilesDelete_Click(null, null);
                 DeleteKeyUp = false;
             }
+
+            // これは ListBox だった頃は必要だった
+            /*
             else if (e.KeyCode == Keys.A && DeleteKeyUp)
             {
                 int FileCount;
@@ -5671,6 +5690,7 @@ RAIDOU=RAIDOU
                     dgvFiles.Rows[i].Selected = true;
                 }
             }
+            */
         }
 
         private void dgvFiles_KeyUp(object sender, KeyEventArgs e)
