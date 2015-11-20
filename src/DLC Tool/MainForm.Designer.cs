@@ -60,6 +60,10 @@ namespace DLC_Tool
             this.btnCharsDelete = new System.Windows.Forms.Button();
             this.btnOpenState = new System.Windows.Forms.Button();
             this.gbFiles = new System.Windows.Forms.GroupBox();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.dgvFiles = new System.Windows.Forms.DataGridView();
+            this.FilePath = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.label4 = new System.Windows.Forms.Label();
             this.btnFilesAdd = new System.Windows.Forms.Button();
             this.cb4H = new System.Windows.Forms.CheckBox();
             this.cb3H = new System.Windows.Forms.CheckBox();
@@ -137,6 +141,8 @@ namespace DLC_Tool
             this.gbHairs2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvHStyles)).BeginInit();
             this.gbFiles.SuspendLayout();
+            this.groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvFiles)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvChars)).BeginInit();
             this.contextMenuStrip.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
@@ -442,6 +448,8 @@ namespace DLC_Tool
             // 
             this.gbFiles.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
+            this.gbFiles.Controls.Add(this.groupBox1);
+            this.gbFiles.Controls.Add(this.label4);
             this.gbFiles.Controls.Add(this.btnFilesAdd);
             this.gbFiles.Controls.Add(this.cb4H);
             this.gbFiles.Controls.Add(this.cb3H);
@@ -461,6 +469,66 @@ namespace DLC_Tool
             this.gbFiles.TabIndex = 20;
             this.gbFiles.TabStop = false;
             this.gbFiles.Text = "ファイル";
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox1.Controls.Add(this.dgvFiles);
+            this.groupBox1.Location = new System.Drawing.Point(8, 65);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(440, 218);
+            this.groupBox1.TabIndex = 18;
+            this.groupBox1.TabStop = false;
+            // 
+            // dgvFiles
+            // 
+            this.dgvFiles.AllowUserToAddRows = false;
+            this.dgvFiles.AllowUserToDeleteRows = false;
+            this.dgvFiles.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.dgvFiles.BackgroundColor = System.Drawing.SystemColors.Window;
+            this.dgvFiles.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.dgvFiles.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.None;
+            this.dgvFiles.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.Disable;
+            this.dgvFiles.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvFiles.ColumnHeadersVisible = false;
+            this.dgvFiles.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.FilePath});
+            this.dgvFiles.GridColor = System.Drawing.SystemColors.ActiveBorder;
+            this.dgvFiles.Location = new System.Drawing.Point(0, 0);
+            this.dgvFiles.Name = "dgvFiles";
+            this.dgvFiles.ReadOnly = true;
+            this.dgvFiles.RowHeadersVisible = false;
+            this.dgvFiles.RowTemplate.Height = 18;
+            this.dgvFiles.RowTemplate.Resizable = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgvFiles.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.dgvFiles.Size = new System.Drawing.Size(440, 218);
+            this.dgvFiles.TabIndex = 17;
+            this.dgvFiles.SelectionChanged += new System.EventHandler(this.dgvFiles_SelectionChanged);
+            this.dgvFiles.DoubleClick += new System.EventHandler(this.dgvFiles_DoubleClick);
+            this.dgvFiles.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvFiles_KeyDown);
+            this.dgvFiles.KeyUp += new System.Windows.Forms.KeyEventHandler(this.dgvFiles_KeyUp);
+            this.dgvFiles.MouseDown += new System.Windows.Forms.MouseEventHandler(this.dgvFiles_MouseDown);
+            // 
+            // FilePath
+            // 
+            this.FilePath.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.FilePath.HeaderText = "";
+            this.FilePath.Name = "FilePath";
+            this.FilePath.ReadOnly = true;
+            this.FilePath.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            // 
+            // label4
+            // 
+            this.label4.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.label4.BackColor = System.Drawing.SystemColors.AppWorkspace;
+            this.label4.FlatStyle = System.Windows.Forms.FlatStyle.System;
+            this.label4.Location = new System.Drawing.Point(7, 64);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(442, 220);
+            this.label4.TabIndex = 26;
             // 
             // btnFilesAdd
             // 
@@ -624,13 +692,6 @@ namespace DLC_Tool
             this.lbFiles.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended;
             this.lbFiles.Size = new System.Drawing.Size(442, 220);
             this.lbFiles.TabIndex = 6;
-            this.lbFiles.DrawItem += new System.Windows.Forms.DrawItemEventHandler(this.lbFiles_DrawItem);
-            this.lbFiles.SelectedIndexChanged += new System.EventHandler(this.lbFiles_SelectedIndexChanged);
-            this.lbFiles.SizeChanged += new System.EventHandler(this.lbFiles_SizeChanged);
-            this.lbFiles.DoubleClick += new System.EventHandler(this.lbFiles_DoubleClick);
-            this.lbFiles.KeyDown += new System.Windows.Forms.KeyEventHandler(this.lbFiles_KeyDown);
-            this.lbFiles.KeyUp += new System.Windows.Forms.KeyEventHandler(this.lbFiles_KeyUp);
-            this.lbFiles.MouseDown += new System.Windows.Forms.MouseEventHandler(this.lbFiles_MouseDown);
             // 
             // dgvChars
             // 
@@ -1212,7 +1273,8 @@ namespace DLC_Tool
             this.MinimumSize = new System.Drawing.Size(640, 640);
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "DLC Tool ほげほげば～じょん 2015.11.19.1";
+            this.Text = "DLC Tool ほげほげば～じょん 2015.11.20.1";
+            this.SizeChanged += new System.EventHandler(this.MainForm_SizeChanged);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.MainForm_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.MainForm_DragEnter);
             this.gbChars.ResumeLayout(false);
@@ -1221,6 +1283,8 @@ namespace DLC_Tool
             ((System.ComponentModel.ISupportInitialize)(this.dgvHStyles)).EndInit();
             this.gbFiles.ResumeLayout(false);
             this.gbFiles.PerformLayout();
+            this.groupBox1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dgvFiles)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvChars)).EndInit();
             this.contextMenuStrip.ResumeLayout(false);
             this.contextMenuStrip1.ResumeLayout(false);
@@ -1328,6 +1392,10 @@ namespace DLC_Tool
         private System.Windows.Forms.DataGridViewTextBoxColumn clmCos;
         private System.Windows.Forms.DataGridViewTextBoxColumn clmInner;
         private System.Windows.Forms.DataGridViewTextBoxColumn clmComment;
+        private System.Windows.Forms.DataGridView dgvFiles;
+        private System.Windows.Forms.DataGridViewTextBoxColumn FilePath;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.Label label4;
     }
 }
 

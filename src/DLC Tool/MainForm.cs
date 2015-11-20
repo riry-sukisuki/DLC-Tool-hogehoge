@@ -55,7 +55,7 @@
         private void ClearCharsUI()
         {
             dgvHStyles.Rows.Clear();
-            lbFiles.Items.Clear();
+            dgvFiles.Rows.Clear();
         }
 
         private void ClearMainUI()
@@ -325,30 +325,191 @@
                 btnHStylesDelete.Enabled = false;
             }
         }
-
-        private void ShowFiles(int charIndex)
+        
+        private void RedrawFiles(int charIndex, bool chkLink)
         {
-            setFileCheckbox();
 
 
-            if (lbFiles.Items.Count > 0)
+            // 表示するファイル名とファイルの存在を取得
+            System.Collections.Generic.List<string> paths = new System.Collections.Generic.List<string>();
+            System.Collections.Generic.List<int> fexists = new System.Collections.Generic.List<int>();
+            bool fileok = true;
+            for (int i = 0; i < dlcData.Chars[charIndex].Files.Length; i++)
             {
-                lbFiles.Items.Clear();
-            }
-
-            lbFiles.BeginUpdate();
-            foreach (string fileName in dlcData.Chars[charIndex].Files)
-            {
+                string fileName = dlcData.Chars[charIndex].Files[i];
                 if (fileName != null)
                 {
-                    lbFiles.Items.Add(fileName);
+                    paths.Add(fileName);
+                    if (chkLink)
+                    {
+                        try
+                        {
+                            if (File.Exists(fileName))
+                            {
+                                fexists.Add(2);
+                            }
+                            else
+                            {
+                                fexists.Add(1);
+                                if (i <= 2 || 11 <= i)
+                                {
+                                    fileok = false;
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            fexists.Add(-1);
+                            fileok = false;
+                        }
+                    }
+                }
+                else if (i <= 2 || 11 <= i)
+                {
+                    fileok = false;
                 }
             }
 
-            lbFiles.EndUpdate();
+            // 画面表示に使う長さと最大文字長を取得
+            var g = dgvFiles.CreateGraphics();
+            int[] showlen = new int[paths.Count];
+            float[] lens = new float[paths.Count];
+            float maxlen = 0;
+            for (int i = 0; i < paths.Count; i++)
+            {
+                showlen[i] = -1;
+                lens[i] = (1000f / 1024f) * g.MeasureString(paths[i], dgvFiles.Font).Width;
+                // なぜこうするとうまくいくのかは不明
+                if (lens[i] > maxlen)
+                {
+                    maxlen = lens[i];
+                }
+            }
+            for (int i = 0; i < paths.Count; i++)
+            {
+                // 既に設定済みならスキップ
+                if (showlen[i] >= 0)
+                {
+                    continue;
+                }
+
+                // 親フォルダを取得
+                string ppath = Path.GetDirectoryName(paths[i]);
+
+                // 同じ親フォルダを持つファイルパスの中で表示が一番長いものの長さを取得
+                float max = lens[i];
+                for (int j = i + 1; j < paths.Count; j++)
+                {
+                    if (ppath == Path.GetDirectoryName(paths[j]) && lens[j] > max)
+                    {
+                        max = lens[j];
+                    }
+                }
+
+                // 最大との差分だけ右側にパティングすればいいのだと思う。
+                for (int j = i; j < paths.Count; j++)
+                {
+                    if (ppath == Path.GetDirectoryName(paths[j]))
+                    {
+                        showlen[j] = (int)(max + 0.5);
+                    }
+                }
+
+            }
+
+            // 一番長い文字列も入るように dgv を右に拡張
+            var loc = dgvFiles.Location;
+            var siz = dgvFiles.Size;
+            int Width0 = dgvFiles.Size.Width;
+            int X0 = loc.X;
+            loc.X += Width0 - (int)(maxlen + 10);
+            if (loc.X > 0)
+            {
+                loc.X = 0;
+            }
+            siz.Width += X0 - loc.X;
+            dgvFiles.Location = loc;
+            dgvFiles.Size = siz;
+
+            chkLink = (chkLink || dgvFiles.Rows.Count != paths.Count);
+
+            if (chkLink && dgvFiles.Rows.Count > 0)
+            {
+                dgvFiles.Rows.Clear();
+            }
+
+            // 右詰めで表示
+            for (int i = 0; i < paths.Count; i++)
+            {
+                if (chkLink)
+                {
+                    dgvFiles.Rows.Add();
+                }
+                var cell = dgvFiles.Rows[i].Cells[0];
+                if (chkLink)
+                {
+                    try
+                    {
+
+                        if (fexists[i] >= 2)
+                        {
+                            cell.Style.BackColor = System.Drawing.Color.Empty;
+                            cell.Style.SelectionBackColor = System.Drawing.Color.Empty;
+                        }
+                        else
+                        {
+                            cell.Style.BackColor = System.Drawing.Color.LightGray;
+                            cell.Style.SelectionBackColor = System.Drawing.Color.DimGray;
+                        }
+                    }
+                    catch { }
+                }
+                
+
+                cell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
+
+                cell.Style.Padding = new Padding(siz.Width - showlen[i], 0, 0, 0);
+
+                cell.Value = paths[i];
+            }
+
+            
+            if (chkLink)
+            {
+                if (fileok)
+                {
+                    dgvChars.SelectedRows[0].Cells[0].Style.BackColor = System.Drawing.Color.Empty;
+                    dgvChars.SelectedRows[0].Cells[0].Style.SelectionBackColor = System.Drawing.Color.Empty;
+                }
+                else
+                {
+                    dgvChars.SelectedRows[0].Cells[0].Style.BackColor = System.Drawing.Color.LightGray;
+                    dgvChars.SelectedRows[0].Cells[0].Style.SelectionBackColor = System.Drawing.Color.DimGray;
+                }
+            }
+            
+
+        }
+
+        private void ShowFiles(int charIndex)
+        {
+
+            setFileCheckbox();
+            RedrawFiles(charIndex, true);
+
+
+
+            // 選択を解除
+            for (int i = 0; i < dgvFiles.Rows.Count; i++)
+            {
+                dgvFiles.Rows[i].Selected = false;
+            }
+
             btnFilesDelete.Enabled = false;
         }
+
         
+
 
         private void SaveDLC(bool Compression)
         {
@@ -1447,13 +1608,14 @@
 
             bool テクスチャ含む = false;
 
-            if (lbFiles.SelectedItems.Count <= 0)
+            if (dgvFiles.SelectedRows.Count <= 0)
             {
                 return;
             }
 
-            foreach (string selectedFile in lbFiles.SelectedItems)
+            foreach (DataGridViewRow row in dgvFiles.SelectedRows)
             {
+                string selectedFile = row.Cells[0].Value.ToString();
                 for (int i = 0; i < FileOrder.Length; i++)
                 {
                     if (selectedFile.EndsWith(FileOrder[i], true, null))
@@ -1490,13 +1652,7 @@
             ShowFiles(dgvChars.SelectedRows[0].Index);
         }
 
-        private void lbFiles_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (lbFiles.SelectedIndex != -1)
-            {
-                btnFilesDelete.Enabled = true;
-            }
-        }
+
 
         private void dgvChars_ColumnHeaderMouseClick(object sender, DataGridViewCellMouseEventArgs e)
         {
@@ -2624,15 +2780,15 @@
             {
                 try
                 {
-                    bool[] selecteds = new bool[lbFiles.Items.Count];
+                    bool[] selecteds = new bool[dgvFiles.Rows.Count];
                     for(int i = 0; i < selecteds.Length; i++)
                     {
-                        selecteds[i] = lbFiles.GetSelected(i);
+                        selecteds[i] = dgvFiles.Rows[i].Selected;
                     }
                     ShowFiles(selectedrow);
                     for (int i = 0; i < selecteds.Length; i++)
                     {
-                         lbFiles.SetSelected(i, selecteds[i]);
+                        dgvFiles.Rows[i].Selected = selecteds[i];
                     }
                 }
                 catch { }
@@ -2849,212 +3005,9 @@
             return (byte) (HCount>1? HCount:1);
         }
 
-        private void lbFiles_DrawItem(object sender, DrawItemEventArgs e)
-        {
-            //背景を描画する
-            //項目が選択されている時は強調表示される
-            e.DrawBackground();
-
-            //ListBoxが空のときにListBoxが選択されるとe.Indexが-1になる
-            if (e.Index > -1)
-            {
-                // バッドノウハウだが、
-                // このイベントは全ての行に対して同時に起こるようなので
-                // 一番上の行が書き換えられるときに
-                // 一緒にコスチュームリストも書き換えておく
-                if(e.Index == 0)
-                {
-                    setEgvCharsNameColor();
-                }
-
-                ListBox lbs = (ListBox)sender;
 
 
-                string txt = lbs.Items[e.Index].ToString();
-                bool fileexists = System.IO.File.Exists(txt);
-                
 
-                //描画する文字列の取得
-                //文字を描画する色の選択
-                if ((e.State & DrawItemState.Selected) != DrawItemState.Selected)
-                {
-                    // 選択されている場合
-                    if (!fileexists)
-                    {
-                        e.Graphics.FillRectangle(System.Drawing.Brushes.LightGray, new System.Drawing.RectangleF(e.Bounds.X, e.Bounds.Y, e.Bounds.Width, e.Bounds.Height));
-                    }
-                }
-                else
-                {
-                    // 選択されていいない場合
-                    if (!fileexists)
-                    {
-                        e.Graphics.FillRectangle(System.Drawing.Brushes.DimGray, new System.Drawing.RectangleF(e.Bounds.X, e.Bounds.Y, e.Bounds.Width, e.Bounds.Height));
-                    }
-                }
-                // 文字色
-                System.Drawing.Brush b = new System.Drawing.SolidBrush(e.ForeColor); ;
-
-                var g = e.Graphics;
-
-                // ファイル名の先頭を合わせるのに使う
-                // MeasureString が不正確で見た目が汚くなったので断念
-                /*
-                // ファイル名が表示上最も長いものの長さ、今のファイルの長さを取得
-                float max_w = 0, cw = 0;
-                for(int i = 0; i < lbs.Items.Count; i++)
-                {
-                    float w = g.MeasureString(Path.GetFileName(lbs.Items[i].ToString()), e.Font, int.MaxValue).Width;
-                    if (max_w < w )
-                    {
-                        max_w = w;
-                    }
-                    if (i == e.Index)
-                    {
-                        cw = w;
-                    }
-                }
-                */
-
-
-                // 今と同じフォルダを持つファイルの中で最大となるフルパスの長差を取得
-                float max_w = 0, cw = 0;
-                string curParent = Path.GetDirectoryName(lbs.Items[e.Index].ToString());
-                for (int i = 0; i < lbs.Items.Count; i++)
-                {
-                    if (Path.GetDirectoryName(lbs.Items[i].ToString()) == curParent)
-                    {
-                        float w = g.MeasureString(lbs.Items[i].ToString(), e.Font, int.MaxValue).Width;
-                        if (max_w < w)
-                        {
-                            max_w = w;
-                        }
-                        if (i == e.Index)
-                        {
-                            cw = w;
-                        }
-                    }
-                }
-
-
-                // 長方形を再設定
-                System.Drawing.RectangleF r = e.Bounds;
-                r.X -= max_w - r.Width;
-                r.Width = max_w;
-
-                //文字列の描画
-                System.Drawing.StringFormat sf = new System.Drawing.StringFormat();
-               // sf.Alignment = System.Drawing.StringAlignment.Far;
-                g.DrawString(txt, e.Font, b, r, sf);
-
-
-                //単純に左で合わせる方法
-                /*
-                // 今のフルパスの長さを取得
-                float cfw = g.MeasureString(txt, e.Font, int.MaxValue).Width;
-
-                // 長方形を再設定
-
-                System.Drawing.RectangleF r = e.Bounds;
-                r.X -= cfw * (float)1.1 + 10 - r.Width;
-                r.Width = cfw * (float)1.1 + 10;
-                
-
-                //文字列の描画
-                System.Drawing.StringFormat sf = new System.Drawing.StringFormat();
-                sf.Alignment = System.Drawing.StringAlignment.Far;
-                g.DrawString(txt, e.Font, b, r, sf);
-                */
-
-                //後始末
-                b.Dispose();
-            }
-
-            //フォーカスを示す四角形を描画
-            e.DrawFocusRectangle();
-        }
-
-        private void lbFiles_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.C && CKeyUp && e.Control)
-            {
-                CKeyUp = false;
-
-                //コピーするファイルのパスをStringCollectionに追加する
-                System.Collections.Specialized.StringCollection files =
-                    new System.Collections.Specialized.StringCollection();
-
-                if(lbFiles.SelectedItems.Count <= 0)
-                {
-                    return;
-                }
-
-                for (int i = 0; i < lbFiles.SelectedItems.Count; i++)
-                {
-                    files.Add(lbFiles.SelectedItems[i].ToString());
-                }
-                //クリップボードにコピーする
-                Clipboard.SetFileDropList(files);
-
-                // フルパスを文字列としてコピーする処理。やめた。
-                /*
-                string cb = "";
-                for (int i = 0; i < lbFiles.SelectedItems.Count; i++)
-                {
-                    cb += lbFiles.SelectedItems[i] + "\n";
-                }
-                Clipboard.SetText(cb);
-                */
-            }
-            else if (e.KeyCode == Keys.V && VKeyUp && e.Control && Clipboard.GetDataObject().GetDataPresent(DataFormats.FileDrop))
-            {
-                VKeyUp = false;
-                string[] paths = (string[])Clipboard.GetDataObject().GetData(DataFormats.FileDrop);
-                AddFiles(paths, false);
-                /* AddFiles の中でやることにした
-                //setEgvCharsSlotColor(); // 流石にこれは不要
-                setEgvCharsNameColor();
-                setEgvCharsTextsColor();
-                */
-
-                }
-            else if (e.KeyCode == Keys.Delete && DeleteKeyUp)
-            {
-                btnFilesDelete_Click(null, null);
-                DeleteKeyUp = false;
-            }
-            else if (e.KeyCode == Keys.A && DeleteKeyUp)
-            {
-                int FileCount;
-                try
-                {
-                    FileCount = lbFiles.Items.Count;
-                }
-                catch
-                {
-                    return;
-                }
-                for(int i = 0; i < FileCount; i++)
-                {
-                    if (!lbFiles.GetSelected(i))
-                    {
-                        lbFiles.SetSelected(i, true);
-                    }
-                }
-            }
-        }
-
-        private void lbFiles_DoubleClick(object sender, EventArgs e)
-        {
-            if (lbFiles.SelectedItems.Count == 1)
-            {
-                string path = (string)lbFiles.SelectedItems[0];
-                //OpenWithExplorer(path);
-                OpenWithApplication(Path.GetExtension(path).Substring(1), path);
-
-
-            }
-        }
 
         private void OpenWithExplorer(string path)
         {
@@ -3079,11 +3032,7 @@
             }
             catch { }
         }
-
-        private void lbFiles_SizeChanged(object sender, EventArgs e)
-        {
-            lbFiles.Invalidate();
-        }
+        
 
         private void dgvChars_KeyDown(object sender, KeyEventArgs e)
         {
@@ -3191,7 +3140,7 @@
                             dlcData.Chars[CharSelected].Files[i] = null;
                         }
 
-                        clikedForm = "lbFiles";
+                        clikedForm = "dgvFiles";
                         貼り付けCtrlVToolStripMenuItem_Click(null, null);
                     }
                 }
@@ -4247,98 +4196,6 @@ RAIDOU=RAIDOU
         }
         
 
-        private void lbFiles_MouseDown(object sender, MouseEventArgs e)
-        {
-            // 左クリック
-            if((e.Button == MouseButtons.Left && btnCharsAdd.Enabled))
-            {
-
-                // MouseDownイベント発生時の (x,y)座標を取得
-                int index = lbFiles.IndexFromPoint(e.X, e.Y);
-                if (index < 0)
-                {
-
-                    for (int i = 0; i < lbFiles.Items.Count; i++)
-                    {
-                        if (lbFiles.GetSelected(i)) // ちらつき抑え
-                        {
-                            lbFiles.SetSelected(i, false);
-                        }
-                    }
-                    if (btnFilesDelete.Enabled) // ちらつき抑え
-                    {
-                        btnFilesDelete.Enabled = false;
-                    }
-                }
-            }
-            // 右クリック
-            else if (e.Button == MouseButtons.Right && btnCharsAdd.Enabled) 
-            {
-
-                // MouseDownイベント発生時の (x,y)座標を取得
-                int index = lbFiles.IndexFromPoint(e.X, e.Y);
-                //if (index < 0) return;
-                if (index >= 0)
-                {
-                    string str = lbFiles.Items[index].ToString();
-                    bool onSelected = false;
-                    for (int i = 0; i < lbFiles.SelectedItems.Count; i++)
-                    {
-                        if (str == lbFiles.SelectedItems[i].ToString())
-                        {
-                            onSelected = true;
-                            break;
-                        }
-                    }
-
-                    if (!onSelected)
-                    {
-
-                        for (int i = 0; i < lbFiles.Items.Count; i++)
-                        {
-                            if (i == index)
-                            {
-                                lbFiles.SetSelected(index, true);
-                            }
-                            else
-                            {
-                                lbFiles.SetSelected(i, false);
-                            }
-                        }
-                    }
-                }
-                else
-                {
-
-                    for (int i = 0; i < lbFiles.Items.Count; i++)
-                    {
-                        if (lbFiles.GetSelected(i)) // ちらつき抑え
-                        {
-                            lbFiles.SetSelected(i, false);
-                        }
-                    }
-                    if (btnFilesDelete.Enabled) // ちらつき抑え
-                    {
-                        btnFilesDelete.Enabled = false;
-                    }
-
-                }
-
-                // 該当行を選択状態にす
-                //if (index >= 0)
-                //   lbFiles.Items[index].
-
-                clikedForm = "lbFiles";
-                コピーCtrlCToolStripMenuItem.Enabled = 削除DeleteToolStripMenuItem.Enabled = btnFilesDelete.Enabled;
-                ClearPasteToolStripMenuItem.Enabled = (lbFiles.Items.Count > 0);
-
-                string[] paths = (string[])Clipboard.GetDataObject().GetData(DataFormats.FileDrop);
-                bool canpaste = AddFiles(paths, true); // テストモード
-                貼り付けCtrlVToolStripMenuItem.Enabled = canpaste;
-                ClearPasteToolStripMenuItem.Enabled = canpaste;
-                contextMenuStrip1.Show(Cursor.Position.X, Cursor.Position.Y);
-            }
-        }
 
         private void dgvHStyles_MouseDown(object sender, MouseEventArgs e)
         {
@@ -4447,7 +4304,7 @@ RAIDOU=RAIDOU
                 }
             }
             // ファイルにフォーカスがあれば
-            else if(clikedForm == "lbFiles")
+            else if(clikedForm == "dgvFiles")
             {
                 if(btnFilesDelete.Enabled)
                 {
@@ -4465,7 +4322,7 @@ RAIDOU=RAIDOU
                 PasteHStyles(false);
             }
             // ファイルにフォーカスがあれば
-            else if (clikedForm == "lbFiles")
+            else if (clikedForm == "dgvFiles")
             {
 
                 string[] paths = (string[])Clipboard.GetDataObject().GetData(DataFormats.FileDrop);
@@ -4482,24 +4339,25 @@ RAIDOU=RAIDOU
                 CopyHStyles();
             }
             // ファイルにフォーカスがあれば
-            else if (clikedForm == "lbFiles")
+            else if (clikedForm == "dgvFiles")
             {
 
                 //コピーするファイルのパスをStringCollectionに追加する
                 System.Collections.Specialized.StringCollection files =
                     new System.Collections.Specialized.StringCollection();
 
-                if(lbFiles.SelectedItems.Count<=0)
+                if(dgvFiles.SelectedRows.Count<=0)
                 {
                     return;
                 }
 
-                for (int i = 0; i < lbFiles.SelectedItems.Count; i++)
+                for (int i = 0; i < dgvFiles.SelectedRows.Count; i++)
                 {
-                    files.Add(lbFiles.SelectedItems[i].ToString());
+                    files.Add(dgvFiles.SelectedRows[i].Cells[0].Value.ToString());
                 }
                 //クリップボードにコピーする
                 Clipboard.SetFileDropList(files);
+                //MessageBox.Show(files[0]);
             }
         }
 
@@ -4636,22 +4494,7 @@ RAIDOU=RAIDOU
                 VKeyUp = true;
             }
         }
-        private void lbFiles_KeyUp(object sender, KeyEventArgs e)
-        {
 
-            if (e.KeyCode == Keys.Delete)
-            {
-                DeleteKeyUp = true;
-            }
-            else if (e.KeyCode == Keys.C)
-            {
-                CKeyUp = true;
-            }
-            else if (e.KeyCode == Keys.V)
-            {
-                VKeyUp = true;
-            }
-        }
 
         private void ClearPasteToolStripMenuItem_Click(object sender, EventArgs e)
         {
@@ -4687,7 +4530,7 @@ RAIDOU=RAIDOU
                 ShowHairstyles(CharSelected);
 
             }
-            else if (clikedForm == "lbFiles")
+            else if (clikedForm == "dgvFiles")
             {
                 // ポップアップ呼び出しの時点でチェックすることにした
                 /*
@@ -4877,27 +4720,27 @@ RAIDOU=RAIDOU
 
         private void SelectFile(int Index, bool selectone)
         {
-            // ctrl または shift が押されていると selectone を無視する
+            // ctrl または shift が押されていると selectone を無視し、またトグルモードになる
             bool ctsh = (((Control.ModifierKeys & Keys.Shift) == Keys.Shift || (Control.ModifierKeys & Keys.Control) == Keys.Control));
 
             string suf = FileOrder[Index];
-            for (int i = 0; i < lbFiles.Items.Count; i++)
+            for (int i = 0; i < dgvFiles.Rows.Count; i++)
             {
-                string str = lbFiles.Items[i].ToString();
+                string str = dgvFiles.Rows[i].Cells[0].Value.ToString();
                 if (str.Substring(str.Length - suf.Length, suf.Length) == suf)
                 {
                     if (ctsh)
                     {
-                        lbFiles.SetSelected(i, !lbFiles.GetSelected(i));
+                        dgvFiles.Rows[i].Selected = !dgvFiles.Rows[i].Selected;
                     }
                     else
                     {
-                        lbFiles.SetSelected(i, true);
+                        dgvFiles.Rows[i].Selected = true;
                     }
                 }
                 else if(selectone && !ctsh)
                 {
-                    lbFiles.SetSelected(i, false);
+                    dgvFiles.Rows[i].Selected = false;
                 }
             }
         }
@@ -5666,6 +5509,194 @@ RAIDOU=RAIDOU
             else
             {
                 OpenWithExplorer(param);
+            }
+        }
+
+        private void MainForm_SizeChanged(object sender, EventArgs e)
+        {
+
+            try // 起動直後などは SelectedRows がなかったりするので。
+            {
+                int index = dgvChars.SelectedRows[0].Index;
+                RedrawFiles(index, false);
+            }
+            catch { }
+        }
+
+        private void dgvFiles_MouseDown(object sender, MouseEventArgs e)
+        {
+
+            // 左クリック
+            if ((e.Button == MouseButtons.Left && btnCharsAdd.Enabled))
+            {
+
+                // MouseDownイベント発生時の (x,y)座標を取得
+                int index = dgvFiles.HitTest(e.X, e.Y).RowIndex;
+                if (index < 0)
+                {
+
+                    for (int i = 0; i < dgvFiles.Rows.Count; i++)
+                    {
+                        dgvFiles.Rows[i].Selected = false;
+                    }
+                    if (btnFilesDelete.Enabled) // ちらつき抑え
+                    {
+                        btnFilesDelete.Enabled = false;
+                    }
+                }
+            }
+            // 右クリック
+            else if (e.Button == MouseButtons.Right && btnCharsAdd.Enabled)
+            {
+
+                // MouseDownイベント発生時の (x,y)座標を取得
+                int index = dgvFiles.HitTest(e.X, e.Y).RowIndex;
+                //if (index < 0) return;
+                if (index >= 0)
+                {
+                    //string str = dgvFiles.Rows[index].Cells[0].Value.ToString();
+                    /*
+                    bool onSelected = false;
+                    try
+                    {
+                        onSelected = (dgvFiles.SelectedRows.Count > 0);
+                    }
+                    catch { }
+                    */
+                    if(!dgvFiles.Rows[index].Cells[0].Selected)
+                    {
+
+                        for (int i = 0; i < dgvFiles.Rows.Count; i++)
+                        {
+                            dgvFiles.Rows[i].Selected = (i == index);
+                        }
+                    }
+                    /*
+                    else
+                    {
+
+                        for (int i = 0; i < dgvFiles.Rows.Count; i++)
+                        {
+                            dgvFiles.Rows[i].Selected = (i == index);
+                        }
+                    }
+                    */
+                }
+                else
+                {
+
+                    for (int i = 0; i < dgvFiles.Rows.Count; i++)
+                    {
+                        dgvFiles.Rows[i].Selected = false;
+                    }
+                    if (btnFilesDelete.Enabled) // ちらつき抑え
+                    {
+                        btnFilesDelete.Enabled = false;
+                    }
+
+                }
+                
+
+                clikedForm = "dgvFiles";
+                コピーCtrlCToolStripMenuItem.Enabled = 削除DeleteToolStripMenuItem.Enabled = btnFilesDelete.Enabled;
+                ClearPasteToolStripMenuItem.Enabled = (dgvFiles.Rows.Count > 0);
+
+                string[] paths = (string[])Clipboard.GetDataObject().GetData(DataFormats.FileDrop);
+                bool canpaste = AddFiles(paths, true); // テストモード
+                貼り付けCtrlVToolStripMenuItem.Enabled = canpaste;
+                ClearPasteToolStripMenuItem.Enabled = canpaste;
+                contextMenuStrip1.Show(Cursor.Position.X, Cursor.Position.Y);
+            }
+        }
+
+        private void dgvFiles_SelectionChanged(object sender, EventArgs e)
+        {
+            btnFilesDelete.Enabled = (dgvFiles.SelectedRows.Count > 0);
+        }
+
+        private void dgvFiles_KeyDown(object sender, KeyEventArgs e)
+        {
+
+            if (e.KeyCode == Keys.C && CKeyUp && e.Control)
+            {
+                CKeyUp = false;
+
+                //コピーするファイルのパスをStringCollectionに追加する
+                System.Collections.Specialized.StringCollection files =
+                    new System.Collections.Specialized.StringCollection();
+
+                if (dgvFiles.SelectedRows.Count <= 0)
+                {
+                    return;
+                }
+
+                for (int i = 0; i < dgvFiles.SelectedRows.Count; i++)
+                {
+                    files.Add(dgvFiles.SelectedRows[i].Cells[0].Value.ToString());
+                }
+                //クリップボードにコピーする
+                Clipboard.SetFileDropList(files);
+
+            }
+            else if (e.KeyCode == Keys.V && VKeyUp && e.Control && Clipboard.GetDataObject().GetDataPresent(DataFormats.FileDrop))
+            {
+                VKeyUp = false;
+                string[] paths = (string[])Clipboard.GetDataObject().GetData(DataFormats.FileDrop);
+                AddFiles(paths, false);
+                /* AddFiles の中でやることにした
+                //setEgvCharsSlotColor(); // 流石にこれは不要
+                setEgvCharsNameColor();
+                setEgvCharsTextsColor();
+                */
+
+            }
+            else if (e.KeyCode == Keys.Delete && DeleteKeyUp)
+            {
+                btnFilesDelete_Click(null, null);
+                DeleteKeyUp = false;
+            }
+            else if (e.KeyCode == Keys.A && DeleteKeyUp)
+            {
+                int FileCount;
+                try
+                {
+                    FileCount = dgvFiles.SelectedRows.Count;
+                }
+                catch
+                {
+                    return;
+                }
+                for (int i = 0; i < FileCount; i++)
+                {
+                    dgvFiles.Rows[i].Selected = true;
+                }
+            }
+        }
+
+        private void dgvFiles_KeyUp(object sender, KeyEventArgs e)
+        {
+
+            if (e.KeyCode == Keys.Delete)
+            {
+                DeleteKeyUp = true;
+            }
+            else if (e.KeyCode == Keys.C)
+            {
+                CKeyUp = true;
+            }
+            else if (e.KeyCode == Keys.V)
+            {
+                VKeyUp = true;
+            }
+        }
+
+        private void dgvFiles_DoubleClick(object sender, EventArgs e)
+        {
+
+            if (dgvFiles.SelectedRows.Count == 1)
+            {
+                string path = dgvFiles.SelectedRows[0].Cells[0].Value.ToString();
+                OpenWithApplication(Path.GetExtension(path).Substring(1), path);
             }
         }
     }
