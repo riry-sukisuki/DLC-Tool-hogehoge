@@ -4604,18 +4604,13 @@ RAIDOU=RAIDOU
 
         private void dgvChars_CellEnter(object sender, DataGridViewCellEventArgs e)
         {
-
-            switch (e.ColumnIndex)
+            if(e.ColumnIndex == 2)
             {
-                //case 1: 今となっては不要
-                case 2:
-                    //この列はIME無効(半角英数のみ)
-                    dgvChars.ImeMode = System.Windows.Forms.ImeMode.Disable;
-                    break;
-                case 3:
-                    //この列は日本語入力ON(ひらがな)
-                    dgvChars.ImeMode = System.Windows.Forms.ImeMode.NoControl;
-                    break;
+                dgvChars.ImeMode = System.Windows.Forms.ImeMode.Disable;
+            }
+            else if (e.ColumnIndex >= 3)
+            {
+                dgvChars.ImeMode = System.Windows.Forms.ImeMode.NoControl;
             }
         }
 
