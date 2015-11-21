@@ -846,9 +846,13 @@
                     {
                         charEntry.CostumeSlot = byte.Parse(s);
                     }
-                    else
+                    else if (groupLine == 2)
                     {
                         charEntry.AddTexsCount = byte.Parse(s);
+                    }
+                    else if (groupLine == 3)
+                    {
+                        charEntry.Comment = s;
                     }
                     groupLine++;
                 }
@@ -909,6 +913,7 @@
                 text += CharNames[dlcData.Chars[i].ID] + "\r\n";
                 text += dlcData.Chars[i].CostumeSlot.ToString() + "\r\n";
                 text += dlcData.Chars[i].AddTexsCount.ToString() + "\r\n";
+                text += dlcData.Chars[i].Comment + "\r\n";
 
                 text += "hairstyles\r\n";
                 for (int j = 0; j < dlcData.Chars[i].HStyles.Count; j++)

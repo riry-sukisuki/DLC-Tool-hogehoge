@@ -1285,7 +1285,7 @@
                         MakeColumnsFromDLCData(dlcData);
 
                         tbSavePath.Text = dlcData.SavePath;
-                        btnSave.Text = "Save DLC";
+                        btnSave.Text = Program.dicLanguage["SaveDLC"]; ;
                         btnCmpSave.Enabled = btnSave.Enabled = true;
                         btnSaveState.Enabled = true;
                         btnCharsAdd.Enabled = true;
@@ -1362,11 +1362,14 @@
                 }
             }
 
-            // max + 1 - 1 = max 列だけコメント列を追加
+            // 現在のコメント数
+            int corcom = dgvChars.Columns.Count - 3;
+
+            // max + 1 - corcom 列だけ末尾にコメント列を追加
             //MessageBox.Show(max.ToString());
-            for (int i = 0; i < max; i++)
+            for (int i = 0; i < max + 1 - corcom; i++)
             {
-                AddComColumn(i + 3, true);
+                AddComColumn(i + 2 + corcom, true);
             }
         }
 
@@ -2465,15 +2468,17 @@
                         }
 
                         newDlc = true;
+                        string cufpath = tbSavePath.Text;
+                        string culbcm = tbBCMVer.Text;
                         ClearMainUI();
-                        tbSavePath.Text = dlcData.SavePath;
-                        btnSave.Text = "Save DLC";
+                        tbSavePath.Text = cufpath;
+                        btnSave.Text = Program.dicLanguage["SaveDLC"];
                         btnCmpSave.Enabled = btnSave.Enabled = true;
                         btnSaveState.Enabled = true;
                         btnCharsAdd.Enabled = true;
                         //clmCos.ReadOnly = false;
                         clmInner.ReadOnly = false;
-                        tbBCMVer.Text = dlcData.BcmVer.ToString();
+                        tbBCMVer.Text = culbcm;
 
                         for (int i = 0; i < dlcData.Chars.Count; i++)
                         {
@@ -2507,17 +2512,27 @@
             try
             {
                 string curDLCPath = "";
+                string curLstPath = "";
+                string curBCMVar = "";
                 try
                 {
                     curDLCPath = tbSavePath.Text;
+                    curLstPath = tbListPath.Text;
+                    curBCMVar = tbBCMVer.Text;
                 }
                 catch { }
                 newDlc = true;
                 ClearMainUI();
                 tbSavePath.Text = curDLCPath;
+                tbListPath.Text = curLstPath;
+                tbListPath.Select(tbListPath.Text.Length, 0);
+                tbListPath.ScrollToCaret();
+                tbBCMVer.Text = curBCMVar;
                 // dlcData = Program.OpenState(fileName);
                 int cuoCount = dlcData.Chars.Count;
                 dlcData.Chars.AddRange(Program.OpenState(fileName).Chars);
+
+                MakeColumnsFromDLCData(dlcData);
                 //btnSave.Text = Program.dicLanguage["SaveDLC"];
                 setBtnSave();
                 btnCmpSave.Enabled = btnSave.Enabled = true;
@@ -3207,6 +3222,12 @@
                                 index = dgvChars.Rows.Count;
                             }
                             int index0 = index;
+
+
+                            var dlcData3 = new DLCData();
+                            dlcData3.Chars.AddRange(dlcData.Chars);
+                            dlcData3.Chars.AddRange(dlcData2.Chars);
+                            MakeColumnsFromDLCData(dlcData3);
 
                             for (int j = 0; j < dlcData2.Chars.Count; j++)
                             {
@@ -5257,6 +5278,15 @@ RAIDOU=RAIDOU
 
         private bool DirectoryIsPureDLC(string path)
         {
+
+            /* 暫定的な対応 */
+            string prtDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
+            string kksPath = Path.Combine(prtDir, @"ホゾンデキール");
+            if(File.Exists(kksPath))
+            {
+                return true;
+            }
+
             try
             {
                 // 現在のリストファイルのフォルダ
