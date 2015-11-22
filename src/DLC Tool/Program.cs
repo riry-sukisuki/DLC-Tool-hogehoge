@@ -664,7 +664,10 @@
 
             }
 
-            dlcData.Chars.Add(charEntry);
+            if (charEntry != null) // この if はほげほげで修正
+            {
+                dlcData.Chars.Add(charEntry);
+            }
             dlcData.BcmVer = 9;
 
             return dlcData;
@@ -883,7 +886,10 @@
 
             }
 
-            dlcData.Chars.Add(charEntry);
+            if (charEntry != null) // この if はほげほげで修正
+            {
+                dlcData.Chars.Add(charEntry);
+            }
             dlcData.BcmVer = 9;
 
             return dlcData;

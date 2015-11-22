@@ -257,6 +257,17 @@
                 setEgvCharsNameColor();
 
                 ShowFiles(dgvChars.SelectedRows[0].Index);
+
+                // 同じ名前のファイル名は二つ同時には登録できないという前提（今の実装では成立する）で、
+                // 追加されたファイルを選択状態にする
+                for(int i = 0; i < dgvFiles.Rows.Count; i++)
+                {
+                    string path = dgvFiles.Rows[i].Cells[0].Value.ToString();
+                    if(Array.IndexOf(fileNames, path) >= 0)
+                    {
+                        dgvFiles.Rows[i].Selected = true;
+                    }
+                }
             }
 
             return add;
@@ -1056,6 +1067,8 @@
                 dgvHStyles.Rows[i].Selected = false;
             }
             dgvHStyles.Rows[dgvHStyles.Rows.Count - 1].Selected = true;
+            btnHStylesDelete.Enabled = true;
+
             if (dgvHStyles.Rows.Count >= 8)
             {
                 btnHStylesAdd.Enabled = false;
@@ -1073,6 +1086,7 @@
                 int SelectedRowsCount;
                 int CharSelected;
                 int[] arraySelected;
+                bool tryToAllDelete;
                 try
                 {
                     SelectedRows = dgvHStyles.SelectedRows;
@@ -1083,6 +1097,7 @@
                     {
                         arraySelected[i] = SelectedRows[i].Index;
                     }
+                    tryToAllDelete = (SelectedRowsCount >= dgvHStyles.Rows.Count);
                 }
                 catch
                 {
@@ -1104,6 +1119,11 @@
                 for (int i = 0; i < dgvHStyles.Rows.Count; i++)
                 {
                     dgvHStyles.Rows[i].Selected = false;
+                }
+
+                if (tryToAllDelete && dgvHStyles.Rows.Count > 0)
+                {
+                    dgvHStyles.Rows[0].Selected = true;
                 }
 
                 /*
@@ -1216,6 +1236,32 @@
                     dgvChars.Rows[0].Selected = true;
 
                 }
+
+                // リストファイルのパスを表示
+                string ext = Path.GetExtension(fileName).ToLower();
+                if (ext == ".lst" || ext == ".rst")
+                {
+                    tbListPath.Text = fileName.Substring(0, fileName.Length - 4);
+                }
+                else
+                {
+                    tbListPath.Text = fileName;
+                }
+                tbListPath.Select(tbListPath.Text.Length, 0);
+                tbListPath.ScrollToCaret();
+
+                // 既にリストファイルが保存してあって、そのリストファイルがその DLC 用のものである場合に限ってチェックボックスオン
+                try
+                {
+                    string listInDLC = Path.Combine(dlcData.SavePath, Path.GetFileName(fileName));
+                    if(listInDLC == fileName || (File.Exists(listInDLC) && (Program.OpenState(listInDLC).SavePath == dlcData.SavePath)))
+                    {
+                        cbSaveListInDLC.Checked = true;
+                    }
+                }
+                catch { }
+                
+
             }
             catch (Exception e)
             {
@@ -1225,50 +1271,39 @@
 
 
 
-        private void btnOpenState_Click(object sender, EventArgs e)
+private void btnOpenState_Click(object sender, EventArgs e)
+{
+
+
+
+
+
+    try
+    {
+        openFileDialogState.FileName = Path.GetFileName(saveFileDialogState.FileName);
+        if (openFileDialogState.ShowDialog() == DialogResult.OK)
         {
 
-
-
-
-
-            try
+            //dgvChars.Columns[0].HeaderCell.SortGlyphDirection = SortOrder.None;
+            //dgvChars.Columns[1].HeaderCell.SortGlyphDirection = SortOrder.None;
+            for (int i = 0; i < dgvChars.Columns.Count; i++)
             {
-                openFileDialogState.FileName = Path.GetFileName(saveFileDialogState.FileName);
-                if (openFileDialogState.ShowDialog() == DialogResult.OK)
-                {
-
-                    //dgvChars.Columns[0].HeaderCell.SortGlyphDirection = SortOrder.None;
-                    //dgvChars.Columns[1].HeaderCell.SortGlyphDirection = SortOrder.None;
-                    for (int i = 0; i < dgvChars.Columns.Count; i++)
-                    {
-                        dgvChars.Columns[i].HeaderCell.SortGlyphDirection = SortOrder.None;
-                    }
+                dgvChars.Columns[i].HeaderCell.SortGlyphDirection = SortOrder.None;
+            }
 
 
 
-                    if (openFileDialogState.FilterIndex == 1)
-                    {
-                        string orgpath = openFileDialogState.FileName;
-                        string ext = Path.GetExtension(orgpath).ToLower();
-                        //newDlc = true; // OpenStateFile で行われるけど tbListPath.Text 編集イベントの前にかえておかないといけない
+            if (openFileDialogState.FilterIndex == 1)
+            {
+                string orgpath = openFileDialogState.FileName;
+                string ext = Path.GetExtension(orgpath).ToLower();
+                //newDlc = true; // OpenStateFile で行われるけど tbListPath.Text 編集イベントの前にかえておかないといけない
 
 
 
-                        OpenStateFile(openFileDialogState.FileName);
-
-
-                        if (ext == ".lst" || ext == ".rst")
-                        {
-                            tbListPath.Text = orgpath.Substring(0, orgpath.Length - 4);
-                        }
-                        else
-                        {
-                            tbListPath.Text = orgpath;
-                        }
-                        tbListPath.Select(tbListPath.Text.Length, 0);
-                        tbListPath.ScrollToCaret();
-                    }
+                OpenStateFile(openFileDialogState.FileName);
+                        
+            }
                     else
                     {
 
@@ -3209,7 +3244,7 @@
 
                         DLCData dlcData2 = Program.string2dlcData(str);
 
-                        if (dlcData2.Chars.Count > 0)
+                        if (dlcData2 != null && dlcData2.Chars.Count > 0)
                         {
                             // 今選択されている場所。挿入に使う
                             int index;
@@ -4320,7 +4355,20 @@ RAIDOU=RAIDOU
 
 
                 clikedForm = "dgvHStyles";
-                コピーCtrlCToolStripMenuItem.Enabled = 削除DeleteToolStripMenuItem.Enabled = btnHStylesDelete.Enabled;
+
+                //コピーCtrlCToolStripMenuItem.Enabled = 削除DeleteToolStripMenuItem.Enabled = btnHStylesDelete.Enabled;
+                // 髪型に関しては、残り１つだと選択されていてもデリートボタンが向こうになるのでこの様な手の抜き方はダメ
+                try
+                {
+                    コピーCtrlCToolStripMenuItem.Enabled = (dgvHStyles.SelectedRows.Count > 0);
+                }
+                catch
+                {
+                    コピーCtrlCToolStripMenuItem.Enabled = false;
+                }
+
+                削除DeleteToolStripMenuItem.Enabled = btnHStylesDelete.Enabled;
+
                 ClearPasteToolStripMenuItem.Enabled = true;
                 bool canpaste = PasteHStyles(true); // テストモード
                 貼り付けCtrlVToolStripMenuItem.Enabled = (canpaste && btnHStylesAdd.Enabled); // 髪型マックスなら貼り付けられない
@@ -4482,7 +4530,9 @@ RAIDOU=RAIDOU
 
             if (addcount > 0)
             {
+
                 ShowHairstyles(dgvChars.SelectedRows[0].Index);
+                btnHStylesDelete.Enabled = true; // ShowHairstyles よりも後じゃないとダメ
                 for (int i = 0; i < dgvHStyles.Rows.Count; i++)
                 {
                     dgvHStyles.Rows[i].Selected = false;
@@ -4492,6 +4542,7 @@ RAIDOU=RAIDOU
                     dgvHStyles.Rows[i].Selected = true;
                 }
             }
+            //MessageBox.Show("a");
 
             return pasted;
             
@@ -5639,7 +5690,8 @@ RAIDOU=RAIDOU
                 
 
                 clikedForm = "dgvFiles";
-                コピーCtrlCToolStripMenuItem.Enabled = 削除DeleteToolStripMenuItem.Enabled = btnFilesDelete.Enabled;
+                コピーCtrlCToolStripMenuItem.Enabled = btnFilesDelete.Enabled;
+                削除DeleteToolStripMenuItem.Enabled = btnFilesDelete.Enabled;
                 ClearPasteToolStripMenuItem.Enabled = (dgvFiles.Rows.Count > 0);
 
                 string[] paths = (string[])Clipboard.GetDataObject().GetData(DataFormats.FileDrop);
