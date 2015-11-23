@@ -5330,13 +5330,18 @@ RAIDOU=RAIDOU
         private bool DirectoryIsPureDLC(string path)
         {
 
+            // 開発版仕様
+            return true;
+
             /* 暫定的な対応 */
+            /*
             string prtDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             string kksPath = Path.Combine(prtDir, @"ホゾンデキール");
             if(File.Exists(kksPath))
             {
                 return true;
             }
+            */
 
             try
             {
