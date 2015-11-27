@@ -695,7 +695,53 @@
             
         }
 
+
+        // コイツはエラーを投げる
         public static void SaveState(DLCData dlcData, string savePath)
+        {
+            // 確実に存在しない保存用フォルダパスの作成
+            string saveTempPathBase = savePath + ".temp";
+            string saveTempPath = saveTempPathBase;
+            for (int i = 2; Directory.Exists(saveTempPath) || File.Exists(saveTempPath); i++)
+            {
+                saveTempPath = saveTempPathBase + i;
+            }
+
+            SaveState(dlcData, savePath, saveTempPath);
+        }
+
+        // コイツはエラーを投げる
+        public static void SaveState(DLCData dlcData, string savePath, string saveTempPath)
+        {
+            try
+            {
+                SaveState_core(dlcData, saveTempPath);
+            }
+            catch (Exception e)
+            {
+                try
+                {
+                    if (File.Exists(saveTempPath))
+                    {
+                        File.Delete(saveTempPath);
+                    }
+                }
+                catch { }
+
+                throw e;
+            }
+
+            if (File.Exists(savePath))
+            {
+                File.Delete(savePath);
+            }
+
+            File.Move(saveTempPath, savePath);
+        }
+
+
+
+        public static void SaveState_core(DLCData dlcData, string savePath)
         {
             string text = "";
 
@@ -1040,7 +1086,7 @@
                 // 確実に存在しない保存用フォルダパスの作成
                 string saveTempPathBase = savePath + "_temp";
                 saveTempPath = saveTempPathBase;
-                for (int i = 2; Directory.Exists(saveTempPath); i++)
+                for (int i = 2; Directory.Exists(saveTempPath) || File.Exists(saveTempPath); i++)
                 {
                     saveTempPath = saveTempPathBase + "_" + i;
                 }

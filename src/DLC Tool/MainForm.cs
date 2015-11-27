@@ -6,8 +6,77 @@
     using System.Threading.Tasks;
     using System.Windows.Forms;
 
+
+    // ini 用
+    using System.Text;
+    using System.Runtime.InteropServices;
+
+
+
+
     public partial class MainForm : Form
     {
+        // ini 用
+        class IniFileHandler
+        {
+            [DllImport("KERNEL32.DLL")]
+            public static extern uint
+              GetPrivateProfileString(string lpAppName,
+              string lpKeyName, string lpDefault,
+              StringBuilder lpReturnedString, uint nSize,
+              string lpFileName);
+
+            [DllImport("KERNEL32.DLL",
+                EntryPoint = "GetPrivateProfileStringA")]
+            public static extern uint
+              GetPrivateProfileStringByByteArray(string lpAppName,
+              string lpKeyName, string lpDefault,
+              byte[] lpReturnedString, uint nSize,
+              string lpFileName);
+
+            [DllImport("KERNEL32.DLL")]
+            public static extern uint
+              GetPrivateProfileInt(string lpAppName,
+              string lpKeyName, int nDefault, string lpFileName);
+
+            [DllImport("KERNEL32.DLL")]
+            public static extern uint WritePrivateProfileString(
+              string lpAppName,
+              string lpKeyName,
+              string lpString,
+              string lpFileName);
+        }
+        private string iniPath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"DLC Tool.ini");
+        private void SaveIniString(string section, string key, string data)
+        {
+            try
+            {
+                SaveIniStringWithError(section, key, data);
+            }
+            catch { }
+        }
+        private void SaveIniStringWithError(string section, string key, string data)
+        {
+            IniFileHandler.WritePrivateProfileString(section, key, data, iniPath);
+        }
+        private string LoadIniString(string section, string key)
+        {
+            try
+            {
+                return LoadIniStringWithError(section, key);
+            }
+            catch
+            {
+                return "";
+            }
+        }
+        private string LoadIniStringWithError(string section, string key)
+        {
+            StringBuilder sb = new StringBuilder(1024);
+            IniFileHandler.GetPrivateProfileString(section, key, "", sb, (uint)sb.Capacity, iniPath);
+            return sb.ToString();
+        }
+
         public static readonly string[] FileOrder = new string[12] { ".TMC", ".TMCL", ".---C", "1.--H", "1.--HL", "2.--H", "2.--HL", "3.--H", "3.--HL", "4.--H", "4.--HL", ".--P" };
 
         private static DLCData dlcData;
@@ -32,6 +101,49 @@
 
         private bool NeedShowChar = true;
 
+
+        // 60 秒ごとにリストファイルを保存
+        // 異常終了時のための安全装置なので複雑な処理は行わないようにする。
+        // ハンドルされない例外が出ても勝手にタイマーが止まったりはしないので注意
+        public class FormsTimerTest
+        {
+            public Timer timer;
+            public void Run()
+            {
+                timer = new Timer();
+                timer.Tick += new EventHandler(MyClock);
+                timer.Interval = 60000;
+                timer.Enabled = true; // timer.Start()と同じ
+
+                //Application.Run(); // メッセージ・ループを開始
+            }
+
+            public void Stop()
+            {
+                timer.Enabled = false;
+            }
+
+            public void MyClock(object sender, EventArgs e)
+            {
+                if (dlcData != null)
+                {
+                    // dlcData 編集中にこのイベントが発生すると何が起こるか分からない
+                    // エラーが起こっても current.lst 本体は傷つかない
+                    try
+                    {
+                        var pt = Path.GetDirectoryName(Application.ExecutablePath);
+                        Program.SaveState(dlcData, Path.Combine(pt, @"current.lst"), Path.Combine(pt, @"current.lst.temp"));
+                    }
+                    catch { }
+
+                    //MessageBox.Show("hozon");
+
+                }
+            }
+        }
+
+
+        private FormsTimerTest TimerForSave;
         public MainForm()
         {
             InitializeComponent();
@@ -39,10 +151,7 @@
             SetDATList();
 
             //dgvChars.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-
-            // とりあえず
-            //dgvChars.Columns[3].DefaultCellStyle.BackColor = System.Drawing.Color.LightGray;
-            //dgvChars.Columns[3].DefaultCellStyle.SelectionBackColor = System.Drawing.Color.DimGray;
+            
 
             string[] cmds = System.Environment.GetCommandLineArgs();
 
@@ -50,7 +159,86 @@
             {
                 OpenStateFile(cmds[1]);
             }
+            else
+            {
+                string curList = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"current.lst");
+                try
+                {
+                    if(File.Exists(curList))
+                    {
+                        OpenStateFile(curList);
+                    }
+                }
+                catch
+                {
+                    try
+                    {
+                        File.Delete(curList);
+                    }
+                    catch { }
+                }
+                
+            }
+
+            // 終了時のイベントハンドラを登録
+            //ApplicationExitイベントハンドラを追加
+            Application.ApplicationExit += new EventHandler(Application_ApplicationExit);
+
+            // 異常終了時は単にタイマーを止める
+            Application.ThreadException +=
+                new System.Threading.ThreadExceptionEventHandler(Application_ThreadException);
+
+            // タイマー開始
+            TimerForSave = new FormsTimerTest();
+            TimerForSave.Run();
         }
+
+        //ApplicationExitイベントハンドラ
+        private void Application_ApplicationExit(object sender, EventArgs e)
+        {
+            //ApplicationExitイベントハンドラを削除
+            Application.ApplicationExit -= new EventHandler(Application_ApplicationExit);
+
+            // タイマーを止める
+            TimerForSave.Stop();
+
+
+            //保存を行う
+
+            if (dlcData != null)
+            {
+                // dlcData 編集中にこのイベントが発生すると何が起こるか分からない
+                // エラーが起こっても current.lst 本体は傷つかない
+                try
+                {
+                    var pt = Path.GetDirectoryName(Application.ExecutablePath);
+                    Program.SaveState(dlcData, Path.Combine(pt, @"current.lst"), Path.Combine(pt, @"current.lst.temp"));
+                }
+                catch { }
+            }
+        }
+
+        // 異常終了時は単にタイマーを止める
+
+        //ThreadExceptionイベントハンドラ
+        private void Application_ThreadException(object sender, System.Threading.ThreadExceptionEventArgs e)
+        {
+
+            // タイマーを止める
+            TimerForSave.Stop();
+            
+            try
+            {
+                //エラーメッセージを表示する
+                MessageBox.Show(e.Exception.Message, Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                //アプリケーションを終了する
+                Application.Exit();
+            }
+        }
+
 
         private void ClearCharsUI()
         {
@@ -98,6 +286,9 @@
 
         private void btnOpenBCM_Click(object sender, EventArgs e)
         {
+            var pt = GetOwnOFolderrExistingParent( LoadIniString("InitialDirectory", "BCM") );
+            if(pt != "") openFileDialogBCM.InitialDirectory = pt;
+            openFileDialogBCM.FileName = Path.GetFileName(saveFileDialogBCM.FileName);
             if (openFileDialogBCM.ShowDialog() == DialogResult.OK)
             {
                 OpenFile(openFileDialogBCM.FileName);
@@ -105,6 +296,8 @@
                 btnSaveState.Enabled = true;
 
                 btnCmpSave.Enabled = false;
+
+                SaveIniString("InitialDirectory", "BCM", Path.GetDirectoryName(openFileDialogBCM.FileName));
             }
         }
 
@@ -535,8 +728,22 @@
                 string dlcName = "";
                 if (newDlc)
                 {
-                    if (tbSavePath.Text == string.Empty)
+                    bool direxists = false;
+                    try
                     {
+                        if (tbSavePath.Text != string.Empty)
+                        {
+                            direxists = Directory.Exists(Path.GetDirectoryName(tbSavePath.Text));
+                        }
+                    }
+                    catch { }
+                    if (!direxists)
+                    {
+
+                        var pt = LoadIniString("InitialDirectory", "BCM"); // ここも BMC で。
+                        if (pt != "") saveFileDialog.InitialDirectory = GetOwnOFolderrExistingParent((Path.GetDirectoryName(pt))); // ただし親を見る。
+                        saveFileDialog.FileName = Path.GetFileName(openFileDialog.FileName);
+                        
                         if (saveFileDialog.ShowDialog() == DialogResult.OK)
                         {
                             System.Text.RegularExpressions.Regex regex_doa = new System.Text.RegularExpressions.Regex(@"^(.*\\([^\\]+))\\\2.bcm$",
@@ -544,10 +751,12 @@
                             if (regex_doa.IsMatch(saveFileDialog.FileName))
                             {
                                 tbSavePath.Text = regex_doa.Replace(saveFileDialog.FileName, "$1");
+                                SaveIniString("InitialDirectory", "BCM", Path.GetDirectoryName(saveFileDialog.FileName));
                             }
                             else
                             {
                                 tbSavePath.Text = saveFileDialog.FileName;
+                                SaveIniString("InitialDirectory", "BCM", saveFileDialog.FileName);
                             }
                         }
                         else
@@ -620,14 +829,26 @@
                             message = Program.dicLanguage["SavedPartialDLC"];
                         }
 
+                        string path = tbSavePath.Text + @"\" + Path.GetFileName(tbListPath.Text) + ".lst";
                         if (cbSaveListInDLC.Enabled && cbSaveListInDLC.Checked)
                         {
 
                             dlcData.SavePath = tbSavePath.Text;
 
-                            string path = tbSavePath.Text + @"\" + Path.GetFileName(tbListPath.Text) + ".lst";
 
                             Program.SaveState(dlcData, path); //dlcData4Save とどっちか迷うところだけど、バックアップ機能を兼ねると思えばオリジナルのほうで良いのでは。
+                        }
+                        else if (cbSaveListInDLC.Enabled && !cbSaveListInDLC.Checked)
+                        {
+                            // ファイルが存在すれば消す
+                            try
+                            {
+                                if(File.Exists(path))
+                                {
+                                    File.Delete(path);
+                                }
+                            }
+                            catch { }
                         }
 
                         // ショートカットを探す
@@ -754,14 +975,31 @@
                 }
                 else
                 {
-                    if (tbSavePath.Text == string.Empty || dlcData.skipRead > 0)
+
+                    bool direxists = false;
+                    try
+                    {
+                        if (tbSavePath.Text != string.Empty)
+                        {
+                            direxists = Directory.Exists(tbSavePath.Text);
+                        }
+                    }
+                    catch { }
+
+                    if (!direxists || dlcData.skipRead > 0)
                     {
                         if (dlcData.skipRead > 0)
                         {
                             MessageBox.Show(Program.dicLanguage["OverwritingKillsSkipedItem"], Program.dicLanguage["Notice"], MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         }
+
+
+                        var pt = GetOwnOFolderrExistingParent(LoadIniString("InitialDirectory", "BCM"));
+                        if (pt != "") saveFileDialogBCM.InitialDirectory = pt;
+                        saveFileDialogBCM.FileName = Path.GetFileName(openFileDialogBCM.FileName);
                         if (saveFileDialogBCM.ShowDialog() == DialogResult.OK)
                         {
+                            SaveIniString("InitialDirectory", "BCM", Path.GetDirectoryName(saveFileDialogBCM.FileName));
                             tbSavePath.Text = saveFileDialogBCM.FileName;
                         }
                         else
@@ -1145,18 +1383,26 @@
 
         private void btnNewDLC_Click(object sender, EventArgs e)
         {
+
+            var pt = LoadIniString("InitialDirectory", "BCM");
+            if (pt != "") saveFileDialog.InitialDirectory = GetOwnOFolderrExistingParent( Path.GetDirectoryName(pt));
+            saveFileDialog.FileName = Path.GetFileName(openFileDialog.FileName);
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
+
                 //MessageBox.Show("a");
                 System.Text.RegularExpressions.Regex regex_doa = new System.Text.RegularExpressions.Regex(@"^(.*\\([^\\]+))\\\2.bcm$",
                     System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                 if (regex_doa.IsMatch(saveFileDialog.FileName))
                 {
                     tbSavePath.Text = regex_doa.Replace(saveFileDialog.FileName, "$1");
+                    SaveIniString("InitialDirectory", "BCM", Path.GetDirectoryName(saveFileDialog.FileName));
+
                 }
                 else
                 {
                     tbSavePath.Text = saveFileDialog.FileName;
+                    SaveIniString("InitialDirectory", "BCM", saveFileDialog.FileName);
                 }
 
                 newDlc = true;
@@ -1251,6 +1497,7 @@
                 tbListPath.ScrollToCaret();
 
                 // 既にリストファイルが保存してあって、そのリストファイルがその DLC 用のものである場合に限ってチェックボックスオン
+                /*
                 try
                 {
                     string listInDLC = Path.Combine(dlcData.SavePath, Path.GetFileName(fileName));
@@ -1259,7 +1506,18 @@
                         cbSaveListInDLC.Checked = true;
                     }
                 }
-                catch { }
+                catch { }*/
+                //　・・・は止めて、既に DLC フォルダが存在して、その中に保存するべきリストファイルが存在しない場合を除いてチェックボックスオン
+                // わざわざ中身までは見ないことにする
+                try
+                {
+                    string listInDLC = Path.Combine(dlcData.SavePath, Path.GetFileName(fileName));
+                    cbSaveListInDLC.Checked = (listInDLC == fileName || (!Directory.Exists(dlcData.SavePath)) || File.Exists(listInDLC));
+                }
+                catch
+                {
+                    cbSaveListInDLC.Checked = true;
+                }
                 
 
             }
@@ -1271,39 +1529,38 @@
 
 
 
-private void btnOpenState_Click(object sender, EventArgs e)
-{
-
-
-
-
-
-    try
-    {
-        openFileDialogState.FileName = Path.GetFileName(saveFileDialogState.FileName);
-        if (openFileDialogState.ShowDialog() == DialogResult.OK)
+        private void btnOpenState_Click(object sender, EventArgs e)
         {
 
-            //dgvChars.Columns[0].HeaderCell.SortGlyphDirection = SortOrder.None;
-            //dgvChars.Columns[1].HeaderCell.SortGlyphDirection = SortOrder.None;
-            for (int i = 0; i < dgvChars.Columns.Count; i++)
+            try
             {
-                dgvChars.Columns[i].HeaderCell.SortGlyphDirection = SortOrder.None;
-            }
+
+                var pt = GetOwnOFolderrExistingParent(LoadIniString("InitialDirectory", "LIST"));
+                if (pt != "") openFileDialogState.InitialDirectory = pt;
+                openFileDialogState.FileName = Path.GetFileName(saveFileDialogState.FileName);
+                if (openFileDialogState.ShowDialog() == DialogResult.OK)
+                {
+                    SaveIniString("InitialDirectory", "LIST", Path.GetDirectoryName(openFileDialogState.FileName));
+                    //dgvChars.Columns[0].HeaderCell.SortGlyphDirection = SortOrder.None;
+                    //dgvChars.Columns[1].HeaderCell.SortGlyphDirection = SortOrder.None;
+                    for (int i = 0; i < dgvChars.Columns.Count; i++)
+                    {
+                        dgvChars.Columns[i].HeaderCell.SortGlyphDirection = SortOrder.None;
+                    }
 
 
 
-            if (openFileDialogState.FilterIndex == 1)
-            {
-                string orgpath = openFileDialogState.FileName;
-                string ext = Path.GetExtension(orgpath).ToLower();
-                //newDlc = true; // OpenStateFile で行われるけど tbListPath.Text 編集イベントの前にかえておかないといけない
+                    if (openFileDialogState.FilterIndex == 1)
+                    {
+                        string orgpath = openFileDialogState.FileName;
+                        string ext = Path.GetExtension(orgpath).ToLower();
+                        //newDlc = true; // OpenStateFile で行われるけど tbListPath.Text 編集イベントの前にかえておかないといけない
 
 
 
-                OpenStateFile(openFileDialogState.FileName);
-                        
-            }
+                        OpenStateFile(openFileDialogState.FileName);
+
+                    }
                     else
                     {
 
@@ -1417,9 +1674,11 @@ private void btnOpenState_Click(object sender, EventArgs e)
                 string path = "";
                 if (tbListPath.Text == "")
                 {
-                    saveFileDialogState.FileName = Path.GetFileName(saveFileDialogState.FileName);
+                    saveFileDialogState.InitialDirectory = LoadIniString("InitialDirectory", "LST");
+                    saveFileDialogState.FileName = Path.GetFileName(openFileDialogState.FileName);
                     PathOK = (saveFileDialogState.ShowDialog() == DialogResult.OK);
-                    if(PathOK) path = saveFileDialogState.FileName;
+                    if(PathOK) SaveIniString("InitialDirectory", "LST", Path.GetDirectoryName(saveFileDialogState.FileName));
+                    if (PathOK) path = saveFileDialogState.FileName;
                     showDialog = true;
                 }
                 else
@@ -1440,7 +1699,10 @@ private void btnOpenState_Click(object sender, EventArgs e)
                         {
                             saveFileDialogState.FileName = Path.GetFileName(saveFileDialogState.FileName);
                         }
+                        saveFileDialogState.InitialDirectory = LoadIniString("InitialDirectory", "LST");
+                        saveFileDialogState.FileName = Path.GetFileName(openFileDialogState.FileName);
                         PathOK = (saveFileDialogState.ShowDialog() == DialogResult.OK);
+                        if (PathOK) SaveIniString("InitialDirectory", "LST", Path.GetDirectoryName(saveFileDialogState.FileName));
                         if (PathOK) path = saveFileDialogState.FileName;
                         showDialog = true;
                     }
@@ -1628,8 +1890,14 @@ private void btnOpenState_Click(object sender, EventArgs e)
 
         private void btnFilesAdd_Click(object sender, EventArgs e)
         {
+            var pt = GetOwnOFolderrExistingParent(LoadIniString("InitialDirectory", "DATA"));
+            if (pt != "") openFileDialog.InitialDirectory = pt;
+            // ファイルの追加は前回のファイル名を思い出す必要はない
+            openFileDialog.FileName = "";
             if (openFileDialog.ShowDialog() == DialogResult.OK)
             {
+                SaveIniString("InitialDirectory", "DATA", Path.GetDirectoryName(openFileDialog.FileName));
+
                 AddFiles(openFileDialog.FileNames, false);
 
                 /* AddFiles の中でやることにした
@@ -2477,10 +2745,14 @@ private void btnOpenState_Click(object sender, EventArgs e)
             // btnOpenState_Click のほぼそのままコピー
             try
             {
+
+
+                var pt = GetOwnOFolderrExistingParent(LoadIniString("InitialDirectory", "LIST"));
+                if (pt != "") openFileDialogState.InitialDirectory = pt;
                 openFileDialogState.FileName = Path.GetFileName(saveFileDialogState.FileName);
                 if (openFileDialogState.ShowDialog() == DialogResult.OK)
                 {
-
+                    SaveIniString("InitialDirectory", "LST", Path.GetDirectoryName(openFileDialogState.FileName));
                     //dgvChars.Columns[0].HeaderCell.SortGlyphDirection = SortOrder.None;
                     //dgvChars.Columns[1].HeaderCell.SortGlyphDirection = SortOrder.None;
                     for (int i = 0; i < dgvChars.Columns.Count; i++)
@@ -4891,7 +5163,7 @@ RAIDOU=RAIDOU
             {
                 tbSavePath.BackColor = System.Drawing.Color.LightGray;
             }
-
+            
             setBtnSave();
         }
 
@@ -5330,7 +5602,7 @@ RAIDOU=RAIDOU
         private bool DirectoryIsPureDLC(string path)
         {
 
-            // 開発版仕様
+            // しばらくはこの形で残しておく
             return true;
 
             /* 暫定的な対応 */
@@ -5801,6 +6073,40 @@ RAIDOU=RAIDOU
                 OpenWithApplication(Path.GetExtension(path).Substring(1), path);
             }
         }
+
+
+        string GetOwnOFolderrExistingParent(string path)
+        {
+            try
+            {
+                /*
+                if (File.Exists(path))
+                {
+                    return path;
+                }
+                */
+
+
+                while (!String.IsNullOrEmpty(path) && !Directory.Exists(path))
+                {
+                    path = Path.GetDirectoryName(path);
+                }
+
+                if (String.IsNullOrEmpty(path))
+                {
+                    return "";
+                }
+                else
+                {
+                    return path;
+                }
+            }
+            catch
+            {
+                return "";
+            }
+        }
+        
     }
 
 }
