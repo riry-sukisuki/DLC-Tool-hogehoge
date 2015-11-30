@@ -46,8 +46,8 @@
               string lpString,
               string lpFileName);
         }
-        private string iniPath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"DLC Tool.ini");
-        private void SaveIniString(string section, string key, string data)
+        public static string iniPath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"DLC Tool.ini");
+        public static void SaveIniString(string section, string key, string data)
         {
             try
             {
@@ -55,11 +55,11 @@
             }
             catch { }
         }
-        private void SaveIniStringWithError(string section, string key, string data)
+        public static void SaveIniStringWithError(string section, string key, string data)
         {
             IniFileHandler.WritePrivateProfileString(section, key, data, iniPath);
         }
-        private string LoadIniString(string section, string key)
+        public static string LoadIniString(string section, string key)
         {
             try
             {
@@ -70,7 +70,7 @@
                 return "";
             }
         }
-        private string LoadIniStringWithError(string section, string key)
+        public static string LoadIniStringWithError(string section, string key)
         {
             StringBuilder sb = new StringBuilder(1024);
             IniFileHandler.GetPrivateProfileString(section, key, "", sb, (uint)sb.Capacity, iniPath);
@@ -125,20 +125,47 @@
 
             public void MyClock(object sender, EventArgs e)
             {
+                SaveCurrentState();
+            }
+
+            public static void SaveCurrentState()
+            {
+
                 if (dlcData != null)
                 {
-                    // dlcData 編集中にこのイベントが発生すると何が起こるか分からない
-                    // エラーが起こっても current.lst 本体は傷つかない
                     try
                     {
-                        var pt = Path.GetDirectoryName(Application.ExecutablePath);
-                        Program.SaveState(dlcData, Path.Combine(pt, @"current.lst"), Path.Combine(pt, @"current.lst.temp"));
-                    }
-                    catch { }
+                        string temp = LoadIniStringWithError("Text", "tbListPath");
 
-                    //MessageBox.Show("hozon");
+                        SaveIniStringWithError("Text", "tbListPath", temp);
+                            // 書き込みテスト
+
+
+                        // dlcData 編集中にこのイベントが発生すると何が起こるか分からない
+                        // エラーが起こっても current.lst 本体は傷つかない
+                        try
+                        {
+                            var pt = Path.GetDirectoryName(Application.ExecutablePath);
+                            Program.SaveState(dlcData, Path.Combine(pt, @"current.lst"), Path.Combine(pt, @"current.lst.temp"));
+                            
+                        }
+                        catch {
+
+                            SaveIniStringWithError("Text", "tbListPath", temp);
+                            // これのエラーはユーザーまで届ける
+                            return;
+                        }
+                    }
+                    catch {
+                        return;
+                    }
+
+
+                    SaveIniStringWithError("Text", "tbListPath", tbListPath_Text_static);
+                        // これのエラーはユーザーまで届ける
 
                 }
+                
             }
         }
 
@@ -167,6 +194,10 @@
                     if(File.Exists(curList))
                     {
                         OpenStateFile(curList);
+                        tbListPath.Text = LoadIniString("Text", "tbListPath");
+
+                        tbListPath.Select(tbListPath.Text.Length, 0);
+                        tbListPath.ScrollToCaret();
                     }
                 }
                 catch
@@ -207,6 +238,8 @@
 
             if (dlcData != null)
             {
+                FormsTimerTest.SaveCurrentState();
+                /*
                 // dlcData 編集中にこのイベントが発生すると何が起こるか分からない
                 // エラーが起こっても current.lst 本体は傷つかない
                 try
@@ -215,6 +248,7 @@
                     Program.SaveState(dlcData, Path.Combine(pt, @"current.lst"), Path.Combine(pt, @"current.lst.temp"));
                 }
                 catch { }
+                */
             }
         }
 
@@ -5019,8 +5053,11 @@ RAIDOU=RAIDOU
             DatSelectedIndex = cbDAT.SelectedIndex;
         }
 
+        public static string tbListPath_Text_static = "";
         private void tbListPath_TextChanged(object sender, EventArgs e)
         {
+            tbListPath_Text_static = tbListPath.Text;
+
             //MessageBox.Show(newDlc.ToString());
             //if (newDlc && tbListPath.Text != "") // なんでこうしたんだったか思い出せない
             if (tbListPath.Text != "")
@@ -5890,6 +5927,15 @@ RAIDOU=RAIDOU
                 RedrawFiles(index, false);
             }
             catch { }
+
+            /*
+            System.Drawing.Point pt = new System.Drawing.Point(tbListPath.Location.X +  tbListPath.Width, tbListPath.Location.Y);
+            var pos = tbListPath.GetCharIndexFromPosition(pt);
+            int tail = ;
+            //if (pos >= tail - 1) pos = tail;
+            */
+            tbListPath.Select(tbListPath.Text.Length, 0);
+            tbListPath.ScrollToCaret();
         }
 
         private void dgvFiles_MouseDown(object sender, MouseEventArgs e)
