@@ -4,12 +4,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("DLC Tool 日本語版")]
-[assembly: AssemblyDescription("")]
+[assembly: AssemblyTitle("DLC Tool hogehoge2015")]
+[assembly: AssemblyDescription("A derived version of DLC Tool")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("")]
-[assembly: AssemblyCopyright("")]
+[assembly: AssemblyProduct("DLC Tool hogehoge2015")]
+[assembly: AssemblyCopyright("Free")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -31,5 +31,5 @@ using System.Runtime.InteropServices;
 // You can specify all the values or you can default the Build and Revision Numbers
 // by using the '*' as shown below:
 // [assembly: AssemblyVersion("1.0.*")]
-[assembly: AssemblyVersion("0.10.3.0")]
-[assembly: AssemblyFileVersion("0.10.3.0")]
+[assembly: AssemblyVersion("2015.12.9.1")] // 01 と書いても 1 になる。
+//[assembly: AssemblyFileVersion("0.10.3.0")]
