@@ -12,7 +12,7 @@
     using System.Runtime.InteropServices;
 
 
-
+    
 
     public partial class MainForm : Form
     {
@@ -1999,8 +1999,17 @@
                         if (GoodName)
                         {
 
-                            dlcData.SavePath = tbSavePath.Text;
-                            Program.SaveState(dlcData, pathInDLC); //dlcData4Save とどっちか迷うところだけど、バックアップ機能を兼ねると思えばオリジナルのほうで良いのでは。
+                            bool DLCFolderExists = false;
+                            try
+                            {
+                                DLCFolderExists = Directory.Exists(Path.GetDirectoryName(pathInDLC));
+                            }
+                            catch {  }
+                            if (DLCFolderExists)
+                            {
+                                dlcData.SavePath = tbSavePath.Text;
+                                Program.SaveState(dlcData, pathInDLC); //dlcData4Save とどっちか迷うところだけど、バックアップ機能を兼ねると思えばオリジナルのほうで良いのでは。
+                            }
                         }
                     }
                     else if (cbSaveListInDLC.Enabled && !cbSaveListInDLC.Checked)
