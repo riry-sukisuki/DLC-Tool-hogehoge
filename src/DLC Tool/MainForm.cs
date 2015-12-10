@@ -3536,7 +3536,7 @@
         private void dgvChars_MouseUp(object sender, MouseEventArgs e)
         {
             mouseDownPoint = System.Drawing.Point.Empty;
-
+            
             // 現在のマウスの位置
             DataGridView.HitTestInfo hitc = dgvChars.HitTest(e.X, e.Y);
 
@@ -3621,16 +3621,23 @@
             // ドラッグが起こらずにマウスが離された場合選択をそこだけにする
             else if(e.Button == MouseButtons.Left)
             {
-                if(dgvChars_MouseDown_dontSelectOne)
+                if (dgvChars_MouseDown_dontSelectOne)
                 {
                     dgvChars_MouseDown_dontSelectOne = false;
                 }
                 else if (hitc.Type == DataGridViewHitTestType.Cell)
                 {
+                    // 選択をオフからのオンにするのが悪いのか、これだとインナーの編集状態が解除されてしまう
+                    // コメントは解除されないのが謎だけど
+                    //dgvChars.ClearSelection();
+                    //dgvChars.Rows[hitc.RowIndex].Selected = true;
 
-                    dgvChars.ClearSelection();
+                    for(int i = 0; i < dgvChars.Rows.Count; i++)
+                    {
+                        dgvChars.Rows[i].Selected = (hitc.RowIndex == i);
+                    }
+
                     dgvChars.CurrentCell = dgvChars.Rows[hitc.RowIndex].Cells[hitc.ColumnIndex];
-                    dgvChars.CurrentCell.Selected = true;
                 }
 
             }
@@ -3639,7 +3646,7 @@
             // じゃないとショートカットキーとかが無効になったまま
             dragStartIndexes = null;
 
-
+            
             // マウスの左ボタンが押されている場合
             var eb = e.Button;
             if (e.Button == MouseButtons.Left)
