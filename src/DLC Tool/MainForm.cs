@@ -310,7 +310,7 @@
             }
             else
             {
-                this.Text += " " + ver;
+                this.Text += " " + ver.Substring(0, ver.Length - 2);
             }
         }
 
