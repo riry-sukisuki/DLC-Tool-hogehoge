@@ -4770,14 +4770,16 @@
             }
 
             // 兄弟 DLC をすべて調べる
-            System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\\(\d+)([^\\]*)$");
+            //System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\\(\d+)([^\\]*)$"); // 1234 - DLC Name\1234.bcm を許す記述
+            System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\\(\d+)$"); // 1234 - DLC Name\1234.bcm を許さない記述
             string[] brothers = Directory.GetDirectories(ParentPath);
             for (int i = 0; i < brothers.Length; i++)
             {
 
                 if (brothers[i] != SavePath && regex.IsMatch(brothers[i]))
                 {
-                    string brotherBCM = regex.Replace(brothers[i], @"\$1$2\$1.bcm");
+                    //string brotherBCM = regex.Replace(brothers[i], @"\$1$2\$1.bcm"); // 1234 - DLC Name\1234.bcm を許す記述
+                    string brotherBCM = regex.Replace(brothers[i], @"\$1\$1.bcm"); // 1234 - DLC Name\1234.bcm を許さない記述
                     DLCData dlcData2;
                     //MessageBox.Show(brotherBCM);
                     try
@@ -5011,7 +5013,8 @@
             }
 
             // 兄弟 DLC をすべて調べる
-            System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\\(\d+)([^\\]*)$");
+            //System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\\(\d+)([^\\]*)$"); // 1234 - DLC Name\1234.bcm を許す記述
+            System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\\(\d+)$"); // 1234 - DLC Name\1234.bcm を許さない記述
             for (int i = 0; i < brothers.Length; i++)
             {
                 var LCands = new System.Collections.Generic.List<DLCData>();
@@ -5025,7 +5028,8 @@
                 {
 
 
-                    string brotherBCM = regex.Replace(brothers[i], @"\$1$2\$1.bcm");
+                    //string brotherBCM = regex.Replace(brothers[i], @"\$1$2\$1.bcm"); // 1234 - DLC Name\1234.bcm を許す記述
+                    string brotherBCM = regex.Replace(brothers[i], @"\$1\$1.bcm"); // 1234 - DLC Name\1234.bcm を許さない記述
                     DLCData dlcData2;
                     //MessageBox.Show(brotherBCM);
                     try
