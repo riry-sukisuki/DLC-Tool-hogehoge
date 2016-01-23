@@ -139,9 +139,9 @@
                         string temp = LoadIniStringWithError("Text", "tbListPath");
 
                         SaveIniStringWithError("Text", "tbListPath", temp);
-                            // 書き込みテスト
+                        // 書き込みテスト
 
-
+                        dlcData.SavePath = tbSavePath_Text_static;
                         // dlcData 編集中にこのイベントが発生すると何が起こるか分からない
                         // エラーが起こっても current.lst 本体は傷つかない
                         try
