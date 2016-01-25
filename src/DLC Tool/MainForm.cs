@@ -12,7 +12,7 @@
     using System.Runtime.InteropServices;
 
 
-    
+
 
     public partial class MainForm : Form
     {
@@ -131,7 +131,7 @@
 
             public static void SaveCurrentState()
             {
-                
+
                 if (dlcData != null)
                 {
                     try
@@ -148,18 +148,20 @@
                         {
                             var pt = Path.GetDirectoryName(Application.ExecutablePath);
                             Program.SaveState(dlcData, Path.Combine(pt, @"current.lst"), Path.Combine(pt, @"current.lst.temp"));
-                            
+
                         }
-                        catch {
+                        catch
+                        {
 
                             SaveIniStringWithError("Text", "tbListPath", temp);
 
-                            
+
                             // これのエラーはユーザーまで届ける
                             return;
                         }
                     }
-                    catch {
+                    catch
+                    {
                         return;
                     }
 
@@ -180,7 +182,7 @@
                     }
                     SaveIniStringWithError("Text", "BCMName", bcmName);
                 }
-                
+
             }
         }
 
@@ -194,7 +196,7 @@
             SetDATList();
 
             //dgvChars.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            
+
 
             string[] cmds = System.Environment.GetCommandLineArgs();
 
@@ -202,13 +204,13 @@
             {
                 OpenStateFile(cmds[1]);
             }
-            
+
             else
             {
                 string curList = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"current.lst");
                 try
                 {
-                    if(File.Exists(curList))
+                    if (File.Exists(curList))
                     {
                         var tbListPathText = LoadIniString("Text", "tbListPath");
                         OpenStateFile(curList, tbListPathText + ".lst");
@@ -239,9 +241,9 @@
                     }
                     catch { }
                 }
-                
+
             }
-            
+
 
             // 終了時のイベントハンドラを登録
             //ApplicationExitイベントハンドラを追加
@@ -282,7 +284,7 @@
 
             // タイマーを止める
             TimerForSave.Stop();
-            
+
             try
             {
                 //エラーメッセージを表示する
@@ -323,7 +325,7 @@
         private void ClearMainUI()
         {
             dgvChars.Rows.Clear();
-            while(dgvChars.Columns.Count > 4)
+            while (dgvChars.Columns.Count > 4)
             {
                 dgvChars.Columns.RemoveAt(dgvChars.Columns.Count - 1);
             }
@@ -360,8 +362,8 @@
 
         private void btnOpenBCM_Click(object sender, EventArgs e)
         {
-            var pt = GetOwnOFolderrExistingParent( LoadIniString("InitialDirectory", "BCM") );
-            if(pt != "") openFileDialogBCM.InitialDirectory = pt;
+            var pt = GetOwnOFolderrExistingParent(LoadIniString("InitialDirectory", "BCM"));
+            if (pt != "") openFileDialogBCM.InitialDirectory = pt;
             openFileDialogBCM.FileName = Path.GetFileName(saveFileDialogBCM.FileName);
             if (openFileDialogBCM.ShowDialog() == DialogResult.OK)
             {
@@ -369,11 +371,13 @@
 
                 btnSaveState.Enabled = true;
 
-                btnCmpSave.Enabled = false;
+                //btnCmpSave.Enabled = false;
+                //btnCmpSave.Enabled = true;
+                //btnCmpSave.Text = Program.dicLanguage["ExtractFiles"];
 
                 SaveIniString("InitialDirectory", "BCM", Path.GetDirectoryName(openFileDialogBCM.FileName));
 
-               
+
             }
         }
 
@@ -415,6 +419,10 @@
                 dlcData = Program.OpenBCM(fileName);
                 //btnSave.Text = Program.dicLanguage["SaveBCM"];
                 setBtnSave();
+
+                btnCmpSave.Enabled = true;
+                btnCmpSave.Text = Program.dicLanguage["ExtractFiles"];
+
 
                 //btnCmpSave.Enabled = 
                 btnSave.Enabled = true;
@@ -458,13 +466,17 @@
 
         private bool AddFiles(string[] fileNames, bool testMode)
         {
+            return AddFiles(fileNames, testMode, true);
+        }
+        private bool AddFiles(string[] fileNames, bool testMode, bool drawWindow)
+        {
             if (dgvChars.SelectedRows.Count != 1) return false;
 
             bool add = false;
             bool テクスチャ含む = false;
             try
             {
-                if(fileNames.Length <= 0)
+                if (fileNames.Length <= 0)
                 {
                     return false;
                 }
@@ -512,10 +524,10 @@
                 //                }
             }
 
-            if(テクスチャ含む)
+            if (テクスチャ含む)
             {
                 dlcData.Chars[dgvChars.SelectedRows[0].Index].AddTexsCount = getAvailableTextsCount(dlcData.Chars[dgvChars.SelectedRows[0].Index]);
-                
+
                 dgvChars.Rows[dgvChars.SelectedRows[0].Index].Cells[1].Value = dlcData.Chars[dgvChars.SelectedRows[0].Index].CostumeSlot.ToString();
                 dgvChars.Rows[dgvChars.SelectedRows[0].Index].Cells[2].Value = dlcData.Chars[dgvChars.SelectedRows[0].Index].AddTexsCount.ToString();
 
@@ -525,7 +537,7 @@
             }
 
             // ファイルチェックを兼ねてテクスチャを含まなくてもやる
-            if (!testMode)
+            if (drawWindow && !testMode)
             {
                 setEgvCharsTextsColor();
                 setEgvCharsNameColor();
@@ -534,10 +546,10 @@
 
                 // 同じ名前のファイル名は二つ同時には登録できないという前提（今の実装では成立する）で、
                 // 追加されたファイルを選択状態にする
-                for(int i = 0; i < dgvFiles.Rows.Count; i++)
+                for (int i = 0; i < dgvFiles.Rows.Count; i++)
                 {
                     string path = dgvFiles.Rows[i].Cells[0].Value.ToString();
-                    if(Array.IndexOf(fileNames, path) >= 0)
+                    if (Array.IndexOf(fileNames, path) >= 0)
                     {
                         dgvFiles.Rows[i].Selected = true;
                     }
@@ -565,7 +577,7 @@
                 var p = dgvChars.PointToClient(Cursor.Position);
                 DataGridView.HitTestInfo hit = dgvChars.HitTest(p.X, p.Y);
                 int lbound, ubound;
-                if(dgvChars_MouseDown_LeftShiftPreClickedIndex >= hit.RowIndex)
+                if (dgvChars_MouseDown_LeftShiftPreClickedIndex >= hit.RowIndex)
                 {
                     ubound = dgvChars_MouseDown_LeftShiftPreClickedIndex;
                     lbound = hit.RowIndex;
@@ -593,8 +605,8 @@
 
             // dragStartIndexes が null で無くて、今選択されているものがただひとつで、しかもその中に含まれているか手動ソート中なら、
             // その選択の変更は望まないものなので、dragStartIndexes の状態に戻す
-            if(dragStartIndexes != null && dgvChars.SelectedRows.Count == 1 && Array.IndexOf(dragStartIndexes, dgvChars.SelectedRows[0].Index) >= 0 && mouseDownPoint != System.Drawing.Point.Empty)
-            { 
+            if (dragStartIndexes != null && dgvChars.SelectedRows.Count == 1 && Array.IndexOf(dragStartIndexes, dgvChars.SelectedRows[0].Index) >= 0 && mouseDownPoint != System.Drawing.Point.Empty)
+            {
                 dgvChars_SelectionChanged_RepairingSelection = true;
 
                 var temp = NeedShowChar;
@@ -603,7 +615,7 @@
                 int[] target;
                 //if(dragPrevIndexes != null)
                 {
-                //    target = dragPrevIndexes;
+                    //    target = dragPrevIndexes;
                 }
                 //else
                 {
@@ -611,7 +623,7 @@
                 }
 
                 dgvChars.ClearSelection();
-                for(int i = 0; i < target.Length; i++)
+                for (int i = 0; i < target.Length; i++)
                 {
                     dgvChars.Rows[target[i]].Selected = true;
                 }
@@ -620,8 +632,8 @@
                 dgvChars_SelectionChanged_RepairingSelection = false;
                 NeedShowChar = temp;
             }
-            
-            
+
+
 
             if (dgvChars.SelectedRows.Count == 1)
             {
@@ -644,7 +656,7 @@
 
         private void ShowCharacter(int idx)
         {
-            if(!NeedShowChar)
+            if (!NeedShowChar)
             {
                 return;
             }
@@ -692,13 +704,13 @@
                 dgvHStyles.Rows[0].Selected = false;
                 btnHStylesDelete.Enabled = false;
             }
-            
+
             if (dgvHStyles.Rows.Count <= 1)
             {
                 btnHStylesDelete.Enabled = false;
             }
         }
-        
+
         private void RedrawFiles(int charIndex, bool chkLink)
         {
 
@@ -843,7 +855,7 @@
                     }
                     catch { }
                 }
-                
+
 
                 cell.Style.Alignment = DataGridViewContentAlignment.MiddleLeft;
 
@@ -852,7 +864,7 @@
                 cell.Value = paths[i];
             }
 
-            
+
             if (chkLink)
             {
                 if (fileok)
@@ -866,7 +878,7 @@
                     dgvChars.SelectedRows[0].Cells[0].Style.SelectionBackColor = System.Drawing.Color.DimGray;
                 }
             }
-            
+
 
         }
 
@@ -887,7 +899,7 @@
             btnFilesDelete.Enabled = false;
         }
 
-        
+
 
 
         private void SaveDLC(bool Compression)
@@ -940,10 +952,10 @@
                         var pt = LoadIniString("InitialDirectory", "BCM"); // ここも BMC で。
                         if (pt != "") saveFileDialog.InitialDirectory = GetOwnOFolderrExistingParent((Path.GetDirectoryName(pt))); // ただし親を見る。
                         saveFileDialog.FileName = Path.GetFileName(openFileDialog.FileName);
-                        
+
                         if (saveFileDialog.ShowDialog() == DialogResult.OK)
                         {
-                            System.Text.RegularExpressions.Regex regex_doa = new System.Text.RegularExpressions.Regex(@"^(.*\\([^\\]+))\\\2.bcm$",
+                            System.Text.RegularExpressions.Regex regex_doa = new System.Text.RegularExpressions.Regex(@"^(.*\\([^\\]+))\\\2\.bcm$",
                                 System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                             if (regex_doa.IsMatch(saveFileDialog.FileName))
                             {
@@ -963,7 +975,7 @@
 
                     }
 
-                    if(!DirectoryIsPureDLC(tbSavePath.Text))
+                    if (!DirectoryIsPureDLC(tbSavePath.Text))
                     {
                         MessageBox.Show(Program.dicLanguage["NotPureDLCFolder"], Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
                         tbSavePath_TextChanged(null, null);//念のため
@@ -1054,7 +1066,7 @@
                             // ファイルが存在していてそれがユーザーが保存したもので無ければ消す
                             try
                             {
-                                if(path != tbListPath.Text + ".lst" && File.Exists(path))
+                                if (path != tbListPath.Text + ".lst" && File.Exists(path))
                                 {
                                     File.Delete(path);
                                 }
@@ -1070,7 +1082,7 @@
                         if (shortcut == "" && regex.IsMatch(tbSavePath.Text))
                         {
                             shortcut = regex.Replace(tbSavePath.Text, @"\game");
-                            if(!OpenWithShortcut(shortcut, "", true))
+                            if (!OpenWithShortcut(shortcut, "", true))
                             {
                                 shortcut = "";
                             }
@@ -1255,7 +1267,14 @@
 
         private void btnCompSave_Click(object sender, EventArgs e)
         {
-            SaveDLC(true);
+            if (newDlc)
+            {
+                SaveDLC(true);
+            }
+            else
+            {
+                btnExtractFiles();
+            }
         }
 
         private void RestrictKeys(object sender, KeyPressEventArgs e)
@@ -1345,9 +1364,9 @@
 
                 // Char に格納する書式を作成
                 string s = "";
-                for(int i = 3; i < dgvChars.Columns.Count; i++)
+                for (int i = 3; i < dgvChars.Columns.Count; i++)
                 {
-                    if(i == e.ColumnIndex)
+                    if (i == e.ColumnIndex)
                     {
                         setText = e.FormattedValue.ToString().Replace(",", " "); // グローバル変数。Valuated へのメッセージ
                         setIndex = i; // グローバル変数
@@ -1357,7 +1376,7 @@
                     {
                         s += dgvChars.Rows[idx].Cells[i].Value;
                     }
-                    if(i < dgvChars.Columns.Count - 1)
+                    if (i < dgvChars.Columns.Count - 1)
                     {
                         s += ",";
                     }
@@ -1447,7 +1466,7 @@
             {
                 try
                 {
-                    if(Byte.Parse(e.FormattedValue.ToString())==0)
+                    if (Byte.Parse(e.FormattedValue.ToString()) == 0)
                     {
                         dgv.CancelEdit();
                         //e.Cancel = true;
@@ -1502,7 +1521,7 @@
                     setEgvCharsTextsColor(); // ほとんどの場合に不要だが実体の有無が変化した時にこのタイミングで反映されないのは不自然なので
 
                 }
-                
+
             }
 
             else if (dgv.Columns[e.ColumnIndex].Name == "clmComment")
@@ -1518,7 +1537,7 @@
 
         private void btnHStylesAdd_Click(object sender, EventArgs e)
         {
-            if(dgvChars.SelectedRows.Count != 1)
+            if (dgvChars.SelectedRows.Count != 1)
             {
                 MessageBox.Show("コスチューム非選択または複数選択時に髪追加の操作が行われました。これは想定されない動作です。作者へご報告頂けると幸いです。");
                 return;
@@ -1574,7 +1593,7 @@
                     return;
                 }
                 Array.Sort(arraySelected);
-                for(int i = 0; i < SelectedRowsCount; i++)
+                for (int i = 0; i < SelectedRowsCount; i++)
                 {
                     dlcData.Chars[CharSelected].HStyles.RemoveAt(arraySelected[0]); // ココは i じゃなくて 0 で正解
 
@@ -1617,13 +1636,13 @@
         {
 
             var pt = LoadIniString("InitialDirectory", "BCM");
-            if (pt != "") saveFileDialog.InitialDirectory = GetOwnOFolderrExistingParent( Path.GetDirectoryName(pt));
+            if (pt != "") saveFileDialog.InitialDirectory = GetOwnOFolderrExistingParent(Path.GetDirectoryName(pt));
             saveFileDialog.FileName = Path.GetFileName(openFileDialog.FileName);
             if (saveFileDialog.ShowDialog() == DialogResult.OK)
             {
 
                 //MessageBox.Show("a");
-                System.Text.RegularExpressions.Regex regex_doa = new System.Text.RegularExpressions.Regex(@"^(.*\\([^\\]+))\\\2.bcm$",
+                System.Text.RegularExpressions.Regex regex_doa = new System.Text.RegularExpressions.Regex(@"^(.*\\([^\\]+))\\\2\.bcm$",
                     System.Text.RegularExpressions.RegexOptions.IgnoreCase);
                 if (regex_doa.IsMatch(saveFileDialog.FileName))
                 {
@@ -1761,7 +1780,7 @@
                 {
                     cbSaveListInDLC.Checked = true;
                 }
-                
+
 
             }
             catch (Exception e)
@@ -1778,12 +1797,12 @@
             try
             {
 
-                var pt = GetOwnOFolderrExistingParent(LoadIniString("InitialDirectory", "LIST"));
+                var pt = GetOwnOFolderrExistingParent(LoadIniString("InitialDirectory", "LST"));
                 if (pt != "") openFileDialogState.InitialDirectory = pt;
                 openFileDialogState.FileName = Path.GetFileName(saveFileDialogState.FileName);
                 if (openFileDialogState.ShowDialog() == DialogResult.OK)
                 {
-                    SaveIniString("InitialDirectory", "LIST", Path.GetDirectoryName(openFileDialogState.FileName));
+                    SaveIniString("InitialDirectory", "LST", Path.GetDirectoryName(openFileDialogState.FileName));
                     //dgvChars.Columns[0].HeaderCell.SortGlyphDirection = SortOrder.None;
                     //dgvChars.Columns[1].HeaderCell.SortGlyphDirection = SortOrder.None;
                     for (int i = 0; i < dgvChars.Columns.Count; i++)
@@ -1920,7 +1939,7 @@
                     saveFileDialogState.InitialDirectory = LoadIniString("InitialDirectory", "LST");
                     saveFileDialogState.FileName = Path.GetFileName(openFileDialogState.FileName);
                     PathOK = (saveFileDialogState.ShowDialog() == DialogResult.OK);
-                    if(PathOK) SaveIniString("InitialDirectory", "LST", Path.GetDirectoryName(saveFileDialogState.FileName));
+                    if (PathOK) SaveIniString("InitialDirectory", "LST", Path.GetDirectoryName(saveFileDialogState.FileName));
                     if (PathOK) path = saveFileDialogState.FileName;
                     showDialog = true;
                 }
@@ -1932,7 +1951,7 @@
                     showDialog = false;
                     path = tbListPath.Text + ".lst";
                     //MessageBox.Show(Path.GetFileName(tbListPath.Text) + "\n" + PathOK.ToString());
-                    if(!PathOK)
+                    if (!PathOK)
                     {
                         if (FileOK)
                         {
@@ -1950,8 +1969,8 @@
                         showDialog = true;
                     }
                 }
-                
-        
+
+
 
                 if (PathOK)
                 {
@@ -2004,7 +2023,7 @@
                             {
                                 DLCFolderExists = Directory.Exists(Path.GetDirectoryName(pathInDLC));
                             }
-                            catch {  }
+                            catch { }
                             if (DLCFolderExists)
                             {
                                 dlcData.SavePath = tbSavePath.Text;
@@ -2050,9 +2069,9 @@
             else
             {
                 int result = dgvChars.SelectedRows[0].Index;
-                for( int i = 1; i < dgvChars.SelectedRows.Count; i++)
+                for (int i = 1; i < dgvChars.SelectedRows.Count; i++)
                 {
-                    if(result > dgvChars.SelectedRows[i].Index)
+                    if (result > dgvChars.SelectedRows[i].Index)
                     {
                         result = dgvChars.SelectedRows[i].Index;
                     }
@@ -2064,7 +2083,7 @@
         private int[] GetSelectedCharsIndexesArray() // どうでもいいけど Index の複数形はこれもアリのようです。
         {
             var result = new int[dgvChars.SelectedRows.Count];
-            for(int i = 0; i < result.Length; i++)
+            for (int i = 0; i < result.Length; i++)
             {
                 result[i] = dgvChars.SelectedRows[i].Index;
             }
@@ -2129,7 +2148,7 @@
                 // これが挿入処理
                 int index;
                 index = GetFirstSelectedCharIndex();
-                if(index <= 0)
+                if (index <= 0)
                 {
                     index = dgvChars.Rows.Count;
                 }
@@ -2158,7 +2177,7 @@
                 dgvChars.Rows[index].Selected = true;
 
             }
-            else if(clikedForm == "btnCharsAdd")
+            else if (clikedForm == "btnCharsAdd")
             {
                 // これは一番下に追加する処理
                 dlcData.Chars.Add(newChar);
@@ -2176,7 +2195,7 @@
             {
                 // ここには到達しない
             }
-            
+
 
             //コピーじゃないのでこれは必要
             btnCharsDelete.Enabled = true;
@@ -2197,14 +2216,14 @@
             //MessageBox.Show(SortedIndexes.Length + ", " + SortedIndexes[0]);
 
             // 非選択時にこれが呼び出されるのは想定外
-            if(SortedIndexes.Length <= 0)
+            if (SortedIndexes.Length <= 0)
             {
                 //MessageBox.Show("コスチューム非選択時にコスチューム削除の操作が行われました。これは想定されない動作です。作者へご報告頂けると幸いです。");
                 return;
             }
 
             // 下から削除していけばインデックスが崩れることはない
-            for(int i = SortedIndexes.Length - 1; i >= 0; i--)
+            for (int i = SortedIndexes.Length - 1; i >= 0; i--)
             {
                 dlcData.Chars.RemoveAt(SortedIndexes[i]);
                 dgvChars.Rows.RemoveAt(SortedIndexes[i]);
@@ -2229,7 +2248,7 @@
                     dgvChars.Rows[dgvChars.Rows.Count - 1].Selected = true;
                 }
             }
-            
+
 
             if (dgvChars.Rows.Count <= 0)
             {
@@ -2286,7 +2305,7 @@
                 {
                     if (selectedFile.EndsWith(FileOrder[i], true, null))
                     {
-                        
+
                         if ((!テクスチャ含む) && System.Text.RegularExpressions.Regex.IsMatch(dlcData.Chars[dgvChars.SelectedRows[0].Index].Files[i], @"\.--HL?$", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
                         {
                             テクスチャ含む = true;
@@ -2492,7 +2511,7 @@
                     {
                         // 選択列の文字列を覚えておく
                         string[] sortTarget = new string[dataLength];
-                        for(int i = 0; i < dataLength; i++ )
+                        for (int i = 0; i < dataLength; i++)
                         {
                             sortTarget[i] = (string)dgvChars.Rows[i].Cells[e.ColumnIndex].Value;
                         }
@@ -2540,7 +2559,7 @@
 
                     // Character の参照に対して選択状態を紐付ける
                     var Selected = new System.Collections.Generic.Dictionary<Character, bool>();
-                    for(var i = 0; i < dlcData.Chars.Count; i++)
+                    for (var i = 0; i < dlcData.Chars.Count; i++)
                     {
                         Selected[dlcData.Chars[i]] = dgvChars.Rows[i].Selected;
                     }
@@ -2559,7 +2578,7 @@
 
                     // Character の参照を手がかりに選択状態を復元する
                     dgvChars.ClearSelection();
-                    for(var i = 0; i < dlcData.Chars.Count; i++)
+                    for (var i = 0; i < dlcData.Chars.Count; i++)
                     {
                         dgvChars.Rows[i].Selected = Selected[dlcData.Chars[i]];
                     }
@@ -2631,7 +2650,7 @@
 
 
                 // 該当行を選択状態にする←これをするとクリックイベントが起きなくなる？
-                if(!dgvChars.Rows[hit.RowIndex].Selected)
+                if (!dgvChars.Rows[hit.RowIndex].Selected)
                     dgvChars.ClearSelection();
                 dgvChars.Rows[hit.RowIndex].Selected = true;
 
@@ -2703,7 +2722,7 @@
                         cmsSlot.Items[i].BackColor = getSlotBackColor(slotCount, NotComIniSlotTable, UsableSlotTable, Char);
 
                         cmsSlot.Items[i].Click += ChangeSlot;
-                        
+
 
 
 
@@ -2717,18 +2736,18 @@
                     // 矢印を頭につける
                     //cmsSlot.Items[tempCostumeSlot].Text = "▶" + cmsSlot.Items[tempCostumeSlot].Text;
 
-                    
+
                     // フォント変更（と言うか下線付加）
                     //現在のフォントを覚えておく
                     var oldFont = cmsSlot.Items[tempCostumeSlot].Font;
                     //現在のフォントにBoldを付加したフォントを作成する
                     //なおBoldを取り消す場合は、「oldFont.Style & ~FontStyle.Bold」とする
-                    var newFont = new System.Drawing.Font(oldFont, oldFont.Style | System.Drawing.FontStyle.Underline | System.Drawing.FontStyle.Bold) ;
+                    var newFont = new System.Drawing.Font(oldFont, oldFont.Style | System.Drawing.FontStyle.Underline | System.Drawing.FontStyle.Bold);
                     //Boldを付加したフォントを設定する
                     cmsSlot.Items[tempCostumeSlot].Font = newFont;
                     //前のフォントを解放する
                     oldFont.Dispose();
-                    
+
 
 
                     System.Drawing.Point location = dgvChars.PointToScreen(r.Location);
@@ -2744,7 +2763,7 @@
                     dragStartIndexes = GetSelectedCharsIndexesArray();
 
                     dgvChars_MouseDown_SortDirectionList = new SortOrder[dgvChars.Columns.Count];
-                    for(int i = 0; i < dgvChars.Columns.Count; i++)
+                    for (int i = 0; i < dgvChars.Columns.Count; i++)
                     {
                         dgvChars_MouseDown_SortDirectionList[i] = dgvChars.Columns[i].HeaderCell.SortGlyphDirection;
                     }
@@ -2759,7 +2778,7 @@
                 // 右クリック
                 if (eb == MouseButtons.Right && btnCharsAdd.Enabled)
                 {
-                    if(dragPrevIndexes != null)
+                    if (dragPrevIndexes != null)
                     {
                         slideChar(dragPrevIndexes, dragStartIndexes);
 
@@ -2865,7 +2884,7 @@
 
                     clikedForm = "dgvChars";
 
-                    
+
 
                     contextMenuStrip.Items.Add(Program.dicLanguage["DeleteD"]);
                     contextMenuStrip.Items[contextMenuStrip.Items.Count - 1].Click += btnCharsDelete_Click;
@@ -2876,7 +2895,7 @@
                 }
 
             }
-            
+
         }
 
 
@@ -2908,7 +2927,7 @@
 
 
             var inputMI = (ToolStripMenuItem)sender;
-            var Slot = byte.Parse((inputMI.ToString()+" ").Substring(0,2));
+            var Slot = byte.Parse((inputMI.ToString() + " ").Substring(0, 2));
             Char.CostumeSlot = Slot;
             dgvChars.Rows[dgvChars.SelectedRows[0].Index].Cells[1].Value = Slot.ToString();
             setEgvCharsSlotColor(); // 絶対やらないといけないのはこれだけだけど
@@ -2926,13 +2945,13 @@
 
             // 端の方に言った場合、掴んでいる場所を取り変えることで辻褄を合わせる。
             // 掴んでいるところの変更はそのまま引きずることにする
-            if(fromIndexes[0] + offset < 0)
+            if (fromIndexes[0] + offset < 0)
             {
                 dragHoldRelIndex += offset + fromIndexes[0];
                 offset = -fromIndexes[0];
 
             }
-            else if(fromIndexes[fromIndexes.Length - 1] + offset >= dlcData.Chars.Count)
+            else if (fromIndexes[fromIndexes.Length - 1] + offset >= dlcData.Chars.Count)
             {
                 dragHoldRelIndex += offset - (dlcData.Chars.Count - 1 - fromIndexes[fromIndexes.Length - 1]);
                 offset = dlcData.Chars.Count - 1 - fromIndexes[fromIndexes.Length - 1];
@@ -2947,7 +2966,7 @@
             for (int i = 0; i < fromIndexes.Length; i++)
             {
                 //try {
-                    newChars[fromIndexes[i] + offset] = dlcData.Chars[fromIndexes[i]];
+                newChars[fromIndexes[i] + offset] = dlcData.Chars[fromIndexes[i]];
                 //}
                 //catch
                 //{
@@ -2958,7 +2977,7 @@
             int pos = -1;
             for (int i = 0; i < dlcData.Chars.Count; i++)
             {
-                if(dlcData.Chars[i] != null)
+                if (dlcData.Chars[i] != null)
                 {
                     while (newChars[++pos] != null) ;
                     newChars[pos] = dlcData.Chars[i];
@@ -2974,7 +2993,7 @@
             }
             newChars = null;
 
-            
+
 
 
             /*
@@ -3034,7 +3053,7 @@
         }
         private void slideChar(int[] fromIndexes, int[] toIndexes)
         {
-            
+
             var newChars = new System.Collections.Generic.List<Character>();
 
 
@@ -3067,13 +3086,13 @@
                 showComment(i);
             }
             newChars = null;
-            
+
             // ソートが崩れたことを記憶
             for (int i = 0; i < dgvChars.Columns.Count; i++)
             {
                 dgvChars.Columns[i].HeaderCell.SortGlyphDirection = SortOrder.None;
             }
-            
+
 
 
             // 選択表示を普通の方法に戻す
@@ -3263,8 +3282,9 @@
                 }
 
             }
-            else */if (e.Data.GetDataPresent(DataFormats.FileDrop)
-                && (e.Effect == DragDropEffects.Copy))
+            else */
+            if (e.Data.GetDataPresent(DataFormats.FileDrop)
+         && (e.Effect == DragDropEffects.Copy))
             {
 
                 //コントロール内にドロップされたとき実行される
@@ -3272,7 +3292,7 @@
                 string[] fileName =
                 (string[])e.Data.GetData(DataFormats.FileDrop, false);
 
-                if(fileName.Length <= 0) // 世の中何があるかわからないものです。
+                if (fileName.Length <= 0) // 世の中何があるかわからないものです。
                 {
                     return;
                 }
@@ -3328,7 +3348,7 @@
                     AddStateFile(fileName[index++]);
                 }
 
-                
+
 
             }
             else
@@ -3350,7 +3370,7 @@
             {
                 string[] fileName =
                     (string[])e.Data.GetData(DataFormats.FileDrop, false);
-                for(int i = 0; i < fileName.Length;i++)
+                for (int i = 0; i < fileName.Length; i++)
                 {
 
                     if (!System.Text.RegularExpressions.Regex.IsMatch(fileName[i], @"\.[lr]st$", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
@@ -3436,9 +3456,9 @@
                         // 掴んでいるのが選択したファイルのうち上から何番目であるかを
                         // ゼロオリジンで記憶
                         dragHoldRelIndex = -1;
-                        for(int i = 0; i < dragStartIndexes.Length; i++)
+                        for (int i = 0; i < dragStartIndexes.Length; i++)
                         {
-                            if(dragStartIndexes[i] == ind)
+                            if (dragStartIndexes[i] == ind)
                             {
                                 dragHoldRelIndex = i;
                                 break;
@@ -3446,7 +3466,7 @@
                         }
 
                         // これは想定外。でもありそう。
-                        if(dragHoldRelIndex < 0)
+                        if (dragHoldRelIndex < 0)
                         {
                             return;
                         }
@@ -3454,9 +3474,9 @@
 
                         // 選択されているものを
                         // 掴んでいる前後に寄せ集める
-                        for( int dir = -1; dir <= 1; dir +=2)
+                        for (int dir = -1; dir <= 1; dir += 2)
                         {
-                            for(int i = dragHoldRelIndex + dir; i >= 0 && i < dragStartIndexes.Length; i += dir)
+                            for (int i = dragHoldRelIndex + dir; i >= 0 && i < dragStartIndexes.Length; i += dir)
                             {
                                 var dstIndex = ind + i - dragHoldRelIndex;
                                 if (dir * (dstIndex - dragStartIndexes[i]) < 0)
@@ -3482,7 +3502,7 @@
 
                         // 選択は連続するが、今後の仕様変更を想定して選択されたものは全て覚えておく
                         dragPrevIndexes = new int[dragStartIndexes.Length];
-                        for( int i = 0; i < dragPrevIndexes.Length; i++)
+                        for (int i = 0; i < dragPrevIndexes.Length; i++)
                         {
                             dragPrevIndexes[i] = ind + i - dragHoldRelIndex;
                         }
@@ -3536,7 +3556,7 @@
         private void dgvChars_MouseUp(object sender, MouseEventArgs e)
         {
             mouseDownPoint = System.Drawing.Point.Empty;
-            
+
             // 現在のマウスの位置
             DataGridView.HitTestInfo hitc = dgvChars.HitTest(e.X, e.Y);
 
@@ -3546,8 +3566,8 @@
                 dgvChars.CurrentCell = dgvChars.Rows[hitc.RowIndex].Cells[hitc.ColumnIndex];
             }
 
-                // ドラッグが終わった時の動作
-                if (dragPrevIndexes != null && dragStartIndexes != null)
+            // ドラッグが終わった時の動作
+            if (dragPrevIndexes != null && dragStartIndexes != null)
             {
 
 
@@ -3615,11 +3635,11 @@
                 //MessageBox.Show("1");
 
                 dgvChars.Focus();
-                
+
             }
 
             // ドラッグが起こらずにマウスが離された場合選択をそこだけにする
-            else if(e.Button == MouseButtons.Left)
+            else if (e.Button == MouseButtons.Left)
             {
                 if (dgvChars_MouseDown_dontSelectOne)
                 {
@@ -3632,7 +3652,7 @@
                     //dgvChars.ClearSelection();
                     //dgvChars.Rows[hitc.RowIndex].Selected = true;
 
-                    for(int i = 0; i < dgvChars.Rows.Count; i++)
+                    for (int i = 0; i < dgvChars.Rows.Count; i++)
                     {
                         dgvChars.Rows[i].Selected = (hitc.RowIndex == i);
                     }
@@ -3646,7 +3666,7 @@
             // じゃないとショートカットキーとかが無効になったまま
             dragStartIndexes = null;
 
-            
+
             // マウスの左ボタンが押されている場合
             var eb = e.Button;
             if (e.Button == MouseButtons.Left)
@@ -3682,7 +3702,7 @@
             {
 
 
-                var pt = GetOwnOFolderrExistingParent(LoadIniString("InitialDirectory", "LIST"));
+                var pt = GetOwnOFolderrExistingParent(LoadIniString("InitialDirectory", "LST"));
                 if (pt != "") openFileDialogState.InitialDirectory = pt;
                 openFileDialogState.FileName = Path.GetFileName(saveFileDialogState.FileName);
                 if (openFileDialogState.ShowDialog() == DialogResult.OK)
@@ -3834,7 +3854,7 @@
 
             // 選択キャラのインデックスを取得
             var SortedSlectedCharIndexes = GetSelectedCharsIndexesArray();
-            if(SortedSlectedCharIndexes.Length <= 0)
+            if (SortedSlectedCharIndexes.Length <= 0)
             {
                 return;
             }
@@ -3842,7 +3862,7 @@
 
             var newChars = new Character[SortedSlectedCharIndexes.Length];
             var curChars = dlcData.Chars;
-            for(int j = 0; j < newChars.Length; j++)
+            for (int j = 0; j < newChars.Length; j++)
             {
                 var curChar = curChars[SortedSlectedCharIndexes[j]];
 
@@ -3883,75 +3903,75 @@
             }
 
 
-                /*
-                if (dgvChars.SelectedRows.Count != 1)
-                {
-                    MessageBox.Show("コスチューム複数選択時の複製処理は未実装です。");
-                    return;
-                }
+            /*
+            if (dgvChars.SelectedRows.Count != 1)
+            {
+                MessageBox.Show("コスチューム複数選択時の複製処理は未実装です。");
+                return;
+            }
 
-                int index;
-                Character curChar;
-                try
-                {
-                    index = dgvChars.SelectedRows[0].Index;
-                    curChar = dlcData.Chars[index];
-                }
-                catch
-                {
-                    return;
-                }
-
-
-
-                // AddCharacter をある程度コピー
-                var newChar = new Character();
-                newChar.ID = curChar.ID;
-                newChar.Female = curChar.Female;
-                newChar.CostumeSlot = curChar.CostumeSlot; // これもコピーしてしまおう
-                newChar.Comment = curChar.Comment;
-                newChar.AddTexsCount = curChar.AddTexsCount;
-                for (int i = 0; i < curChar.HStyles.Count; i++)
-                {
-                    newChar.HStyles.Add(new Hairstyle(curChar.HStyles[i].Hair, curChar.HStyles[i].Face));
-                }
-                for (int i = 0; i < curChar.Files.Length; i++)
-                {
-                    newChar.Files[i] = curChar.Files[i];
-                }
+            int index;
+            Character curChar;
+            try
+            {
+                index = dgvChars.SelectedRows[0].Index;
+                curChar = dlcData.Chars[index];
+            }
+            catch
+            {
+                return;
+            }
 
 
-                // これが今の挿入処理
-                dlcData.Chars.Insert(index + 1, newChar);
 
-                dgvChars.Rows.Insert(index + 1);
-                dgvChars.Rows[index + 1].Cells[0].Value = Program.CharNamesJpn[newChar.ID];
-                dgvChars.Rows[index + 1].Cells[1].Value = newChar.CostumeSlot.ToString();
-                dgvChars.Rows[index + 1].Cells[2].Value = newChar.AddTexsCount.ToString();
-                //dgvChars.Rows[index + 1].Cells[3].Value = newChar.Comment;
-                showComment(index + 1);
-                dgvChars.Rows[index + 1].Selected = true;
+            // AddCharacter をある程度コピー
+            var newChar = new Character();
+            newChar.ID = curChar.ID;
+            newChar.Female = curChar.Female;
+            newChar.CostumeSlot = curChar.CostumeSlot; // これもコピーしてしまおう
+            newChar.Comment = curChar.Comment;
+            newChar.AddTexsCount = curChar.AddTexsCount;
+            for (int i = 0; i < curChar.HStyles.Count; i++)
+            {
+                newChar.HStyles.Add(new Hairstyle(curChar.HStyles[i].Hair, curChar.HStyles[i].Face));
+            }
+            for (int i = 0; i < curChar.Files.Length; i++)
+            {
+                newChar.Files[i] = curChar.Files[i];
+            }
 
 
-                */
-                // これは一番下に追加する処理。今はやめた。
-                /*
-                dlcData.Chars.Add(newChar);
+            // これが今の挿入処理
+            dlcData.Chars.Insert(index + 1, newChar);
 
-                dgvChars.Rows.Add();
-                dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[0].Value = Program.CharNamesJpn[newChar.ID];
-                dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[1].Value = newChar.CostumeSlot.ToString();
-                dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[2].Value = newChar.AddTexsCount.ToString();
-                //dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[3].Value = newChar.Comment();
-                showComment(dgvChars.Rows.Count - 1);
-                dgvChars.Rows[dgvChars.Rows.Count - 1].Selected = true;
+            dgvChars.Rows.Insert(index + 1);
+            dgvChars.Rows[index + 1].Cells[0].Value = Program.CharNamesJpn[newChar.ID];
+            dgvChars.Rows[index + 1].Cells[1].Value = newChar.CostumeSlot.ToString();
+            dgvChars.Rows[index + 1].Cells[2].Value = newChar.AddTexsCount.ToString();
+            //dgvChars.Rows[index + 1].Cells[3].Value = newChar.Comment;
+            showComment(index + 1);
+            dgvChars.Rows[index + 1].Selected = true;
 
-                // これも要らなくなることに注意
-                btnCharsDelete.Enabled = true;
-                btnFilesAdd.Enabled = true;
-                */
 
-                setEgvCharsSlotColor();
+            */
+            // これは一番下に追加する処理。今はやめた。
+            /*
+            dlcData.Chars.Add(newChar);
+
+            dgvChars.Rows.Add();
+            dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[0].Value = Program.CharNamesJpn[newChar.ID];
+            dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[1].Value = newChar.CostumeSlot.ToString();
+            dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[2].Value = newChar.AddTexsCount.ToString();
+            //dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[3].Value = newChar.Comment();
+            showComment(dgvChars.Rows.Count - 1);
+            dgvChars.Rows[dgvChars.Rows.Count - 1].Selected = true;
+
+            // これも要らなくなることに注意
+            btnCharsDelete.Enabled = true;
+            btnFilesAdd.Enabled = true;
+            */
+
+            setEgvCharsSlotColor();
 
             //MessageBox.Show("2");
             setEgvCharsNameColor();
@@ -4023,7 +4043,7 @@
             {
                 case default(int): // = 0
                     return System.Drawing.Color.Red;
-                    //return System.Drawing.Color.PaleTurquoise;
+                //return System.Drawing.Color.PaleTurquoise;
 
                 case 1:
                     if (!NotComIniSlotTable[Char])
@@ -4050,12 +4070,12 @@
             switch (slotCount[Char])
             {
                 case default(int): // = 0
-                    return  System.Drawing.Color.Red;
+                    return System.Drawing.Color.Red;
 
                 case 1:
                     if (!NotComIniSlotTable[Char])
                     {
-                        return System.Drawing.Color.DarkBlue;;
+                        return System.Drawing.Color.DarkBlue; ;
                     }
                     else if (!UsableSlotTable[Char])
                     {
@@ -4097,7 +4117,7 @@
         {
             bool changed = false;
             int selectedrow;
-            if(dgvChars.SelectedRows.Count == 1)
+            if (dgvChars.SelectedRows.Count == 1)
             {
                 selectedrow = dgvChars.SelectedRows[0].Index;
             }
@@ -4117,7 +4137,7 @@
             {
                 if ((!newDlc) || CheckCharFile(dlcData.Chars[i]))
                 {
-                    if(dgvChars[0, i].Style.BackColor != System.Drawing.Color.Empty)
+                    if (dgvChars[0, i].Style.BackColor != System.Drawing.Color.Empty)
                     {
                         changed = (changed || selectedrow == i);
                         dgvChars[0, i].Style.BackColor = System.Drawing.Color.Empty;
@@ -4140,7 +4160,7 @@
                 try
                 {
                     bool[] selecteds = new bool[dgvFiles.Rows.Count];
-                    for(int i = 0; i < selecteds.Length; i++)
+                    for (int i = 0; i < selecteds.Length; i++)
                     {
                         selecteds[i] = dgvFiles.Rows[i].Selected;
                     }
@@ -4151,7 +4171,7 @@
                     }
                 }
                 catch { }
-                
+
             }
         }
 
@@ -4167,7 +4187,7 @@
             if (Files[0] == null)
             {
             }
-            else if(File.Exists(Files[0]))
+            else if (File.Exists(Files[0]))
             {
                 TMC = true;
             }
@@ -4348,7 +4368,7 @@
             // これを参考に。
             // public static readonly string[] FileOrder = new string[12] { ".TMC", ".TMCL", ".---C", "1.--H", "1.--HL", "2.--H", "2.--HL", "3.--H", "3.--HL", "4.--H", "4.--HL", ".--P" };
             int HCount = 0;
-            if(Files[3] != null && Files[4] != null && File.Exists(Files[3]) && File.Exists(Files[4]))
+            if (Files[3] != null && Files[4] != null && File.Exists(Files[3]) && File.Exists(Files[4]))
             {
                 HCount++;
 
@@ -4367,7 +4387,7 @@
                     }
                 }
             }
-            return (byte) (HCount>1? HCount:1);
+            return (byte)(HCount > 1 ? HCount : 1);
         }
 
 
@@ -4397,7 +4417,7 @@
             }
             catch { }
         }
-        
+
 
         private void dgvChars_KeyDown(object sender, KeyEventArgs e)
         {
@@ -4496,7 +4516,7 @@
                     {
                         //var charselectedrows = GetSelectedCharsIndexesArray();
                         int CharSelected = GetFirstSelectedCharIndex();
-                        if(CharSelected < 0)
+                        if (CharSelected < 0)
                         {
                             return;
                         }
@@ -4560,7 +4580,7 @@
                     }
                     else
                     {
-                        if(dgvChars.SelectedRows.Count <= 0)
+                        if (dgvChars.SelectedRows.Count <= 0)
                         {
                             return;
                         }
@@ -4574,7 +4594,7 @@
                         {
                             // 今選択されている場所。挿入に使う
                             int index = GetFirstSelectedCharIndex();
-                            if(index < 0)
+                            if (index < 0)
                             {
                                 index = dgvChars.Rows.Count;
                             }
@@ -4655,7 +4675,7 @@
                             dgvChars.ClearSelection();
                             for (int i = 0; i < dlcData2.Chars.Count; i++)
                             {
-                                dgvChars.Rows[index0+i].Selected = true;
+                                dgvChars.Rows[index0 + i].Selected = true;
                             }
 
                             /*
@@ -4680,7 +4700,7 @@
 
                 btnCharsDelete_Click(null, null);
 
-                  
+
             }
         }
 
@@ -4694,7 +4714,7 @@
                 btnHStylesDelete_Click(null, null);
                 DeleteKeyUp = false;
             }
-            else if (e.KeyCode == Keys.C && CKeyUp  && e.Control)
+            else if (e.KeyCode == Keys.C && CKeyUp && e.Control)
             {
                 CKeyUp = false;
                 CopyHStyles();
@@ -4709,7 +4729,7 @@
 
         private Program.SlotTable<bool> GetNotComIniSlotTable() // Dictionary とかを使ったほうがいいのだろうけどどうせここは計算時間の主要項じゃないし。
         {
-            
+
             Program.SlotTable<bool> NotComIniSlotTable = new Program.SlotTable<bool>(true);
 
             // chara_common, chara_initial は直に書く。その方が楽だしトラブルも減りそうだし何より高速になる。
@@ -4754,7 +4774,7 @@
 
         private Program.SlotTable<bool> GetUsableSlotTable()
         {
-            
+
             Program.SlotTable<bool> UsableSlotTable = new Program.SlotTable<bool>(true);
 
             // 想定される書式のパスが指定されているか
@@ -4788,7 +4808,7 @@
                     }
                     catch
                     {
-                       continue;
+                        continue;
                     }
                     //MessageBox.Show(brothers[i] + "\n" + dlcData2.Chars.Count.ToString());
                     for (int j = 0; j < dlcData2.Chars.Count; j++)
@@ -4800,7 +4820,7 @@
 
 
             return UsableSlotTable;
-            
+
         }
 
         // よく考えると全キャラ分取得するのは無駄な気もするが、
@@ -4849,7 +4869,7 @@
                 }
             }
 
-            
+
 
             // リストが何もなかったら何も出来ない
             if (LCandPaths.Count == 0)
@@ -4858,11 +4878,11 @@
             }
 
             // listpaths 更新日時降順にバブルソート
-            for( int i = 0; i < LCandPaths.Count; i++)
+            for (int i = 0; i < LCandPaths.Count; i++)
             {
                 for (int j = 1; j < LCands.Count - i; j++)
                 {
-                    if(File.GetLastWriteTime(LCandPaths[j-1])< File.GetLastWriteTime(LCandPaths[j]))
+                    if (File.GetLastWriteTime(LCandPaths[j - 1]) < File.GetLastWriteTime(LCandPaths[j]))
                     {
                         var temp = LCandPaths[j];
                         LCandPaths[j] = LCandPaths[j - 1];
@@ -4887,7 +4907,7 @@
             // 先頭の listdata のみを用いる
             DLCData listdata = LCands[0];
             string defaultTitle = Path.GetFileNameWithoutExtension(LCandPaths[0]);
-            if(defaultTitle.Length >= "default.".Length)
+            if (defaultTitle.Length >= "default.".Length)
             {
                 defaultTitle = defaultTitle.Substring("default.".Length);
             }
@@ -5066,7 +5086,7 @@
                         {
                             var last = File.GetLastWriteTime(lists[0]);
                             name = Path.GetFileNameWithoutExtension(lists[0]);
-                            for(int k = 1; k < lists.Length; k++)
+                            for (int k = 1; k < lists.Length; k++)
                             {
                                 var last2 = File.GetLastWriteTime(lists[k]);
                                 if (last2 > last)
@@ -5093,13 +5113,13 @@
                                 found = false;
                                 for (int k = 0; k < LCands.Count; k++)
                                 {
-                                    if(LCands[k].SavePath == brothers[i])
+                                    if (LCands[k].SavePath == brothers[i])
                                     {
                                         found = true;
                                         break;
                                     }
                                 }
-                                if(found)
+                                if (found)
                                 {
                                     for (int k = 0; k < LCands.Count; k++)
                                     {
@@ -5116,7 +5136,7 @@
 
                                 // リストファイルの path のファイル名が brothers[i] のプレフィックスに一致するものを探す
                                 // 同時に最大一致文字数を取得
-                                
+
                                 int maxlength = 0;
                                 found = false;
                                 for (int k = 0; k < LCands.Count; k++)
@@ -5135,7 +5155,7 @@
                                 }
 
 
-                                
+
 
                                 if (found)
                                 {
@@ -5165,10 +5185,10 @@
                                 name = Path.GetFileNameWithoutExtension(listpath);
                                 listdata = LCands[0];
                                 var last = File.GetLastWriteTime(listpath);
-                                for(int k = 1; k < LCands.Count; k++)
+                                for (int k = 1; k < LCands.Count; k++)
                                 {
                                     var last2 = File.GetLastWriteTime(LCandPaths[k]);
-                                    if(last2 > last)
+                                    if (last2 > last)
                                     {
                                         listpath = LCandPaths[k];
                                         name = Path.GetFileNameWithoutExtension(listpath);
@@ -5179,7 +5199,7 @@
                             }
 
 
-                            
+
                         }
 
 
@@ -5187,17 +5207,17 @@
                         // リストファイル内のコメントから設定する
                         if (listpath != "")
                         {
-                            if(listdata == null)
+                            if (listdata == null)
                             {
                                 listdata = Program.OpenState(listpath);
                             }
 
-                            for(int k = 0; k < listdata.Chars.Count; k++)
+                            for (int k = 0; k < listdata.Chars.Count; k++)
                             {
-                                if(dlcData2.Chars[j].CostumeSlot == listdata.Chars[k].CostumeSlot && dlcData2.Chars[j].ID == listdata.Chars[k].ID && listdata.Chars[k].Comment != "")
+                                if (dlcData2.Chars[j].CostumeSlot == listdata.Chars[k].CostumeSlot && dlcData2.Chars[j].ID == listdata.Chars[k].ID && listdata.Chars[k].Comment != "")
                                 {
                                     name = listdata.Chars[k].Comment;
-                                    while(name.Substring(name.Length-1) == ",")
+                                    while (name.Substring(name.Length - 1) == ",")
                                     {
                                         name = name.Substring(0, name.Length - 1);
                                     }
@@ -5242,6 +5262,7 @@ SaveDLC=Save DLC
 OverwriteDLC=Overwrite
 SaveCompressedDLC=Save Cmp.
 OverwriteCompressedDLC=Ovwt Cmp.
+ExtractFiles=Extract TMC
 Characters=Characters
 Hairstyles=Hairstyles
 CopyC=Copy (Ctrl+C)
@@ -5335,7 +5356,8 @@ RAIDOU=RAIDOU
                         sw.Close();
                     }
                     MessageBox.Show("Created \"" + lngSubPath + "\" as a sample language file.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                } catch { }
+                }
+                catch { }
             }
             try
             {
@@ -5349,7 +5371,7 @@ RAIDOU=RAIDOU
                 }
                 catch { }
             }
-            
+
             // 不足分は英語で補完しつつ初期画面を翻訳
             string from, def;
             // BCMを開く
@@ -5452,7 +5474,7 @@ RAIDOU=RAIDOU
             // 圧縮して保存
             from = "SaveCompressedDLC"; def = "Save Cmp.";
             if (Program.dicLanguage.ContainsKey(from)) btnCmpSave.Text = Program.dicLanguage[from]; else btnCmpSave.Text = Program.dicLanguage[from] = def;
-            
+
             // 元ツールのステートデータ
             from = "OriginalStateData"; def = "State data for original DLC Tool";
             if (Program.dicLanguage.ContainsKey(from)) { } else Program.dicLanguage[from] = def; ;
@@ -5474,11 +5496,13 @@ RAIDOU=RAIDOU
 
 
             // 初期画面に現れない部分の補間
-            
+
             // BCMを保存
             from = "SaveBCM"; def = "Save BCM";
             if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
-            
+            // ファイル展開
+            from = "ExtractFiles"; def = "Extract TMC";
+            if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
             // 注意
             from = "Notice"; def = "Notice";
             if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
@@ -5567,7 +5591,7 @@ RAIDOU=RAIDOU
             if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
 
             // キャラクター名
-            foreach ( var element in Program.CharNames)
+            foreach (var element in Program.CharNames)
             {
                 from = def = element.Value;
                 if (Program.dicLanguage.ContainsKey(from)) Program.CharNamesJpn[element.Key] = Program.dicLanguage[from]; else Program.CharNamesJpn[element.Key] = Program.dicLanguage[from] = def;
@@ -5607,7 +5631,7 @@ RAIDOU=RAIDOU
             this.id45.Text = Program.CharNamesJpn[45];
             this.id46.Text = Program.CharNamesJpn[46];
         }
-        
+
 
 
         private void dgvHStyles_MouseDown(object sender, MouseEventArgs e)
@@ -5728,7 +5752,7 @@ RAIDOU=RAIDOU
         private void 削除DeleteToolStripMenuItem_Click(object sender, EventArgs e)
         {
             // 髪型にフォーカスがあれば
-            if(clikedForm == "dgvHStyles")
+            if (clikedForm == "dgvHStyles")
             {
                 if (btnHStylesDelete.Enabled)
                 {
@@ -5736,9 +5760,9 @@ RAIDOU=RAIDOU
                 }
             }
             // ファイルにフォーカスがあれば
-            else if(clikedForm == "dgvFiles")
+            else if (clikedForm == "dgvFiles")
             {
-                if(btnFilesDelete.Enabled)
+                if (btnFilesDelete.Enabled)
                 {
                     btnFilesDelete_Click(null, null);
                 }
@@ -5778,7 +5802,7 @@ RAIDOU=RAIDOU
                 System.Collections.Specialized.StringCollection files =
                     new System.Collections.Specialized.StringCollection();
 
-                if(dgvFiles.SelectedRows.Count<=0)
+                if (dgvFiles.SelectedRows.Count <= 0)
                 {
                     return;
                 }
@@ -5814,7 +5838,7 @@ RAIDOU=RAIDOU
                 inds[i] = dgvHStyles.SelectedRows[i].Index;
             }
             Array.Sort(inds);
-            
+
 
             string str = "";
             for (int i = 0; i < dgvHStyles.SelectedRows.Count; i++)
@@ -5835,12 +5859,12 @@ RAIDOU=RAIDOU
 
             bool pasted = false;
 
-            if(!btnHStylesAdd.Enabled && !testMode) // テストモードなら髪型の数は気にしない
+            if (!btnHStylesAdd.Enabled && !testMode) // テストモードなら髪型の数は気にしない
             {
                 return false;
             }
 
-            if(!Clipboard.GetDataObject().GetDataPresent(DataFormats.Text))
+            if (!Clipboard.GetDataObject().GetDataPresent(DataFormats.Text))
             {
                 return false;
             }
@@ -5904,7 +5928,7 @@ RAIDOU=RAIDOU
             //MessageBox.Show("a");
 
             return pasted;
-            
+
         }
 
 
@@ -5915,11 +5939,11 @@ RAIDOU=RAIDOU
             {
                 DeleteKeyUp = true;
             }
-            else if(e.KeyCode == Keys.C)
+            else if (e.KeyCode == Keys.C)
             {
                 CKeyUp = true;
             }
-            else if(e.KeyCode == Keys.V)
+            else if (e.KeyCode == Keys.V)
             {
                 VKeyUp = true;
             }
@@ -5964,7 +5988,7 @@ RAIDOU=RAIDOU
                 */
 
 
-                            int CharSelected;
+                int CharSelected;
                 try
                 {
                     CharSelected = dgvChars.SelectedRows[0].Index;
@@ -6041,7 +6065,7 @@ RAIDOU=RAIDOU
 
         private void dgvChars_CellEnter(object sender, DataGridViewCellEventArgs e)
         {
-            if(e.ColumnIndex == 2)
+            if (e.ColumnIndex == 2)
             {
                 dgvChars.ImeMode = System.Windows.Forms.ImeMode.Disable;
             }
@@ -6066,7 +6090,7 @@ RAIDOU=RAIDOU
                 // プログラムを終了
                 Environment.Exit(0);
             }
-            if(DATs.Length <= 0)
+            if (DATs.Length <= 0)
             {
                 MessageBox.Show(Program.dicLanguage["NeedDAT"], Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
 
@@ -6079,7 +6103,7 @@ RAIDOU=RAIDOU
             System.Collections.Generic.List<string> nodefDATs = new System.Collections.Generic.List<string>();
             for (int i = 0; i < DATs.Length; i++)
             {
-                if(Path.GetFileName(DATs[i]).Substring(0,"default.".Length) == "default.")
+                if (Path.GetFileName(DATs[i]).Substring(0, "default.".Length) == "default.")
                 {
                     defDATs.Add(DATs[i]);
                 }
@@ -6153,7 +6177,7 @@ RAIDOU=RAIDOU
                         tbListPath.BackColor = System.Drawing.Color.Empty;
                         cbSaveListInDLC.Enabled = true;
                     }
-                    else if(GoodName)
+                    else if (GoodName)
                     {
                         tbListPath.BackColor = System.Drawing.Color.LightGray;
                         cbSaveListInDLC.Enabled = true;
@@ -6195,7 +6219,7 @@ RAIDOU=RAIDOU
                         dgvFiles.Rows[i].Selected = true;
                     }
                 }
-                else if(selectone && !ctsh)
+                else if (selectone && !ctsh)
                 {
                     dgvFiles.Rows[i].Selected = false;
                 }
@@ -6267,7 +6291,7 @@ RAIDOU=RAIDOU
             {
                 tbSavePath.BackColor = System.Drawing.Color.LightGray;
             }
-            
+
             setBtnSave();
         }
 
@@ -6286,7 +6310,7 @@ RAIDOU=RAIDOU
             // token 的に書いていく。空をスキップしたりはしない。最後には全部を突っ込む
             //int start = 0;
             int i;
-            for(i = 3; i < dgvChars.Rows[Index].Cells.Count; i++)
+            for (i = 3; i < dgvChars.Rows[Index].Cells.Count; i++)
             {
                 int len = com.IndexOf(',');
                 if (len >= 0)
@@ -6347,7 +6371,7 @@ RAIDOU=RAIDOU
             //textColumn.Name = "Column1";
             //if (clicledIndex == 2)
             {
-            //    textColumn.HeaderText = Program.dicLanguage["Comment"];
+                //    textColumn.HeaderText = Program.dicLanguage["Comment"];
             }
             //else
             {
@@ -6387,7 +6411,7 @@ RAIDOU=RAIDOU
                 dgvChars.Columns[i].HeaderText = Program.dicLanguage["Comment"] + " " + (i - 2).ToString();
             }
 
-            if(ForInit)
+            if (ForInit)
             {
                 return;
             }
@@ -6426,7 +6450,7 @@ RAIDOU=RAIDOU
                         }
 
                     }
-                        
+
                 }
                 if (comma >= 0)
                 {
@@ -6468,7 +6492,7 @@ RAIDOU=RAIDOU
             {
                 //if (i == 3)
                 {
-                //    dgvChars.Columns[i].HeaderText = Program.dicLanguage["Comment"];
+                    //    dgvChars.Columns[i].HeaderText = Program.dicLanguage["Comment"];
                 }
                 //else
                 {
@@ -6490,7 +6514,7 @@ RAIDOU=RAIDOU
                 if (ColAddIndex == 0)
                 {
                     int cp = dlcData.Chars[i].Comment.IndexOf(",");
-                    if(cp >= 0)
+                    if (cp >= 0)
                     {
                         dlcData.Chars[i].Comment = com.Substring(cp + 1);
                     }
@@ -6516,14 +6540,14 @@ RAIDOU=RAIDOU
                         start = comma + 1;
                     }
 
-                    if(comma < 0)
+                    if (comma < 0)
                     {
                         dlcData.Chars[i].Comment = com;
                     }
                     else
                     {
                         int next = com.IndexOf(',', comma + 1);
-                        if(next < 0)
+                        if (next < 0)
                         {
                             dlcData.Chars[i].Comment = com.Substring(0, comma);
                         }
@@ -6548,7 +6572,7 @@ RAIDOU=RAIDOU
             // DisplayIndex と Index に差が出ていれば直す
             // 一箇所ずれているだけと仮定
             int from = -1, to = -1;
-            for(int i = 3; i < dgvChars.Columns.Count; i++)
+            for (int i = 3; i < dgvChars.Columns.Count; i++)
             {
                 int i2 = dgvChars.Columns[i].DisplayIndex;
                 if (i2 == i + 1)
@@ -6564,16 +6588,16 @@ RAIDOU=RAIDOU
                     }
                     break;
                 }
-                else if(i2 > i + 1)
+                else if (i2 > i + 1)
                 {
                     from = i;
                     to = i2;
                     break;
                 }
-                
+
             }
 
-            if(from < 3)
+            if (from < 3)
             {
                 return;
             }
@@ -6762,7 +6786,7 @@ RAIDOU=RAIDOU
                     {
                         continue; // rst ファイルは配布用なので仮に失っても再 DLC すればよく損害は軽微と判断
                     }
-                    else if(ext == ".lst")
+                    else if (ext == ".lst")
                     {
                         // lst ファイルは中身をみて判断
                         DLCData lstdata = Program.OpenState(files[i]);
@@ -6787,7 +6811,7 @@ RAIDOU=RAIDOU
                     {
                         name = name.Substring(0, name.Length - 1);
                     }
-                    
+
 
                     if (name.Length <= foldername.Length && foldername.Substring(0, name.Length) == name)
                     {
@@ -6900,7 +6924,8 @@ RAIDOU=RAIDOU
                 {
                     btnSave.Text = Program.dicLanguage["SaveBCM"];
                 }
-                
+
+                btnCmpSave.Enabled = (GetBinPath(true) != ""); // この場合は TMC を抽出機能
             }
         }
 
@@ -6916,12 +6941,12 @@ RAIDOU=RAIDOU
         private bool OpenWithShortcut(string scPath, string param, bool test)
         {
             string[] exts = new string[] { ".lnk", ".lnk.lnk", ".bat", ".vbs", ".js", "wsh" };
-                // .lnk.lnk は多くの環境でショートカットファイルの拡張子 .lnk が表示されないことを知らないユーザーへの配慮
+            // .lnk.lnk は多くの環境でショートカットファイルの拡張子 .lnk が表示されないことを知らないユーザーへの配慮
 
             try
             {
                 string foundScPath = "";
-                for(int i = 0; i < exts.Length; i++)
+                for (int i = 0; i < exts.Length; i++)
                 {
                     string scPathWithExt = scPath + exts[i];
                     if (File.Exists(scPathWithExt))
@@ -6931,7 +6956,7 @@ RAIDOU=RAIDOU
                     }
                 }
 
-                if(foundScPath == "")
+                if (foundScPath == "")
                 {
                     return false;
                 }
@@ -6944,8 +6969,8 @@ RAIDOU=RAIDOU
                         // 念のためカレントディレクトリを動かしておく
                         string sCD = System.Environment.CurrentDirectory;
                         System.Environment.CurrentDirectory = Path.GetDirectoryName(foundScPath);
-                        
-                        
+
+
                         if (param != "")
                         {
                             System.Diagnostics.Process.Start("\"" + foundScPath + "\"", param);
@@ -6962,7 +6987,7 @@ RAIDOU=RAIDOU
                     return true;
                 }
             }
-            catch {}
+            catch { }
 
             return false;
         }
@@ -6988,7 +7013,7 @@ RAIDOU=RAIDOU
         private void MainForm_SizeChanged(object sender, EventArgs e)
         {
 
-            if(dgvChars.SelectedRows.Count == 1) // 起動直後などは SelectedRows がなかったりするので。
+            if (dgvChars.SelectedRows.Count == 1) // 起動直後などは SelectedRows がなかったりするので。
             {
                 int index = dgvChars.SelectedRows[0].Index;
                 RedrawFiles(index, false);
@@ -7049,7 +7074,7 @@ RAIDOU=RAIDOU
                     }
                     catch { }
                     */
-                    if(!dgvFiles.Rows[index].Cells[0].Selected)
+                    if (!dgvFiles.Rows[index].Cells[0].Selected)
                     {
 
                         for (int i = 0; i < dgvFiles.Rows.Count; i++)
@@ -7081,7 +7106,7 @@ RAIDOU=RAIDOU
                     }
 
                 }
-                
+
 
                 clikedForm = "dgvFiles";
                 コピーCtrlCToolStripMenuItem.Enabled = btnFilesDelete.Enabled;
@@ -7227,6 +7252,254 @@ RAIDOU=RAIDOU
             }
         }
         
+
+        private void btnExtractFiles()
+        {
+            // ダイアログを開く前に一回チェック
+            var loadPath = GetBinPath(true);
+            if(loadPath == "")
+            {
+                setBtnSave();
+                var e = new FileNotFoundException(null,GetBinPath(false));
+                MessageBox.Show(e.Message, Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            string pt;
+            try
+            {
+                pt = GetOwnOFolderrExistingParent(Path.GetDirectoryName(LoadIniString("InitialDirectory", "DATA")));
+            }
+            catch
+            {
+                pt = "";
+            }
+            if (pt != "") saveFileDialogTMC.InitialDirectory = pt;
+            var fn = Path.GetFileName(Path.GetFileNameWithoutExtension(loadPath));
+
+            // 入力後にパスの修正を行わない代わりに " (2)" を末尾につける
+            var defaultFilePath = Path.Combine(pt, fn);
+            for (var i = 2; Directory.Exists(defaultFilePath) || File.Exists(defaultFilePath) ; i++)
+            {
+                defaultFilePath = Path.Combine(pt, fn + " (" + i + ")");
+            }
+            fn = Path.GetFileName(defaultFilePath);
+
+            saveFileDialogTMC.FileName = fn;
+            if (saveFileDialogTMC.ShowDialog() == DialogResult.OK)
+            {
+
+                string savePath = saveFileDialogTMC.FileName;
+
+                // 安全性などを考えて、現段階では“あえて”パスの修正は行わない
+
+                // フォルダ名が重なっていた場合に重複を避ける処理
+                /*
+                var defpath = Path.Combine(pt, fn);
+                if (savePath == Path.Combine(defpath, fn))
+                {
+                    savePath = defpath;
+                }
+                */
+
+                // フォルダ内のファイルを選択した場合にフォルダを選択する処理
+                /*
+                for (int i = 0; i < FileOrder.Length; i++)
+                {
+                    if (savePath.EndsWith(MainForm.FileOrder[i]))
+                    {
+                        savePath = Path.GetDirectoryName(savePath);
+                        break;
+                    }
+                }
+                */
+
+                SaveIniString("InitialDirectory", "DATA", savePath);
+                ExtractFiles(savePath, loadPath);
+
+            }
+        }
+
+        private void ExtractFiles(string savePath, string loadPath)
+        {
+            try
+            {
+                var archData = Archive_Tool.Program.ParseArchive(loadPath, DAT); // loadPath == "" でもエラーを投げてくれない
+                if (archData == null)
+                {
+                    if (!File.Exists(loadPath))
+                    {
+                        throw new FileNotFoundException(null, loadPath);
+                    }
+                    else if (!File.Exists(DAT))
+                    {
+                        throw new FileNotFoundException(null, DAT);
+                    }
+                    // それでもダメなら想定外なのでヌル参照エラーが出るまで放置
+                }
+
+                var targetArchData = new System.Collections.Generic.List<Archive_Tool.ArchiveFile>();
+
+                var Chars = dlcData.Chars;
+
+
+                tbSavePath.Text = Path.GetDirectoryName(Path.GetDirectoryName(loadPath));
+                newDlc = true;
+                ClearMainUI();
+                dlcData = new DLCData();
+                setBtnSave();
+                btnCmpSave.Enabled = btnSave.Enabled = true;
+                btnSaveState.Enabled = true;
+                btnCharsAdd.Enabled = true;
+                clmInner.ReadOnly = false;
+                dlcData.BcmVer = 9;
+                tbBCMVer.Text = "9";
+                cbSaveListInDLC.Enabled = true;
+                cbSaveListInDLC.Checked = true;
+
+                if(File.Exists(savePath))
+                {
+                    File.Delete(savePath);
+                }
+                if (!Directory.Exists(savePath))
+                {
+                    Directory.CreateDirectory(savePath);
+                }
+
+                var userFlags = new bool[] { false, false, false, false };
+
+                // 主要な計算は明らかに抽出処理なのでこれは不要というか、無いほうが良い
+                // と思ったが、処理中はリストの更新は行われずチェックボックスだけがチラついたのでやっぱりやる
+                var dgvChars_SelectionChanged_RepairingSelection_current = dgvChars_SelectionChanged_RepairingSelection;
+                dgvChars_SelectionChanged_RepairingSelection = true;
+
+                // スクロールバーが変に動くのでファイルの抽出だけは先にしておく
+                SetProgressBar(true, Chars.Count);
+                for (var i = 0; i < Chars.Count; i++)
+                {
+                    IncrementProgressBar();
+
+                    var chr = Chars[i];
+
+                    var decName = GetDecName(chr);
+                    for (var j = 0; j < archData.Length; j++)
+                    {
+                        var archFile = archData[j];
+                        if (archFile.Name.StartsWith(decName))
+                        {
+                            var dataFilePath = Path.Combine(savePath, archFile.Name);
+                            Archive_Tool.Program.ExtractFile(archFile, dataFilePath, userFlags);
+                        }
+                    }
+                }
+
+
+                for (var i = 0; i < Chars.Count; i++)
+                {
+                    //IncrementProgressBar();
+
+                    var chr = Chars[i];
+                    
+
+                    // これは一番下に追加する処理
+                    dlcData.Chars.Add(chr);
+                    dgvChars.Rows.Add();
+                    dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[0].Value = Program.CharNamesJpn[chr.ID];
+                    dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[1].Value = chr.CostumeSlot.ToString();
+                    dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[2].Value = chr.AddTexsCount.ToString();
+                    showComment(dgvChars.Rows.Count - 1);
+                    dgvChars.ClearSelection(); //AddFiles のために必要
+                    dgvChars.Rows[dgvChars.Rows.Count - 1].Selected = true; //AddFiles のために必要
+
+                    var decName = GetDecName(chr);
+                    var fileNameList = new System.Collections.Generic.List<string>();
+                    for(var j = 0; j < archData.Length; j++)
+                    {
+                        var archFile = archData[j];
+                        if(archFile.Name.StartsWith(decName) )
+                        {
+                            var dataFilePath = Path.Combine(savePath, archFile.Name);
+                            fileNameList.Add(dataFilePath);
+                        }
+                    }
+                    var fileNames = new string[fileNameList.Count];
+                    for(int j = 0; j < fileNames.Length; j++)
+                    {
+                        fileNames[j] = fileNameList[j];
+                    }
+                    AddFiles(fileNames, false, false);
+                }
+
+                // 主要な計算は明らかに抽出処理なのでこれは不要というか、無いほうが良い
+                // と思ったが、処理中はリストの更新は行われずチェックボックスだけがチラついたのでやっぱりやる
+                dgvChars_SelectionChanged_RepairingSelection = dgvChars_SelectionChanged_RepairingSelection_current;
+
+                //1つめを選択。この時点で描画モードはオンになってないとダメ
+                dgvChars.ClearSelection(); //AddFiles のために必要
+                if(dgvChars.Rows.Count > 0) dgvChars.Rows[0].Selected = true; //AddFiles のために必要
+
+
+                //コピーじゃないのでこれは必要
+                btnCharsDelete.Enabled = true;
+                btnFilesAdd.Enabled = true;
+
+                setEgvCharsSlotColor(); // これらも追加
+                setEgvCharsNameColor();
+                setEgvCharsTextsColor(); // デフォルト機能により初めから問題があることも多々
+
+
+                SetProgressBar(false, 0);
+
+                return;
+            }
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message, Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private string GetBinPath(bool checkExistence)
+        {
+            try
+            {
+                string fileName = tbSavePath.Text;
+                if (Path.GetExtension(fileName).ToLower() != ".bcm")
+                {
+                    return "";
+                }
+
+                System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\\(\d+)\.bcm$",
+                   System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+                if (regex.IsMatch(fileName))
+                {
+                    fileName = regex.Replace(fileName, "\\data\\$1.bin");
+                }
+                else
+                {
+                    return "";
+                }
+
+                if ((!checkExistence) || File.Exists(fileName))
+                {
+                    return fileName;
+                }
+                else
+                {
+                    return "";
+                }
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        private string GetDecName(Character chr)
+        {
+            // オリジナルを参考にしてるから問題無いでしょう
+            return Program.CharNames[chr.ID] + "_DLCU_" + (chr.CostumeSlot + 1).ToString("D3");
+        }
     }
 
 }

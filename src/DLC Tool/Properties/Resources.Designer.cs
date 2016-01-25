@@ -73,6 +73,16 @@ namespace DLC_Tool.Properties {
         /// <summary>
         ///   型 System.Byte[] のローカライズされたリソースを検索します。
         /// </summary>
+        internal static byte[] doaKey {
+            get {
+                object obj = ResourceManager.GetObject("doaKey", resourceCulture);
+                return ((byte[])(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   型 System.Byte[] のローカライズされたリソースを検索します。
+        /// </summary>
         internal static byte[] ICSharpCode_SharpZipLib {
             get {
                 object obj = ResourceManager.GetObject("ICSharpCode_SharpZipLib", resourceCulture);

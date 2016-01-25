@@ -108,6 +108,7 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <None Include="Resources\cStub" />
+    <None Include="Resources\doaKey" />
     <None Include="Resources\pStub" />
   </ItemGroup>
   <ItemGroup>

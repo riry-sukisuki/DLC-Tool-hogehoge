@@ -1566,3 +1566,1305 @@
         */
     }
 }
+
+//using System.Data.OleDb;
+
+namespace Archive_Tool
+{
+    using System;
+    using System.Collections.Generic;
+    using System.Drawing;
+    using System.Globalization;
+    using System.IO;
+    using System.Reflection;
+    using System.Text;
+    using System.Threading.Tasks;
+    using System.Windows.Forms;
+
+    internal static class Program
+    {
+        private static readonly byte[] FirstName = new byte[8] { 0x32, 0x52, 0x42, 0x36, 0x33, 0x40, 0x31, 0x53 };
+        private static readonly byte[] FirstAsset = new byte[12] { 0x19, 0x00, 0x00, 0x00, 0xFF, 0xFF, 0xFF, 0xFF, 0x1A, 0x00, 0x00, 0x00 };
+        private static readonly byte[] FirstData = new byte[8] { 0x14, 0x3D, 0x08, 0x00, 0x01, 0x00, 0x00, 0xE0 };
+        private static AppDomain currentDomain;
+        //private static MainForm mainForm;
+        private static Dictionary<string, List<NameEntry>> nameDB;
+        private static Dictionary<string, SwapEntry> swapDB;
+        private static Dictionary<string, List<string>> indexDB;
+        private static string lnkPath, blpPath, swapPath, lrPath;
+
+        private static string DAT;
+
+        public static void testEcho(string str)
+        {
+            MessageBox.Show(str);
+        }
+
+        public static ArchiveFile[] ParseArchive(string fileName, string DatPath)
+        {
+            DAT = DatPath;
+            try
+            {
+                if (nameDB == null)
+                {
+                    LoadDB(true);
+                }
+
+                //mainForm.AddToLog("Info: Opening archive...");
+                lnkPath = Path.ChangeExtension(fileName, "lnk");
+                string[] nameEntries = ParseBIN(fileName);
+                uint[,] lnkEntries = ParseLNK(lnkPath);
+                blpPath = Path.ChangeExtension(fileName, "blp");
+                int[] blpIndexes = null;
+                uint[,] blpEntries = null;
+                if (File.Exists(blpPath))
+                {
+                    try
+                    {
+                        blpEntries = ParseBLP(blpPath);
+                        if (blpEntries != null)
+                        {
+                            blpIndexes = MatchIndexes(nameEntries, lnkEntries, blpEntries);
+                        }
+                    }
+                    catch (Exception e)
+                    {
+                        blpPath = null;
+                        //mainForm.AddToLog("Warning: Parsing of \"" + Path.GetFileName(blpPath) + "\" resulted in an error. " + e.Message, Color.DodgerBlue);
+                    }
+                }
+                else
+                {
+                    blpPath = null;
+                }
+
+                string fileDir = Path.GetDirectoryName(fileName);
+                if (fileDir != Path.GetDirectoryName(swapPath))
+                {
+                    swapPath = fileDir + @"\mod_at.config";
+                    lrPath = fileDir + @"\mod.config";
+                    if (!File.Exists(lrPath))
+                    {
+                        lrPath = null;
+                    }
+
+                    try
+                    {
+                        if (File.Exists(swapPath))
+                        {
+                            LoadSwapDB();
+                        }
+                        else
+                        {
+                            if (lrPath != null)
+                            {
+                                CreateSwapDB();
+                                LoadSwapDB();
+                            }
+                            else
+                            {
+                                swapDB = null;
+                            }
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        swapDB = null;
+                        //mainForm.AddToLog("Warning: Parsing of \"mod_at.config\" resulted in an error. File will be overwritten.", Color.DodgerBlue);
+                    }
+                }
+
+                var archData = new ArchiveFile[nameEntries.Length];
+                int unusedCount = 0;
+                int unknownCount = 0;
+                for (int i = 0; i < nameEntries.Length; i++)
+                {
+                    var archFile = new ArchiveFile();
+                    archFile.EncryptedName = nameEntries[i];
+                    List<NameEntry> nameList;
+                    if (nameDB.TryGetValue(nameEntries[i], out nameList))
+                    {
+                        archFile.Flags = nameList[0].Flags;
+                        if (nameList[0].Name != string.Empty)
+                        {
+                            archFile.Name = nameList[0].Name;
+                        }
+                        else
+                        {
+                            archFile.Name = nameEntries[i];
+                        }
+
+                        if (nameList[0].Indexes != null)
+                        {
+                            archFile.Index = nameList[0].Indexes[0];
+                        }
+
+                        if (nameList[0].Unused)
+                        {
+                            archFile.Unused = true;
+                            unusedCount++;
+                        }
+                    }
+                    else
+                    {
+                        archFile.Name = nameEntries[i];
+                        archFile.Unknown = true;
+                        unknownCount++;
+                    }
+
+                    if ((blpIndexes != null) && (blpIndexes[i] != -1))
+                    {
+                        archFile.BLPIndex = blpIndexes[i];
+                        archFile.Index = blpEntries[blpIndexes[i], 0].ToString("X");
+                        archFile.Flags = blpEntries[blpIndexes[i], 2].ToString("X8");
+                        archFile.DecompSize = blpEntries[blpIndexes[i], 3].ToString("X");
+                    }
+                    else
+                    {
+                        archFile.BLPIndex = -1;
+                        if (archFile.Flags == null)
+                        {
+                            archFile.Flags = "00000000";
+                        }
+                    }
+
+                    SwapEntry swapEntry;
+                    if ((swapDB != null) && swapDB.TryGetValue(archFile.EncryptedName, out swapEntry))
+                    {
+                        archFile.SwapName = swapEntry.SwapName;
+                    }
+
+                    archFile.LNKIndex = i;
+                    archFile.LNKOffset = lnkEntries[i, 0];
+                    archFile.Size = lnkEntries[i, 1];
+                    archData[i] = archFile;
+                }
+
+                //mainForm.AddToLog("Info: Archive \"" + Path.GetFileNameWithoutExtension(fileName) + "\" is successfully opened.", Color.Green);
+                if (unusedCount > 0)
+                {
+                    if (unknownCount > 0)
+                    {
+                        //mainForm.AddToLog("Info: Found " + unusedCount.ToString() + " unused and " + unknownCount.ToString() + " unknown entries.", Color.DodgerBlue);
+                    }
+                    else
+                    {
+                        //mainForm.AddToLog("Info: Found " + unusedCount.ToString() + " unused entries.", Color.DodgerBlue);
+                    }
+                }
+                else if (unknownCount > 0)
+                {
+                    //mainForm.AddToLog("Info: Found " + unknownCount.ToString() + " unknown entries.", Color.DodgerBlue);
+                }
+
+                return archData;
+            }
+            catch (Exception e)
+            {
+                //mainForm.AddToLog("Error: " + e.Message, Color.Red);
+                return null;
+            }
+        }
+
+        public static void UpdateDB(string fileName)
+        {
+            try
+            {
+                //mainForm.AddToLog("Info: Updating DB...");
+                string[,] gameDB = DumpGameDB(fileName);
+                if (nameDB == null)
+                {
+                    LoadDB(false);
+                }
+
+                bool dbUpdated = false;
+                var newDB = new List<string>(nameDB.Count);
+                for (int i = 0; i < gameDB.GetLength(0); i++)
+                {
+                    List<NameEntry> nameList;
+                    if (nameDB.TryGetValue(gameDB[i, 0], out nameList))
+                    {
+                        if (nameList[0].Indexes != null)
+                        {
+                            string currentIndex = i.ToString("X");
+                            int indIndex = nameList[0].Indexes.IndexOf(currentIndex);
+                            if (indIndex != -1)
+                            {
+                                if (indIndex == 0)
+                                {
+                                    newDB.Add(gameDB[i, 0] + "\t" + nameList[0].Name + "\t" + gameDB[i, 1] + "\t" + string.Join(",", nameList[0].Indexes));
+                                    if (nameList[0].Unused || (gameDB[i, 1] != nameList[0].Flags))
+                                    {
+                                        dbUpdated = true;
+                                    }
+                                }
+                                else
+                                {
+                                    nameList[0].Indexes.RemoveAt(indIndex);
+                                    nameList[0].Indexes.Insert(0, currentIndex);
+                                    newDB.Add(gameDB[i, 0] + "\t" + nameList[0].Name + "\t" + gameDB[i, 1] + "\t" + string.Join(",", nameList[0].Indexes));
+                                    dbUpdated = true;
+                                }
+                            }
+                            else
+                            {
+                                nameList[0].Indexes.Insert(0, currentIndex);
+                                newDB.Add(gameDB[i, 0] + "\t" + nameList[0].Name + "\t" + gameDB[i, 1] + "\t" + string.Join(",", nameList[0].Indexes));
+                                dbUpdated = true;
+                            }
+                        }
+                        else
+                        {
+                            newDB.Add(gameDB[i, 0] + "\t" + nameList[0].Name + "\t" + gameDB[i, 1] + "\t" + i.ToString("X"));
+                            dbUpdated = true;
+                        }
+
+                        if (nameList.Count == 1)
+                        {
+                            nameDB.Remove(gameDB[i, 0]);
+                        }
+                        else
+                        {
+                            nameList.RemoveAt(0);
+                        }
+                    }
+                    else
+                    {
+                        newDB.Add(gameDB[i, 0] + "\t" + "\t" + gameDB[i, 1] + "\t" + i.ToString("X"));
+                        dbUpdated = true;
+                    }
+                }
+
+                if (dbUpdated)
+                {
+                    newDB.Add("end_flag" + "\t" + "\t" + "FFFFFFFF");
+                    if (nameDB.Count > 0)
+                    {
+                        foreach (var nameList in nameDB.Values)
+                        {
+                            foreach (var nameEntry in nameList)
+                            {
+                                if (nameEntry.Indexes != null)
+                                {
+                                    newDB.Add(nameEntry.EncryptedName + "\t" + nameEntry.Name + "\t" + nameEntry.Flags + "\t" + string.Join(",", nameEntry.Indexes));
+                                }
+                                else
+                                {
+                                    newDB.Add(nameEntry.EncryptedName + "\t" + nameEntry.Name + "\t" + nameEntry.Flags);
+                                }
+                            }
+                        }
+                    }
+
+                    File.WriteAllLines(DAT, newDB, Encoding.ASCII);
+                    //mainForm.AddToLog("Info: DB updated.", Color.Green);
+                }
+                else
+                {
+                    //mainForm.AddToLog("Info: New information not found.");
+                }
+            }
+            catch (Exception e)
+            {
+                //mainForm.AddToLog("Error: " + e.Message, Color.Red);
+            }
+            finally
+            {
+                nameDB = null;
+            }
+        }
+
+        public static Tuple<string, Color> ExtractFile(ArchiveFile archFile, string savePath, bool[] userFlags)
+        {
+            try
+            {
+                Tuple<string, Color> extractResult = null;
+                using (var fs = new FileStream(lnkPath, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    fs.Position = archFile.LNKOffset;
+                    using (var fs2 = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.Read))
+                    {
+                        if ((archFile.Flags[0] != '0') || userFlags[0] || userFlags[2])
+                        {
+                            var sizeBytes = new byte[4];
+                            fs.Read(sizeBytes, 0, 4);
+                            uint decompSize = BitConverter.ToUInt32(sizeBytes, 0);
+                            fs.Position = archFile.LNKOffset;
+                            if (((archFile.Flags[0] == 'E') || (archFile.Flags[0] == 'C') || userFlags[0]) && (!userFlags[1]))
+                            {
+                                var inputBuffer = new byte[archFile.Size];
+                                fs.Read(inputBuffer, 0, (int)archFile.Size);
+                                DecryptFile(inputBuffer, decompSize);
+                                using (var ms = new MemoryStream(inputBuffer))
+                                {
+                                    if (!userFlags[3])
+                                    {
+                                        WriteDecompressedFile(ms, fs2, archFile.Size, decompSize);
+                                        if (fs2.Length != decompSize)
+                                        {
+                                            extractResult = new Tuple<string, Color>("Warning: File \"" + archFile.Name + "\" has a wrong size. ", Color.DodgerBlue);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        WriteFile(ms, fs2, archFile.Size);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                if (!userFlags[3])
+                                {
+                                    WriteDecompressedFile(fs, fs2, archFile.Size, decompSize);
+                                    if (fs2.Length != decompSize)
+                                    {
+                                        extractResult = new Tuple<string, Color>("Warning: File \"" + archFile.Name + "\" has a wrong size. ", Color.DodgerBlue);
+                                    }
+                                }
+                                else
+                                {
+                                    WriteFile(fs, fs2, archFile.Size);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            WriteFile(fs, fs2, archFile.Size);
+                        }
+                    }
+                }
+
+                return extractResult;
+            }
+            catch (Exception e)
+            {
+                return new Tuple<string, Color>("Error: File \"" + archFile.Name + "\" can't be extracted. " + e.Message, Color.Red);
+            }
+        }
+
+        public static bool SwapFile(ArchiveFile archFile, string swapDir, string fileName)
+        {
+            try
+            {
+                string sourceName = Path.GetFileName(fileName);
+                if (blpPath != null)
+                {
+                    if (archFile.BLPIndex == -1)
+                    {
+                        throw new Exception("BLP index for this file is unknown.");
+                    }
+
+                    uint fileOffset;
+                    uint decompSize;
+                    uint compSize = 0;
+                    using (var fs = new FileStream(lnkPath, FileMode.Open, FileAccess.Write, FileShare.Read))
+                    {
+                        fs.Position = fs.Length;
+                        fileOffset = (uint)fs.Position;
+                        using (var fs2 = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                        {
+                            decompSize = (uint)fs2.Length;
+                            if (archFile.Flags[0] != '0')
+                            {
+                                WriteCompressedFile(fs, fs2);
+                                compSize = (uint)fs.Length - fileOffset;
+                            }
+                            else
+                            {
+                                fs2.CopyTo(fs);
+                            }
+                        }
+
+                        if (fs.Position % 2048 > 0)
+                        {
+                            fs.Position = fs.Position - (fs.Position % 2048) + 2048;
+                        }
+
+                        var bw = new BinaryWriter(fs);
+                        if (fs.Length % 2048 > 0)
+                        {
+                            bw.BaseStream.Position -= 1;
+                            bw.Write((byte)0);
+                        }
+
+                        bw.BaseStream.Position = 0x10;
+                        bw.Write((uint)bw.BaseStream.Length);
+                        bw.BaseStream.Position = 0x20 + (archFile.LNKIndex * 0x20);
+                        bw.Write(fileOffset);
+                        bw.Write(0);
+                        if (archFile.Flags[0] != '0')
+                        {
+                            bw.Write(compSize);
+                            bw.Write(0);
+                            bw.Write(compSize);
+                        }
+                        else
+                        {
+                            bw.Write(decompSize);
+                            bw.Write(0);
+                            bw.Write(decompSize);
+                        }
+                    }
+
+                    using (var fs = new FileStream(blpPath, FileMode.Open, FileAccess.Write, FileShare.Read))
+                    {
+                        var bw = new BinaryWriter(fs);
+                        bw.BaseStream.Position = 0x10 + (archFile.BLPIndex * 0x14) + 4;
+                        if (archFile.Flags[0] != '0')
+                        {
+                            bw.Write(compSize);
+                            if (archFile.Flags[0] != '4')
+                            {
+                                bw.BaseStream.Position += 3;
+                                bw.Write((byte)0x40);
+                            }
+                            else
+                            {
+                                bw.BaseStream.Position += 4;
+                            }
+
+                            bw.Write(decompSize);
+                        }
+                        else
+                        {
+                            bw.Write(decompSize);
+                            bw.Write(0);
+                            bw.Write(0);
+                        }
+                    }
+
+                    archFile.SwapName = sourceName;
+                    if (swapDB == null)
+                    {
+                        CreateSwapDB();
+                    }
+
+                    ChangeSwapDB(new SwapEntry(archFile.EncryptedName, archFile.Index, archFile.Size.ToString("X"), archFile.Flags, archFile.DecompSize, archFile.LNKOffset.ToString("X"),
+                        archFile.SwapName), false);
+
+                    archFile.LNKOffset = fileOffset;
+                    if (archFile.Flags[0] != '0')
+                    {
+                        archFile.Size = compSize;
+                        archFile.Flags = "4" + archFile.Flags.Substring(1, 7);
+                    }
+                    else
+                    {
+                        archFile.Size = decompSize;
+                    }
+                }
+                else
+                {
+                    uint fileSize;
+                    string fileFlags;
+                    string swapDirPath = Path.GetDirectoryName(lnkPath) + @"\" + swapDir;
+                    Directory.CreateDirectory(swapDirPath);
+                    if (File.Exists(swapDirPath + sourceName))
+                    {
+                        sourceName += "_";
+                        for (int i = 2; i < 10000; i++)
+                        {
+                            if (!File.Exists(swapDirPath + sourceName + i.ToString()))
+                            {
+                                sourceName += i.ToString();
+                                break;
+                            }
+                        }
+                    }
+
+                    if (archFile.Flags[0] != '0')
+                    {
+                        using (var fs = new FileStream(swapDirPath + sourceName, FileMode.Create, FileAccess.Write, FileShare.Read))
+                        {
+                            using (var fs2 = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                            {
+                                WriteCompressedFile(fs, fs2);
+                                fileSize = (uint)fs2.Length;
+                                fileFlags = "4" + archFile.Flags.Substring(1, 7);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        File.Copy(fileName, swapDirPath + sourceName, true);
+                        fileSize = (uint)new System.IO.FileInfo(fileName).Length;
+                        fileFlags = archFile.Flags;
+                    }
+
+                    if (archFile.SwapName != null)
+                    {
+                        File.Delete(Path.GetDirectoryName(lnkPath) + @"\" + archFile.SwapName);
+                    }
+
+                    archFile.SwapName = swapDir + sourceName;
+                    if (swapDB == null)
+                    {
+                        CreateSwapDB();
+                    }
+
+                    ChangeSwapDB(new SwapEntry(archFile.EncryptedName, archFile.Index, "0", fileFlags, fileSize.ToString("X"), "0", archFile.SwapName), false);
+                }
+
+                //mainForm.AddToLog("Info: File \"" + archFile.Name + "\" is swapped with \"" + sourceName + "\".", Color.Green);
+                return true;
+            }
+            catch (Exception e)
+            {
+                //mainForm.AddToLog("Error: " + e.Message, Color.Red);
+                return false;
+            }
+        }
+
+        public static bool ResetSwap(ArchiveFile archFile)
+        {
+            try
+            {
+                SwapEntry swapEntry = swapDB[archFile.EncryptedName];
+                if (blpPath != null)
+                {
+                    archFile.Size = uint.Parse(swapEntry.Size, NumberStyles.HexNumber);
+                    archFile.Flags = swapEntry.Flags;
+                    archFile.DecompSize = swapEntry.DecompSize;
+                    archFile.LNKOffset = uint.Parse(swapEntry.LNKOffset, NumberStyles.HexNumber);
+                    using (var fs = new FileStream(lnkPath, FileMode.Open, FileAccess.Write, FileShare.Read))
+                    {
+                        var bw = new BinaryWriter(fs);
+                        bw.BaseStream.Position = 0x20 + (archFile.LNKIndex * 0x20);
+                        bw.Write(archFile.LNKOffset);
+                        bw.Write(0);
+                        bw.Write(archFile.Size);
+                        bw.Write(0);
+                        bw.Write(archFile.Size);
+                    }
+
+                    using (var fs = new FileStream(blpPath, FileMode.Open, FileAccess.Write, FileShare.Read))
+                    {
+                        var bw = new BinaryWriter(fs);
+                        bw.BaseStream.Position = 0x10 + (archFile.BLPIndex * 0x14) + 4;
+                        bw.Write(archFile.Size);
+                        bw.Write(uint.Parse(archFile.Flags, NumberStyles.HexNumber));
+                        bw.Write(uint.Parse(archFile.DecompSize, NumberStyles.HexNumber));
+                    }
+                }
+                else
+                {
+                    File.Delete(Path.GetDirectoryName(lnkPath) + @"\" + archFile.SwapName);
+                    archFile.DecompSize = "0";
+                }
+
+                archFile.SwapName = null;
+                ChangeSwapDB(swapEntry, true);
+                //mainForm.AddToLog("Info: File \"" + archFile.Name + "\" has been reset to the default value.", Color.Green);
+                return true;
+            }
+            catch (Exception e)
+            {
+                //mainForm.AddToLog("Error: " + e.Message, Color.Red);
+                return false;
+            }
+        }
+
+        private static void LoadDB(bool showInfo)
+        {
+            if (showInfo)
+            {
+                //mainForm.AddToLog("Info: Loading DB...");
+            }
+
+            using (var sr = new StreamReader(DAT, Encoding.ASCII))
+            {
+                nameDB = new Dictionary<string, List<NameEntry>>();
+                indexDB = new Dictionary<string, List<string>>();
+                bool endFlag = false;
+                while (!sr.EndOfStream)
+                {
+                    string[] dbEntry = sr.ReadLine().Split('\t');
+                    if (dbEntry[0] == "end_flag")
+                    {
+                        endFlag = true;
+                        continue;
+                    }
+
+                    NameEntry nameEntry;
+                    if (dbEntry.Length > 3)
+                    {
+                        var entryIndexes = new List<string>(dbEntry[3].Split(','));
+                        nameEntry = new NameEntry(dbEntry[0], dbEntry[1], dbEntry[2], entryIndexes, endFlag);
+                        foreach (var entryIndex in entryIndexes)
+                        {
+                            List<string> indexEntry;
+                            if (!indexDB.TryGetValue(entryIndex, out indexEntry))
+                            {
+                                indexEntry = new List<string>();
+                                indexEntry.Add(dbEntry[0]);
+                                indexDB.Add(entryIndex, indexEntry);
+                            }
+                            else
+                            {
+                                if (indexEntry.IndexOf(dbEntry[0]) == -1)
+                                {
+                                    indexEntry.Add(dbEntry[0]);
+                                }
+                            }
+                        }
+                    }
+                    else if (dbEntry.Length > 2)
+                    {
+                        nameEntry = new NameEntry(dbEntry[0], dbEntry[1], dbEntry[2], endFlag);
+                    }
+                    else
+                    {
+                        nameEntry = new NameEntry(dbEntry[0], dbEntry[1], "00000000", endFlag);
+                    }
+
+                    List<NameEntry> nameList;
+                    if (!nameDB.TryGetValue(dbEntry[0], out nameList))
+                    {
+                        nameList = new List<NameEntry>();
+                        nameList.Add(nameEntry);
+                        nameDB.Add(dbEntry[0], nameList);
+                    }
+                    else
+                    {
+                        nameList.Add(nameEntry);
+                    }
+                }
+            }
+        }
+
+        private static void LoadSwapDB()
+        {
+            bool indexMismatch = false;
+            using (var sr = new StreamReader(swapPath, Encoding.ASCII))
+            {
+                swapDB = new Dictionary<string, SwapEntry>();
+                if (blpPath != null)
+                {
+                    while (!sr.EndOfStream)
+                    {
+                        string[] dbEntry = sr.ReadLine().Split('\t');
+                        var swapEntry = new SwapEntry(dbEntry[0], dbEntry[1], dbEntry[2], dbEntry[3], dbEntry[4], dbEntry[5], dbEntry[6]);
+                        swapDB.Add(swapEntry.EncryptedName, swapEntry);
+                    }
+                }
+                else
+                {
+                    while (!sr.EndOfStream)
+                    {
+                        string[] dbEntry = sr.ReadLine().Split('\t');
+                        if (dbEntry[1] != nameDB[dbEntry[0]][0].Indexes[0])
+                        {
+                            if (!indexMismatch)
+                            {
+                                indexMismatch = true;
+                            }
+                        }
+
+                        var swapEntry = new SwapEntry(dbEntry[0], dbEntry[1], dbEntry[2], dbEntry[3], dbEntry[4], dbEntry[5], dbEntry[6]);
+                        swapDB.Add(swapEntry.EncryptedName, swapEntry);
+                    }
+                }
+            }
+
+            if (indexMismatch)
+            {
+                if (!File.Exists(Path.GetDirectoryName(lnkPath) + @"\dis_chk"))
+                {
+                    var dialogResult = MessageBox.Show("Swaps config file doesn't match the current DB version. Press \"Yes\" to update the config file. Press \"Cancel\" to disable this warning.",
+                        "Warning", MessageBoxButtons.YesNoCancel, MessageBoxIcon.Warning);
+                    if (dialogResult == DialogResult.Yes)
+                    {
+                        foreach (var swapEntry in swapDB)
+                        {
+                            swapEntry.Value.Index = nameDB[swapEntry.Value.EncryptedName][0].Indexes[0];
+                        }
+
+                        RebuildSwapDB();
+                    }
+                    else if (dialogResult == DialogResult.Cancel)
+                    {
+                        File.Create(Path.GetDirectoryName(lnkPath) + @"\dis_chk").Dispose();
+                    }
+                }
+            }
+        }
+
+        private static void CreateSwapDB()
+        {
+            using (var sw = new StreamWriter(Path.GetDirectoryName(lnkPath) + @"\mod_at.config", false, Encoding.ASCII))
+            {
+                swapDB = new Dictionary<string, SwapEntry>();
+                if (lrPath != null)
+                {
+                    using (var sr = new StreamReader(lrPath, Encoding.ASCII))
+                    {
+                        while (!sr.EndOfStream)
+                        {
+                            string[] dbEntry = sr.ReadLine().Replace("0x", string.Empty).Split(':');
+                            var swapEntry = new SwapEntry();
+                            swapEntry.Index = dbEntry[0].ToUpperInvariant().TrimStart('0');
+                            if (swapEntry.Index == string.Empty)
+                            {
+                                swapEntry.Index = "0";
+                            }
+
+                            swapEntry.EncryptedName = indexDB[swapEntry.Index][0];
+                            swapEntry.Flags = dbEntry[1].ToUpperInvariant();
+                            swapEntry.DecompSize = dbEntry[2].ToUpperInvariant();
+                            swapEntry.SwapName = dbEntry[3].Replace('/', '\\');
+                            swapEntry.Size = "0";
+                            swapEntry.LNKOffset = "0";
+                            swapDB.Add(swapEntry.EncryptedName, swapEntry);
+                            sw.WriteLine(string.Join("\t", new string[] { swapEntry.EncryptedName, swapEntry.Index, swapEntry.Size, swapEntry.Flags, swapEntry.DecompSize,
+                                swapEntry.LNKOffset, swapEntry.SwapName }));
+                        }
+                    }
+                }
+                else if (blpPath == null)
+                {
+                    lrPath = Path.GetDirectoryName(lnkPath) + @"\mod.config";
+                    File.Create(lrPath).Dispose();
+                }
+            }
+        }
+
+        private static void ChangeSwapDB(SwapEntry inputEntry, bool deleteEntry)
+        {
+            if (!deleteEntry)
+            {
+                if (swapDB.ContainsKey(inputEntry.EncryptedName))
+                {
+                    swapDB[inputEntry.EncryptedName] = inputEntry;
+                    RebuildSwapDB();
+                }
+                else
+                {
+                    swapDB.Add(inputEntry.EncryptedName, inputEntry);
+                    using (var sw = new StreamWriter(swapPath, true, Encoding.ASCII))
+                    {
+                        sw.WriteLine(string.Join("\t", new string[] { inputEntry.EncryptedName, inputEntry.Index, inputEntry.Size, inputEntry.Flags, inputEntry.DecompSize,
+                            inputEntry.LNKOffset, inputEntry.SwapName }));
+                    }
+
+                    if (lrPath != null)
+                    {
+                        using (var sw = new StreamWriter(lrPath, true, Encoding.ASCII))
+                        {
+                            sw.WriteLine(string.Join(":", new string[] { "0x" + inputEntry.Index.ToLowerInvariant(), "0x" + inputEntry.Flags.ToLowerInvariant(),
+                                "0x" + inputEntry.DecompSize.ToLowerInvariant(), inputEntry.SwapName.Replace('\\', '/') }));
+                        }
+                    }
+                }
+            }
+            else
+            {
+                swapDB.Remove(inputEntry.EncryptedName);
+                RebuildSwapDB();
+            }
+        }
+
+        private static void RebuildSwapDB()
+        {
+            using (var sw = new StreamWriter(swapPath, false, Encoding.ASCII))
+            {
+                foreach (var swapEntry in swapDB)
+                {
+                    sw.WriteLine(string.Join("\t", new string[] { swapEntry.Value.EncryptedName, swapEntry.Value.Index, swapEntry.Value.Size, swapEntry.Value.Flags,
+                        swapEntry.Value.DecompSize, swapEntry.Value.LNKOffset, swapEntry.Value.SwapName }));
+                }
+            }
+
+            if (lrPath != null)
+            {
+                using (var sw = new StreamWriter(lrPath, false, Encoding.ASCII))
+                {
+                    foreach (var swapEntry in swapDB)
+                    {
+                        sw.WriteLine(string.Join(":", new string[] { "0x" + swapEntry.Value.Index.ToLowerInvariant(), "0x" + swapEntry.Value.Flags.ToLowerInvariant(),
+                                "0x" + swapEntry.Value.DecompSize.ToLowerInvariant(), swapEntry.Value.SwapName.Replace('\\', '/') }));
+                    }
+                }
+            }
+        }
+
+        private static string[] ParseBIN(string fileName)
+        {
+            using (var ms = new MemoryStream())
+            {
+                using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    fs.CopyTo(ms);
+                }
+
+                ms.Position = 0;
+                var br = new BinaryReader(ms);
+                if (br.ReadInt32() != 0x4F4D464C)
+                {
+                    throw new Exception("Unsupported BIN file format.");
+                }
+
+                br.BaseStream.Position = 8;
+                int nameCount = br.ReadInt32();
+                var nameOffsets = new int[nameCount];
+                br.BaseStream.Position = 0x30;
+                nameOffsets[0] = br.ReadInt32() + 1;
+                for (int i = 1; i < nameCount; i++)
+                {
+                    br.BaseStream.Position += 8;
+                    nameOffsets[i] = br.ReadInt32() + 1;
+                }
+
+                var nameEntries = new string[nameCount];
+                for (int i = 0; i < nameCount; i++)
+                {
+                    br.BaseStream.Position = nameOffsets[i];
+                    var charsList = new List<char>();
+                    int charByte = br.ReadByte();
+                    while (charByte != 0)
+                    {
+                        charsList.Add((char)charByte);
+                        charByte = ms.ReadByte();
+                    }
+
+                    nameEntries[i] = new string(charsList.ToArray());
+                }
+
+                return nameEntries;
+            }
+        }
+
+        private static uint[,] ParseLNK(string fileName)
+        {
+            byte[] headerBuffer;
+            using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
+            {
+                fs.Position = 8;
+                var byteBuffer = new byte[4];
+                fs.Read(byteBuffer, 0, 4);
+                int headerSize = (BitConverter.ToInt32(byteBuffer, 0) + 1) * 32;
+                headerBuffer = new byte[headerSize];
+                fs.Position = 0;
+                fs.Read(headerBuffer, 0, headerSize);
+            }
+
+            using (var ms = new MemoryStream(headerBuffer))
+            {
+                var br = new BinaryReader(ms);
+                br.BaseStream.Position = 8;
+                int fileCount = br.ReadInt32();
+                br.BaseStream.Position = 0x20;
+                var lnkEntries = new uint[fileCount, 2];
+                for (int i = 0; i < fileCount; i++)
+                {
+                    lnkEntries[i, 0] = br.ReadUInt32();
+                    br.BaseStream.Position += 4;
+                    lnkEntries[i, 1] = br.ReadUInt32();
+                    br.BaseStream.Position += 20;
+                }
+
+                return lnkEntries;
+            }
+        }
+
+        private static uint[,] ParseBLP(string fileName)
+        {
+            using (var ms = new MemoryStream())
+            {
+                using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    fs.CopyTo(ms);
+                }
+
+                ms.Position = 0;
+                var br = new BinaryReader(ms);
+                if (br.ReadInt32() == 0x46495031)
+                {
+                    int entryCount = br.ReadInt32();
+                    var blpEntries = new uint[entryCount, 4];
+                    br.BaseStream.Position = 0x10;
+                    for (int i = 0; i < entryCount; i++)
+                    {
+                        for (int j = 0; j < 4; j++)
+                        {
+                            blpEntries[i, j] = br.ReadUInt32();
+                        }
+
+                        br.BaseStream.Position += 4;
+                    }
+
+                    return blpEntries;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+        }
+
+        private static int[] MatchIndexes(string[] nameEntries, uint[,] lnkEntries, uint[,] blpEntries)
+        {
+            var blpIndexes = new int[nameEntries.Length];
+            for (int i = 0; i < blpIndexes.Length; i++)
+            {
+                blpIndexes[i] = -1;
+            }
+
+            var dupIndexes = new List<int>();
+            for (int i = 0; i < blpEntries.GetLength(0); i++)
+            {
+                List<string> indexNames;
+                if (indexDB.TryGetValue(blpEntries[i, 0].ToString("X"), out indexNames))
+                {
+                    var foundIndexes = new List<int>();
+                    foreach (var indexName in indexNames)
+                    {
+                        int foundIndex = Array.IndexOf<string>(nameEntries, indexName);
+                        while (foundIndex != -1)
+                        {
+                            foundIndexes.Add(foundIndex);
+                            foundIndex = Array.IndexOf<string>(nameEntries, indexName, ++foundIndex);
+                        }
+                    }
+
+                    foreach (var foundIndex in foundIndexes)
+                    {
+                        if (blpEntries[i, 1] == lnkEntries[foundIndex, 1])
+                        {
+                            if (blpIndexes[foundIndex] == -1)
+                            {
+                                blpIndexes[foundIndex] = i;
+                            }
+                            else
+                            {
+                                dupIndexes.Add(foundIndex);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if (dupIndexes.Count > 0)
+            {
+                foreach (var dupIndex in dupIndexes)
+                {
+                    blpIndexes[dupIndex] = -1;
+                }
+            }
+
+            return blpIndexes;
+        }
+
+        private static string[,] DumpGameDB(string fileName)
+        {
+            using (var ms = new MemoryStream())
+            {
+                using (var fs = new FileStream(fileName, FileMode.Open, FileAccess.Read, FileShare.Read))
+                {
+                    fs.CopyTo(ms);
+                }
+
+                var byteBuffer = ms.ToArray();
+                int nameTableOffset = ByteSearch(byteBuffer, FirstName, 0, false);
+                if (nameTableOffset < 0)
+                {
+                    throw new Exception("Name table not found in the game.exe.");
+                }
+
+                int assetTableOffset = ByteSearch(byteBuffer, FirstAsset, nameTableOffset, true) - 4;
+                if (assetTableOffset < 0)
+                {
+                    throw new Exception("Asset table not found in the game.exe.");
+                }
+
+                int dataTableOffset = ByteSearch(byteBuffer, FirstData, assetTableOffset, false);
+                if (dataTableOffset < 0)
+                {
+                    throw new Exception("Data table not found in the game.exe.");
+                }
+
+                var nameOffsets = new List<int>();
+                var br = new BinaryReader(ms);
+                br.BaseStream.Position = assetTableOffset;
+                int nameStartOffset = br.ReadInt32();
+                int offsetCorrection = nameStartOffset - nameTableOffset;
+                while (nameStartOffset != 0)
+                {
+                    nameOffsets.Add(nameStartOffset - offsetCorrection);
+                    br.BaseStream.Position += 12;
+                    nameStartOffset = br.ReadInt32();
+                }
+
+                var gameDB = new string[nameOffsets.Count, 2];
+                for (int i = 0; i < nameOffsets.Count; i++)
+                {
+                    br.BaseStream.Position = nameOffsets[i];
+                    var charsList = new List<char>();
+                    int charByte = br.ReadByte();
+                    while (charByte != 0)
+                    {
+                        charsList.Add((char)charByte);
+                        charByte = ms.ReadByte();
+                    }
+
+                    gameDB[i, 0] = new string(charsList.ToArray());
+                }
+
+                br.BaseStream.Position = dataTableOffset;
+                for (int i = 0; i < nameOffsets.Count; i++)
+                {
+                    br.BaseStream.Position += 4;
+                    gameDB[i, 1] = br.ReadUInt32().ToString("X8");
+                }
+
+                return gameDB;
+            }
+        }
+
+        private static void DecryptFile(byte[] inputBuffer, uint decompSize)
+        {
+            byte[] tempKey = BitConverter.GetBytes((((decompSize + 0x3E7) * 7) / 0xB) + (decompSize % 0x11) + 0x1AC);
+            var byteList = new List<byte>();
+            for (int i = tempKey.Length - 1; i >= 0; i--)
+            {
+                if (tempKey[i] != 00)
+                {
+                    byteList.Add(tempKey[i]);
+                }
+            }
+
+            byte[] cryptKey = byteList.ToArray();
+            int cryptKeyPos = 0;
+            //byte[] doaKey = Archive_Tool.Properties.Resources.doaKey;
+            byte[] doaKey = DLC_Tool.Properties.Resources.doaKey;
+            int doaKeyPos = 0;
+            byte xorByte;
+            for (int i = 4; i < inputBuffer.Length; i++)
+            {
+                if (cryptKeyPos == cryptKey.Length)
+                {
+                    cryptKeyPos = 0;
+                }
+
+                if (doaKeyPos == doaKey.Length)
+                {
+                    doaKeyPos = 0;
+                }
+
+                xorByte = (byte)(cryptKey[cryptKeyPos] ^ doaKey[doaKeyPos]);
+                if ((inputBuffer[i] != 0) && (inputBuffer[i] != xorByte))
+                {
+                    inputBuffer[i] = (byte)(inputBuffer[i] ^ xorByte);
+                }
+
+                cryptKeyPos++;
+                doaKeyPos++;
+            }
+        }
+
+        private static void WriteDecompressedFile(Stream s, FileStream fs, uint fileSize, uint decompSize)
+        {
+            fs.SetLength(decompSize);
+            long fileEndPos = s.Position + fileSize;
+            var sizeBytes = new byte[4];
+            int chunkSize;
+            s.Position += 4;
+            while (s.Position < fileEndPos)
+            {
+                s.Read(sizeBytes, 0, 4);
+                chunkSize = BitConverter.ToInt32(sizeBytes, 0) - 0x8000;
+                if (chunkSize > 0)
+                {
+                    var inputBuffer = new byte[chunkSize];
+                    s.Read(inputBuffer, 0, chunkSize);
+                    using (var iis = new ICSharpCode.SharpZipLib.Zip.Compression.Streams.InflaterInputStream(new MemoryStream(inputBuffer)))
+                    {
+                        iis.CopyTo(fs);
+                    }
+                }
+                else
+                {
+                    chunkSize += 0x8000;
+                    var inputBuffer = new byte[chunkSize];
+                    s.Read(inputBuffer, 0, chunkSize);
+                    fs.Write(inputBuffer, 0, chunkSize);
+                }
+
+                if ((s.Position - 4) % 16 != 0)
+                {
+                    s.Position = s.Position - ((s.Position - 4) % 16) + 16;
+                }
+            }
+        }
+
+        private static int ByteSearch(byte[] byteBuffer, byte[] searchPattern, int startOffset, bool customSearch)
+        {
+            bool patternFound = false;
+            if (!customSearch)
+            {
+                for (int i = startOffset; i < byteBuffer.Length - searchPattern.Length; i++)
+                {
+                    if (byteBuffer[i] == searchPattern[0])
+                    {
+                        patternFound = true;
+                        for (int j = 1; j < searchPattern.Length; j++)
+                        {
+                            if (byteBuffer[i + j] != searchPattern[j])
+                            {
+                                patternFound = false;
+                                break;
+                            }
+                        }
+
+                        if (patternFound)
+                        {
+                            return i;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                for (int i = startOffset; i < byteBuffer.Length - searchPattern.Length; i++)
+                {
+                    if (byteBuffer[i] == searchPattern[0])
+                    {
+                        patternFound = true;
+                        for (int j = 1; j < 4; j++)
+                        {
+                            if (byteBuffer[i + j] != searchPattern[j])
+                            {
+                                patternFound = false;
+                                break;
+                            }
+                        }
+
+                        for (int j = 4; j < 8; j++)
+                        {
+                            if (byteBuffer[i + j + 4] != searchPattern[j])
+                            {
+                                patternFound = false;
+                                break;
+                            }
+                        }
+
+                        for (int j = 8; j < 12; j++)
+                        {
+                            if (byteBuffer[i + j + 8] != searchPattern[j])
+                            {
+                                patternFound = false;
+                                break;
+                            }
+                        }
+
+                        if (patternFound)
+                        {
+                            return i;
+                        }
+                    }
+                }
+            }
+
+            return -1;
+        }
+
+        private static Assembly ResolveEventHandler(Object sender, ResolveEventArgs args)
+        {
+            string dllName = new AssemblyName(args.Name).Name + ".dll";
+            if (dllName != "ICSharpCode.SharpZipLib.dll")
+            {
+                return null;
+            }
+            else
+            {
+                currentDomain.AssemblyResolve -= ResolveEventHandler;
+                //return Assembly.Load(Archive_Tool.Properties.Resources.ICSharpCode_SharpZipLib);
+                return Assembly.Load(DLC_Tool.Properties.Resources.ICSharpCode_SharpZipLib);
+            }
+        }
+
+        private static void WriteCompressedFile(FileStream fs, FileStream fs2)
+        {
+            var taskList = new List<Task<byte[]>>();
+            while (true)
+            {
+                var inputBuffer = new byte[0x4000];
+                int readCount = fs2.Read(inputBuffer, 0, 0x4000);
+                if (readCount > 0)
+                {
+                    taskList.Add(Task<byte[]>.Factory.StartNew(() => CompressChunk(inputBuffer, readCount)));
+                }
+                else
+                {
+                    break;
+                }
+            }
+
+            fs.Write(BitConverter.GetBytes((uint)fs2.Length), 0, 4);
+            foreach (var taskResult in taskList)
+            {
+                if (taskResult.Status != TaskStatus.RanToCompletion)
+                {
+                    taskResult.Wait();
+                }
+
+                fs.Write(BitConverter.GetBytes(taskResult.Result.Length + 0x8000), 0, 4);
+                fs.Write(taskResult.Result, 0, taskResult.Result.Length);
+                if ((fs.Position - 4) % 16 > 0)
+                {
+                    fs.Position = fs.Position - ((fs.Position - 4) % 16) + 16;
+                }
+            }
+
+            if ((fs.Length - 4) % 16 > 0)
+            {
+                fs.Position -= 1;
+                fs.WriteByte((byte)0);
+            }
+        }
+
+        private static byte[] CompressChunk(byte[] chunkBuffer, int chunkSize)
+        {
+            using (var ms = new MemoryStream())
+            {
+                var zs = new ICSharpCode.SharpZipLib.Zip.Compression.Streams.DeflaterOutputStream(ms);
+                zs.IsStreamOwner = false;
+                zs.Write(chunkBuffer, 0, chunkSize);
+                zs.Close();
+                return ms.ToArray();
+            }
+        }
+
+        private static void WriteFile(Stream s, FileStream fs, uint fileSize)
+        {
+            fs.SetLength(fileSize);
+            var inputBuffer = new byte[0x1000];
+            uint chunksCount = fileSize / 0x1000;
+            int lastChunkSize = (int)(fileSize % 0x1000);
+            int readCount;
+            for (int i = 0; i < chunksCount; i++)
+            {
+                readCount = s.Read(inputBuffer, 0, 0x1000);
+                fs.Write(inputBuffer, 0, readCount);
+            }
+
+            if (lastChunkSize > 0)
+            {
+                readCount = s.Read(inputBuffer, 0, lastChunkSize);
+                fs.Write(inputBuffer, 0, readCount);
+            }
+        }
+
+        /*
+        [STAThread]
+        private static void Main()
+        {
+            Application.EnableVisualStyles();
+            Application.SetCompatibleTextRenderingDefault(false);
+            currentDomain = AppDomain.CurrentDomain;
+            currentDomain.AssemblyResolve += ResolveEventHandler;
+            mainForm = new MainForm();
+            Application.Run(mainForm);
+        }
+        */
+    }
+}
