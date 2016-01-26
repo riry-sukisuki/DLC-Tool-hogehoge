@@ -416,7 +416,11 @@
                 newDlc = false;
                 ClearMainUI();
                 tbSavePath.Text = fileName;
-                dlcData = Program.OpenBCM(fileName);
+                //dlcData = Program.OpenBCM(fileName);
+                //通常のオープンファイルもこっちにしちゃおう
+                dlcData = Program.OpenBCM_超原始的修正(fileName);
+
+
                 //btnSave.Text = Program.dicLanguage["SaveBCM"];
                 setBtnSave();
 
@@ -7335,7 +7339,10 @@ RAIDOU=RAIDOU
                     {
                         throw new FileNotFoundException(null, DAT);
                     }
-                    // それでもダメなら想定外なのでヌル参照エラーが出るまで放置
+                    else
+                    {
+                        throw new ArgumentNullException("archData");
+                    }
                 }
 
                 var targetArchData = new System.Collections.Generic.List<Archive_Tool.ArchiveFile>();
@@ -7388,7 +7395,11 @@ RAIDOU=RAIDOU
                         if (archFile.Name.StartsWith(decName))
                         {
                             var dataFilePath = Path.Combine(savePath, archFile.Name);
-                            Archive_Tool.Program.ExtractFile(archFile, dataFilePath, userFlags);
+                            var result = Archive_Tool.Program.ExtractFile(archFile, dataFilePath, userFlags);
+                            if(result != null)
+                            {
+                                throw new Exception(result.Item1);
+                            }
                         }
                     }
                 }
