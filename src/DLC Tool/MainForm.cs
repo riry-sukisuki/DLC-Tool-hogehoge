@@ -5294,6 +5294,7 @@ OverwriteState=Overwrite
 SaveListInDLC=Save same name file in DLC folder
 AddStateSD=Add state (Shift+Drop)
 OriginalStateData=State data for original DLC Tool
+FileNameMustBeDigits=File name must be digits.
 DoYouStartDOA5=Do you start DEAD OR ALIVE 5 Last Round?
 OverwritingKillsSkipedItem=Skipped item(s) will be lost with the overwriting.
 SetDestinationToSave=Set destination to save.
@@ -5512,6 +5513,9 @@ RAIDOU=RAIDOU
             if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
             // エラー
             from = "Error"; def = "Error";
+            if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
+            // ファイル名は数字のみ使用できます
+            from = "FileNameMustBeDigits"; def = "File name must be digits.";
             if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
             // DEAD OR ALIVE 5 Last Round を起動しますか？
             from = "DoYouStartDOA5"; def = "Do you start DEAD OR ALIVE 5 Last Round?";

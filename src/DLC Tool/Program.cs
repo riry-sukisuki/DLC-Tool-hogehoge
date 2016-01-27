@@ -249,7 +249,7 @@
             ulong dlcNum;
             if (!ulong.TryParse(dlcName, out dlcNum))
             {
-                throw new Exception("ファイル名は数字のみ使用できます");
+                throw new Exception(dicLanguage["FileNameMustBeDigits"]);
             }
 
             ulong checkSum = 0;
