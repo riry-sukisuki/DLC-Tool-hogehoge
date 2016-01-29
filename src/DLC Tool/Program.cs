@@ -11,6 +11,8 @@
 
     internal static class Program
     {
+        // これらは外部ファイルで指定するように仕様変更
+        /*
         public static readonly Dictionary<byte, string> CharNames = new Dictionary<byte, string>()
         {
             { 0, "ZACK" }, { 1, "TINA" }, { 2, "JANNLEE" }, { 3, "EIN" }, { 4, "HAYABUSA" }, { 5, "KASUMI" }, { 6, "GENFU" }, { 7, "HELENA" }, { 8, "LEON" }, { 9, "BASS" },
@@ -64,6 +66,14 @@
             {45, 32}, // ほのか
             {46, 10}  // 雷道
         };
+
+            
+        public static readonly List<byte> FemaleIDs = new List<byte> { 1, 5, 7, 10, 12, 13, 15, 16, 20, 21, 30, 32, 33, 39, 40, 42, 43, 44, 45 };
+        */
+        public static Dictionary<byte, string> CharNames;
+        public static Dictionary<byte, string> CharNamesJpn;
+        public static Dictionary<byte, byte> NumOfSlots;
+        public static List<byte> FemaleIDs;
 
         public struct SlotTable<T>
         {
@@ -139,7 +149,6 @@
 
         public static Dictionary<string, string> dicLanguage = new Dictionary<string, string> { };
 
-        public static readonly List<byte> FemaleIDs = new List<byte> { 1, 5, 7, 10, 12, 13, 15, 16, 20, 21, 30, 32, 33, 39, 40, 42, 43, 44, 45 };
 
         private static List<string> decNames, encNames;
 
@@ -612,8 +621,12 @@
                                 MessageBox.Show("[" + s + "]の名前に問題があるため読込はスキップされました", "注意", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                 */
 
-                                System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\$1");
-                                string mes = regex.Replace(dicLanguage["SkippedBadNameX"], "[" + s + "]");
+                                var CharInfoPath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"CharactersInfo");
+                                var subPath = Path.Combine(Path.GetFileName(Path.GetDirectoryName(CharInfoPath)), Path.GetFileName(CharInfoPath));
+
+                                System.Text.RegularExpressions.Regex regexReplace = new System.Text.RegularExpressions.Regex(@"(.+)");
+                                string mes = regexReplace.Replace("[" + s + "]", dicLanguage["SkippedBadNameX"]) + "\n" +
+                                     regexReplace.Replace(subPath, dicLanguage["ProblemMyBeSolvedByEditingX"]);
 
                                 MessageBox.Show(mes, dicLanguage["Notice"], MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             }

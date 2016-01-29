@@ -192,7 +192,8 @@
         {
             InitializeComponent();
             setVersion();
-            TranslateInitialUI();
+            SetCharNames();
+            TranslateInitialUI(true);
             SetDATList();
 
             //dgvChars.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -2691,10 +2692,27 @@
                         }
                     }
 
+
+                    // common, initial を exe に埋め込んでいたときの記述
+                    /*
                     Program.SlotTable<bool> NotComIniSlotTable = GetNotComIniSlotTable();
                     Program.SlotTable<string> ComIniSlotCommentTable = GetComIniSlotCommentTable();
                     Program.SlotTable<string> SlotOwnerTable = GetSlotOwnerTable();
                     Program.SlotTable<bool> UsableSlotTable = GetNotComIniSlotTable();
+                    */
+                    Program.SlotTable<string> ComIniSlotCommentTable = GetComIniSlotCommentTable();
+                    Program.SlotTable<bool> NotComIniSlotTable = new Program.SlotTable<bool>(true);
+                    for (int i = 0; i < ComIniSlotCommentTable.Count(); i++)
+                    {
+                        for (int j = 0; j < ComIniSlotCommentTable[i].Length; j++)
+                        {
+                            var ComIniSlotComment = ComIniSlotCommentTable[i, j];
+                            NotComIniSlotTable[i, j] = (ComIniSlotCommentTable[i, j] == "");
+                        }
+                    }
+                    Program.SlotTable<string> SlotOwnerTable = GetSlotOwnerTable();
+                    Program.SlotTable<bool> UsableSlotTable = new Program.SlotTable<bool>(true);
+
                     for (int i = 0; i < UsableSlotTable.Count(); i++)
                     {
                         for (int j = 0; j < UsableSlotTable[i].Length; j++)
@@ -4730,7 +4748,7 @@
             }
         }
 
-
+        // common, initial 情報を完全にファイルで管理する更新にともなって使われなくなる。
         private Program.SlotTable<bool> GetNotComIniSlotTable() // Dictionary とかを使ったほうがいいのだろうけどどうせここは計算時間の主要項じゃないし。
         {
 
@@ -4833,8 +4851,8 @@
         // このままでいいことにしよう。
         private Program.SlotTable<string> GetComIniSlotCommentTable()
         {
-            Program.SlotTable<string> ComIniSlotCommentTable = new Program.SlotTable<string>("common,initial");
-
+            //Program.SlotTable<string> ComIniSlotCommentTable = new Program.SlotTable<string>("common,initial");
+            Program.SlotTable < string > ComIniSlotCommentTable = new Program.SlotTable<string>("");
 
             // Lists フォルダを読んでおく（GetSlotOwnerTable のほぼコピー）
             string[] listpaths = null;
@@ -5246,7 +5264,92 @@
             return SlotOwnerTable;
         }
 
-        private void TranslateInitialUI()
+
+        public void SetCharNames()
+        {
+            bool LoadLanguage = false;
+            try
+            {
+                // リストファイルを読み込み、「追加」のところに追加する
+
+                catMale.DropDownItems.Clear();
+                catFemale.DropDownItems.Clear();
+                var CharInfoPath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"CharactersInfo");
+                System.Text.RegularExpressions.Regex regexIgnore = new System.Text.RegularExpressions.Regex(@"^\s*\/\/|^\s*$");
+                System.Text.RegularExpressions.Regex regexRead = new System.Text.RegularExpressions.Regex(@"^([A-Z0-9]+)\s*=\s*(\d+)\s*,\s*(Male|Female)\s*,\s*(\d+)\s*$");
+                using (var sr = new StreamReader(CharInfoPath))
+                {
+                    Program.CharNames = new System.Collections.Generic.Dictionary<byte, string>();
+                    Program.NumOfSlots = new System.Collections.Generic.Dictionary<byte, byte>();
+                    Program.FemaleIDs = new System.Collections.Generic.List<byte>();
+
+                    int linecount = 0;
+                    while (!sr.EndOfStream)
+                    {
+                        linecount++;
+                        var line = sr.ReadLine();
+                        if (regexIgnore.IsMatch(line))
+                        {
+                            continue;
+                        }
+                        var mc = regexRead.Matches(line);
+                        if (mc.Count == 0)
+                        {
+                            TranslateInitialUI(false);
+                            LoadLanguage = true;
+                            System.Text.RegularExpressions.Regex regexReplace = new System.Text.RegularExpressions.Regex(@"(.+)");
+                            var msg = regexReplace.Replace(
+                                Path.Combine(Path.GetFileName(Path.GetDirectoryName(CharInfoPath)), Path.GetFileName(CharInfoPath)), Program.dicLanguage["FormatOfLineInXIsIncorrect"]) + "\n\n" +
+                                linecount + ": " + line;
+                                
+                            
+                            throw new FormatException(msg);
+                        }
+                        else
+                        {
+                            var m = mc[0]; // インデクサが1オリジンなので注意
+                            var Name = m.Groups[1].Value;
+                            var ID = byte.Parse(m.Groups[2].Value);
+                            Program.CharNames[ID] = Name;
+                            Program.NumOfSlots[ID] = byte.Parse(m.Groups[4].Value);
+                            if (m.Groups[3].Value == "Male")
+                            {
+                                catMale.DropDownItems.Add(Name);
+                                catMale.DropDownItems[catMale.DropDownItems.Count - 1].Click += AddCharacter;
+                            }
+                            else
+                            {
+                                Program.FemaleIDs.Add(ID);
+                                catFemale.DropDownItems.Add(Name);
+                                catFemale.DropDownItems[catFemale.DropDownItems.Count - 1].Click += AddCharacter;
+                            }
+
+                        }
+                    }
+                }
+
+
+                // 念のためソート
+                Program.FemaleIDs.Sort();
+                //MessageBox.Show(Program.FemaleIDs[0] + ", " + Program.FemaleIDs[1] + ", " + Program.FemaleIDs[2] + ", " + Program.FemaleIDs[3]);
+
+                // 表示用の追加
+                Program.CharNamesJpn = new System.Collections.Generic.Dictionary<byte, string>(Program.CharNames);
+            }
+            catch (Exception e)
+            {
+               if(!LoadLanguage)
+                {
+                    TranslateInitialUI(false);
+                }
+                
+                MessageBox.Show(e.Message, Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // プログラムを終了
+                Environment.Exit(0);
+            }
+        }
+
+        private void TranslateInitialUI(bool withCharNames)
         {
             string prtDir = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location);
             string lngSubPath = @"Languages\" + Application.CurrentCulture + ".lng";
@@ -5309,9 +5412,11 @@ SkippedNItems=$1 unsupported item(s) was skipped.
 NotFoundNameX=Unable to found $1 from the database.
 NotFoundSomeOfFilesXOfCharY=Unable to found some of $1 files for $2.
 SkippedBadNameX=$1 was skipped because of its unsupported name.
-NeedDAT=This program requires at least one ""DAT\*.dat"" file.
+ProblemMyBeSolvedByEditingX=The Problem may be solved by editing ""$1.""
+NeedDAT =This program requires at least one ""DAT\*.dat"" file.
 NotPureDLCFolder = Save path has unknown items. DLC is not saved.
-ZACK=ZACK
+FormatOfLineInXIsIncorrect=The format of following line in ""$1"" is not correct.
+ZACK =ZACK
 TINA=TINA
 JANNLEE=JANNLEE
 EIN=EIN
@@ -5591,14 +5696,41 @@ RAIDOU=RAIDOU
             // $2の$1ファイルのいずれかが見つかりません
             from = "NotFoundSomeOfFilesXOfCharY"; def = "Unable to found some of $1 files for $2.";
             if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
-            // $1の名前に問題があるため読込はスキップされました"
+            // $1の名前に問題があるため読込はスキップされました
             from = "SkippedBadNameX"; def = "$1 was skipped because of its unsupported name.";
+            if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
+            // "$1" を修正することで問題が解決するかもしれません
+            from = "ProblemMyBeSolvedByEditingX"; def = @"The Problem may be solved by editing ""$1.""";
             if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
             // "DAT\*.dat" ファイルが少なくとも一つ必要です
             from = "NeedDAT"; def = @"This program requires at least one ""DAT\*.dat"" file.";
             if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
+            // "$1" 内の以下の行のフォーマットが正しくありません
+            from = "FormatOfLineInXIsIncorrect"; def = @"The format of following line in ""$1"" is not correct.";
+            if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
 
             // キャラクター名
+            if (withCharNames)
+            {
+                foreach (var element in Program.CharNames)
+                {
+                    from = def = element.Value;
+                    if (Program.dicLanguage.ContainsKey(from)) Program.CharNamesJpn[element.Key] = Program.dicLanguage[from]; else Program.CharNamesJpn[element.Key] = Program.dicLanguage[from] = def;
+                }
+
+                foreach (ToolStripItem element in catMale.DropDownItems)
+                {
+                    from = def = element.Text;
+                    if (Program.dicLanguage.ContainsKey(from)) element.Text = Program.dicLanguage[from];
+                }
+                foreach (ToolStripItem element in catFemale.DropDownItems)
+                {
+                    from = def = element.Text;
+                    if (Program.dicLanguage.ContainsKey(from)) element.Text = Program.dicLanguage[from];
+                }
+            }
+
+            /*
             foreach (var element in Program.CharNames)
             {
                 from = def = element.Value;
@@ -5638,6 +5770,7 @@ RAIDOU=RAIDOU
             this.id44.Text = Program.CharNamesJpn[44];
             this.id45.Text = Program.CharNamesJpn[45];
             this.id46.Text = Program.CharNamesJpn[46];
+            */
         }
 
 
