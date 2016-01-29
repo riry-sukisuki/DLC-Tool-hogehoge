@@ -190,12 +190,12 @@
         private FormsTimerTest TimerForSave;
         public MainForm()
         {
+
             InitializeComponent();
             setVersion();
             SetCharNames();
             TranslateInitialUI(true);
             SetDATList();
-
             //dgvChars.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 
 
@@ -454,7 +454,7 @@
                 for (int i = 0; i < dlcData.Chars.Count; i++)
                 {
                     dgvChars.Rows.Add();
-                    dgvChars.Rows[i].Cells[0].Value = Program.CharNamesJpn[dlcData.Chars[i].ID];
+                    dgvChars.Rows[i].Cells[0].Value = GetCharNamesJpn(dlcData.Chars[i].ID);// Program.CharNamesJpn[dlcData.Chars[i].ID];
                     dgvChars.Rows[i].Cells[1].Value = dlcData.Chars[i].CostumeSlot.ToString();
                     dgvChars.Rows[i].Cells[2].Value = dlcData.Chars[i].AddTexsCount.ToString();
                     //dgvChars.Rows[i].Cells[3].Value = dlcData.Chars[i].Comment;
@@ -1709,7 +1709,7 @@
                     for (int i = 0; i < dlcData.Chars.Count; i++)
                     {
                         dgvChars.Rows.Add();
-                        dgvChars.Rows[i].Cells[0].Value = Program.CharNamesJpn[dlcData.Chars[i].ID];
+                        dgvChars.Rows[i].Cells[0].Value = GetCharNamesJpn(dlcData.Chars[i].ID);// Program.CharNamesJpn[dlcData.Chars[i].ID];
                         dgvChars.Rows[i].Cells[1].Value = dlcData.Chars[i].CostumeSlot.ToString();
                         dgvChars.Rows[i].Cells[2].Value = dlcData.Chars[i].AddTexsCount.ToString();
 
@@ -1855,7 +1855,7 @@
                         for (int i = 0; i < dlcData.Chars.Count; i++)
                         {
                             dgvChars.Rows.Add();
-                            dgvChars.Rows[i].Cells[0].Value = Program.CharNamesJpn[dlcData.Chars[i].ID];
+                            dgvChars.Rows[i].Cells[0].Value = GetCharNamesJpn(dlcData.Chars[i].ID);// Program.CharNamesJpn[dlcData.Chars[i].ID];
                             dgvChars.Rows[i].Cells[1].Value = dlcData.Chars[i].CostumeSlot.ToString();
                             dgvChars.Rows[i].Cells[2].Value = dlcData.Chars[i].AddTexsCount.ToString();
 
@@ -2172,7 +2172,7 @@
                 // あっちは index + 1 だけど index == Length を許してないから間違いではない。
                 dlcData.Chars.Insert(index, newChar);
                 dgvChars.Rows.Insert(index);
-                dgvChars.Rows[index].Cells[0].Value = Program.CharNamesJpn[newChar.ID];
+                dgvChars.Rows[index].Cells[0].Value = GetCharNamesJpn(newChar.ID);// Program.CharNamesJpn[newChar.ID];
                 dgvChars.Rows[index].Cells[1].Value = newChar.CostumeSlot.ToString();
                 dgvChars.Rows[index].Cells[2].Value = newChar.AddTexsCount.ToString();
                 //newChar.Comment = "";// GetComment()";
@@ -2187,7 +2187,7 @@
                 // これは一番下に追加する処理
                 dlcData.Chars.Add(newChar);
                 dgvChars.Rows.Add();
-                dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[0].Value = Program.CharNamesJpn[newChar.ID];
+                dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[0].Value = GetCharNamesJpn(newChar.ID);// Program.CharNamesJpn[newChar.ID];
                 dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[1].Value = newChar.CostumeSlot.ToString();
                 dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[2].Value = newChar.AddTexsCount.ToString();
                 //newChar.Comment = "";// GetComment()";
@@ -2574,7 +2574,7 @@
                     {
                         dlcData.Chars[i] = result[i];
                         byte ID = dlcData.Chars[i].ID;
-                        dgvChars.Rows[i].Cells[0].Value = Program.CharNamesJpn[ID];
+                        dgvChars.Rows[i].Cells[0].Value = GetCharNamesJpn(ID);// Program.CharNamesJpn[ID];
                         dgvChars.Rows[i].Cells[1].Value = dlcData.Chars[i].CostumeSlot.ToString();
                         dgvChars.Rows[i].Cells[2].Value = dlcData.Chars[i].AddTexsCount.ToString();
                         //dgvChars.Rows[i].Cells[3].Value = dlcData.Chars[i].Comment;
@@ -3008,7 +3008,7 @@
             for (int i = 0; i < dlcData.Chars.Count; i++)
             {
                 dlcData.Chars[i] = newChars[i];
-                dgvChars.Rows[i].Cells[0].Value = Program.CharNamesJpn[dlcData.Chars[i].ID];
+                dgvChars.Rows[i].Cells[0].Value = GetCharNamesJpn(dlcData.Chars[i].ID, false);//  Program.CharNamesJpn[dlcData.Chars[i].ID];
                 dgvChars.Rows[i].Cells[1].Value = dlcData.Chars[i].CostumeSlot.ToString();
                 dgvChars.Rows[i].Cells[2].Value = dlcData.Chars[i].AddTexsCount.ToString();
                 showComment(i);
@@ -3102,7 +3102,7 @@
             for (int i = 0; i < dlcData.Chars.Count; i++)
             {
                 dlcData.Chars[i] = newChars[i];
-                dgvChars.Rows[i].Cells[0].Value = Program.CharNamesJpn[dlcData.Chars[i].ID];
+                dgvChars.Rows[i].Cells[0].Value = GetCharNamesJpn(dlcData.Chars[i].ID, false);//  Program.CharNamesJpn[dlcData.Chars[i].ID];
                 dgvChars.Rows[i].Cells[1].Value = dlcData.Chars[i].CostumeSlot.ToString();
                 dgvChars.Rows[i].Cells[2].Value = dlcData.Chars[i].AddTexsCount.ToString();
                 showComment(i);
@@ -3211,14 +3211,14 @@
             for (int i = fromIndex; i != toIndex; i += step)
             {
                 dlcData.Chars[i] = dlcData.Chars[i + step];
-                dgvChars.Rows[i].Cells[0].Value = Program.CharNamesJpn[dlcData.Chars[i].ID];
+                dgvChars.Rows[i].Cells[0].Value = GetCharNamesJpn(dlcData.Chars[i].ID, false);//  Program.CharNamesJpn[dlcData.Chars[i].ID];
                 dgvChars.Rows[i].Cells[1].Value = dlcData.Chars[i].CostumeSlot.ToString();
                 dgvChars.Rows[i].Cells[2].Value = dlcData.Chars[i].AddTexsCount.ToString();
                 //dgvChars.Rows[i].Cells[3].Value = dlcData.Chars[i].Comment;
                 showComment(i);
             }
             dlcData.Chars[toIndex] = temp;
-            dgvChars.Rows[toIndex].Cells[0].Value = Program.CharNamesJpn[dlcData.Chars[toIndex].ID];
+            dgvChars.Rows[toIndex].Cells[0].Value = GetCharNamesJpn(dlcData.Chars[toIndex].ID, false);//  Program.CharNamesJpn[dlcData.Chars[toIndex].ID];
             dgvChars.Rows[toIndex].Cells[1].Value = dlcData.Chars[toIndex].CostumeSlot.ToString();
             dgvChars.Rows[toIndex].Cells[2].Value = dlcData.Chars[toIndex].AddTexsCount.ToString();
             //dgvChars.Rows[ind2].Cells[3].Value = dlcData.Chars[toIndex].Comment;
@@ -3513,7 +3513,7 @@
                         // dlcData の変更を表示に反映
                         for (int i = dragStartIndexes[0]; i <= dragStartIndexes[dragStartIndexes.Length - 1]; i++)
                         {
-                            dgvChars.Rows[i].Cells[0].Value = Program.CharNamesJpn[dlcData.Chars[i].ID];
+                            dgvChars.Rows[i].Cells[0].Value = GetCharNamesJpn(dlcData.Chars[i].ID, false);// Program.CharNamesJpn[dlcData.Chars[i].ID];
                             dgvChars.Rows[i].Cells[1].Value = dlcData.Chars[i].CostumeSlot.ToString();
                             dgvChars.Rows[i].Cells[2].Value = dlcData.Chars[i].AddTexsCount.ToString();
                             //dgvChars.Rows[i].Cells[3].Value = dlcData.Chars[i].Comment;
@@ -3767,7 +3767,7 @@
                         for (int i = 0; i < dlcData.Chars.Count; i++)
                         {
                             dgvChars.Rows.Add();
-                            dgvChars.Rows[i].Cells[0].Value = Program.CharNamesJpn[dlcData.Chars[i].ID];
+                            dgvChars.Rows[i].Cells[0].Value = GetCharNamesJpn(dlcData.Chars[i].ID);// Program.CharNamesJpn[dlcData.Chars[i].ID];
                             dgvChars.Rows[i].Cells[1].Value = dlcData.Chars[i].CostumeSlot.ToString();
                             dgvChars.Rows[i].Cells[2].Value = dlcData.Chars[i].AddTexsCount.ToString();
                             //dlcData.Chars[i].Comment = "";// GetComment()";
@@ -3832,7 +3832,7 @@
                     for (int i = 0; i < dlcData.Chars.Count; i++)
                     {
                         dgvChars.Rows.Add();
-                        dgvChars.Rows[i].Cells[0].Value = Program.CharNamesJpn[dlcData.Chars[i].ID];
+                        dgvChars.Rows[i].Cells[0].Value = GetCharNamesJpn(dlcData.Chars[i].ID);// Program.CharNamesJpn[dlcData.Chars[i].ID];
                         dgvChars.Rows[i].Cells[1].Value = dlcData.Chars[i].CostumeSlot.ToString();
                         dgvChars.Rows[i].Cells[2].Value = dlcData.Chars[i].AddTexsCount.ToString();
                         //dlcData.Chars[i].Comment = "";// GetComment()";
@@ -3910,7 +3910,7 @@
                 dlcData.Chars.Insert(index + 0 + 0, newChars[i]);
 
                 dgvChars.Rows.Insert(index + 0 + 0);
-                dgvChars.Rows[index + 0 + 0].Cells[0].Value = Program.CharNamesJpn[newChars[i].ID];
+                dgvChars.Rows[index + 0 + 0].Cells[0].Value = GetCharNamesJpn(newChars[i].ID);// Program.CharNamesJpn[newChars[i].ID];
                 dgvChars.Rows[index + 0 + 0].Cells[1].Value = newChars[i].CostumeSlot.ToString();
                 dgvChars.Rows[index + 0 + 0].Cells[2].Value = newChars[i].AddTexsCount.ToString();
                 //dgvChars.Rows[index + 0 + 0].Cells[3].Value = newChar.Comment;
@@ -3924,74 +3924,7 @@
                 dgvChars.Rows[index + 0 + i].Selected = true;
             }
 
-
-            /*
-            if (dgvChars.SelectedRows.Count != 1)
-            {
-                MessageBox.Show("コスチューム複数選択時の複製処理は未実装です。");
-                return;
-            }
-
-            int index;
-            Character curChar;
-            try
-            {
-                index = dgvChars.SelectedRows[0].Index;
-                curChar = dlcData.Chars[index];
-            }
-            catch
-            {
-                return;
-            }
-
-
-
-            // AddCharacter をある程度コピー
-            var newChar = new Character();
-            newChar.ID = curChar.ID;
-            newChar.Female = curChar.Female;
-            newChar.CostumeSlot = curChar.CostumeSlot; // これもコピーしてしまおう
-            newChar.Comment = curChar.Comment;
-            newChar.AddTexsCount = curChar.AddTexsCount;
-            for (int i = 0; i < curChar.HStyles.Count; i++)
-            {
-                newChar.HStyles.Add(new Hairstyle(curChar.HStyles[i].Hair, curChar.HStyles[i].Face));
-            }
-            for (int i = 0; i < curChar.Files.Length; i++)
-            {
-                newChar.Files[i] = curChar.Files[i];
-            }
-
-
-            // これが今の挿入処理
-            dlcData.Chars.Insert(index + 1, newChar);
-
-            dgvChars.Rows.Insert(index + 1);
-            dgvChars.Rows[index + 1].Cells[0].Value = Program.CharNamesJpn[newChar.ID];
-            dgvChars.Rows[index + 1].Cells[1].Value = newChar.CostumeSlot.ToString();
-            dgvChars.Rows[index + 1].Cells[2].Value = newChar.AddTexsCount.ToString();
-            //dgvChars.Rows[index + 1].Cells[3].Value = newChar.Comment;
-            showComment(index + 1);
-            dgvChars.Rows[index + 1].Selected = true;
-
-
-            */
-            // これは一番下に追加する処理。今はやめた。
-            /*
-            dlcData.Chars.Add(newChar);
-
-            dgvChars.Rows.Add();
-            dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[0].Value = Program.CharNamesJpn[newChar.ID];
-            dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[1].Value = newChar.CostumeSlot.ToString();
-            dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[2].Value = newChar.AddTexsCount.ToString();
-            //dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[3].Value = newChar.Comment();
-            showComment(dgvChars.Rows.Count - 1);
-            dgvChars.Rows[dgvChars.Rows.Count - 1].Selected = true;
-
-            // これも要らなくなることに注意
-            btnCharsDelete.Enabled = true;
-            btnFilesAdd.Enabled = true;
-            */
+            
 
             setEgvCharsSlotColor();
 
@@ -4011,8 +3944,20 @@
             {
                 slotCount[dlcData.Chars[i]]++;
             }
-            Program.SlotTable<bool> NotComIniSlotTable = GetNotComIniSlotTable();
+            //Program.SlotTable<bool> NotComIniSlotTable = GetNotComIniSlotTable();
             Program.SlotTable<bool> UsableSlotTable = GetUsableSlotTable();
+            Program.SlotTable<string> ComIniSlotCommentTable = GetComIniSlotCommentTable();
+            Program.SlotTable<bool> NotComIniSlotTable = new Program.SlotTable<bool>(true);
+            for (int i = 0; i < ComIniSlotCommentTable.Count(); i++)
+            {
+                for (int j = 0; j < ComIniSlotCommentTable[i].Length; j++)
+                {
+                    var ComIniSlotComment = ComIniSlotCommentTable[i, j];
+                    NotComIniSlotTable[i, j] = (ComIniSlotCommentTable[i, j] == "");
+                }
+            }
+
+
             for (int i = 0; i < dgvChars.Rows.Count; i++)
             {
                 dgvChars.Rows[i].Cells[1].Style.BackColor = getSlotBackColor(slotCount, NotComIniSlotTable, UsableSlotTable, dlcData.Chars[i]);
@@ -4659,7 +4604,7 @@
                                 // ボタンでのコピーだけ index + 1 だけどあっちは index == Length を許してないから間違いではない。
                                 dlcData.Chars.Insert(index, newChar);
                                 dgvChars.Rows.Insert(index);
-                                dgvChars.Rows[index].Cells[0].Value = Program.CharNamesJpn[newChar.ID];
+                                dgvChars.Rows[index].Cells[0].Value = GetCharNamesJpn(newChar.ID);// Program.CharNamesJpn[newChar.ID];
                                 dgvChars.Rows[index].Cells[1].Value = newChar.CostumeSlot.ToString();
                                 dgvChars.Rows[index].Cells[2].Value = newChar.AddTexsCount.ToString();
                                 //dgvChars.Rows[index].Cells[3].Value = newChar.Comment;
@@ -4673,7 +4618,7 @@
                                 dlcData.Chars.Add(newChar);
 
                                 dgvChars.Rows.Add();
-                                dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[0].Value = Program.CharNamesJpn[newChar.ID];
+                                dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[0].Value = GetCharNamesJpn(newChar.ID);// Program.CharNamesJpn[newChar.ID];
                                 dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[1].Value = newChar.CostumeSlot.ToString();
                                 dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[2].Value = newChar.AddTexsCount.ToString();
                                 //dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[3].Value = newChar.Comment;
@@ -4748,6 +4693,7 @@
             }
         }
 
+        /*
         // common, initial 情報を完全にファイルで管理する更新にともなって使われなくなる。
         private Program.SlotTable<bool> GetNotComIniSlotTable() // Dictionary とかを使ったほうがいいのだろうけどどうせここは計算時間の主要項じゃないし。
         {
@@ -4793,7 +4739,7 @@
 
             return NotComIniSlotTable;
         }
-
+        */
         private Program.SlotTable<bool> GetUsableSlotTable()
         {
 
@@ -4883,7 +4829,7 @@
                         try
                         {
                             // 順序を逆転させないこと！
-                            LCands.Add(Program.OpenState(listpaths[k]));
+                            LCands.Add(Program.OpenState(listpaths[k], false));
                             LCandPaths.Add(listpaths[k]);
                         }
                         catch { }
@@ -5046,7 +4992,7 @@
                         try
                         {
                             // 順序を逆転させないこと！
-                            LCands0.Add(Program.OpenState(listpaths[k]));
+                            LCands0.Add(Program.OpenState(listpaths[k], false));
                             LCandPaths0.Add(listpaths[k]);
                         }
                         catch { }
@@ -5060,9 +5006,12 @@
             for (int i = 0; i < brothers.Length; i++)
             {
                 var LCands = new System.Collections.Generic.List<DLCData>();
-                LCands.AddRange(LCands0);
                 System.Collections.Generic.List<string> LCandPaths = new System.Collections.Generic.List<string>();
-                LCandPaths.AddRange(LCandPaths0);
+                if (LCands0 != null && LCandPaths0 != null)
+                {
+                    LCands.AddRange(LCands0);
+                    LCandPaths.AddRange(LCandPaths0);
+                }
 
                 //MessageBox.Show(((brothers[i] != SavePath) + ", " + ( regex.IsMatch(brothers[i]))));
 
@@ -5231,7 +5180,7 @@
                         {
                             if (listdata == null)
                             {
-                                listdata = Program.OpenState(listpath);
+                                listdata = Program.OpenState(listpath, false);
                             }
 
                             for (int k = 0; k < listdata.Chars.Count; k++)
@@ -5412,7 +5361,8 @@ SkippedNItems=$1 unsupported item(s) was skipped.
 NotFoundNameX=Unable to found $1 from the database.
 NotFoundSomeOfFilesXOfCharY=Unable to found some of $1 files for $2.
 SkippedBadNameX=$1 was skipped because of its unsupported name.
-ProblemMyBeSolvedByEditingX=The Problem may be solved by editing ""$1.""
+IDXIsUnknown=ID ""$1"" is unknown.
+ProblemMayBeSolvedByEditingX =The Problem may be solved by editing ""$1.""
 NeedDAT =This program requires at least one ""DAT\*.dat"" file.
 NotPureDLCFolder = Save path has unknown items. DLC is not saved.
 FormatOfLineInXIsIncorrect=The format of following line in ""$1"" is not correct.
@@ -5699,8 +5649,11 @@ RAIDOU=RAIDOU
             // $1の名前に問題があるため読込はスキップされました
             from = "SkippedBadNameX"; def = "$1 was skipped because of its unsupported name.";
             if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
+            // 未知の ID "$1" が検出されました
+            from = "IDXIsUnknown"; def = @" ID ""$1"" is unknown.";
+            if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
             // "$1" を修正することで問題が解決するかもしれません
-            from = "ProblemMyBeSolvedByEditingX"; def = @"The Problem may be solved by editing ""$1.""";
+            from = "ProblemMayBeSolvedByEditingX"; def = @"The Problem may be solved by editing ""$1.""";
             if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
             // "DAT\*.dat" ファイルが少なくとも一つ必要です
             from = "NeedDAT"; def = @"This program requires at least one ""DAT\*.dat"" file.";
@@ -5730,47 +5683,7 @@ RAIDOU=RAIDOU
                 }
             }
 
-            /*
-            foreach (var element in Program.CharNames)
-            {
-                from = def = element.Value;
-                if (Program.dicLanguage.ContainsKey(from)) Program.CharNamesJpn[element.Key] = Program.dicLanguage[from]; else Program.CharNamesJpn[element.Key] = Program.dicLanguage[from] = def;
-            }
-            this.id0.Text = Program.CharNamesJpn[0];
-            this.id1.Text = Program.CharNamesJpn[1];
-            this.id2.Text = Program.CharNamesJpn[2];
-            this.id3.Text = Program.CharNamesJpn[3];
-            this.id4.Text = Program.CharNamesJpn[4];
-            this.id5.Text = Program.CharNamesJpn[5];
-            this.id6.Text = Program.CharNamesJpn[6];
-            this.id7.Text = Program.CharNamesJpn[7];
-            this.id8.Text = Program.CharNamesJpn[8];
-            this.id9.Text = Program.CharNamesJpn[9];
-            this.id10.Text = Program.CharNamesJpn[10];
-            this.id11.Text = Program.CharNamesJpn[11];
-            this.id12.Text = Program.CharNamesJpn[12];
-            this.id13.Text = Program.CharNamesJpn[13];
-            this.id14.Text = Program.CharNamesJpn[14];
-            this.id15.Text = Program.CharNamesJpn[15];
-            this.id16.Text = Program.CharNamesJpn[16];
-            this.id19.Text = Program.CharNamesJpn[19];
-            this.id20.Text = Program.CharNamesJpn[20];
-            this.id21.Text = Program.CharNamesJpn[21];
-            this.id24.Text = Program.CharNamesJpn[24];
-            this.id29.Text = Program.CharNamesJpn[29];
-            this.id30.Text = Program.CharNamesJpn[30];
-            this.id32.Text = Program.CharNamesJpn[32];
-            this.id33.Text = Program.CharNamesJpn[33];
-            this.id31.Text = Program.CharNamesJpn[31];
-            this.id39.Text = Program.CharNamesJpn[39];
-            this.id40.Text = Program.CharNamesJpn[40];
-            this.id41.Text = Program.CharNamesJpn[41];
-            this.id42.Text = Program.CharNamesJpn[42];
-            this.id43.Text = Program.CharNamesJpn[43];
-            this.id44.Text = Program.CharNamesJpn[44];
-            this.id45.Text = Program.CharNamesJpn[45];
-            this.id46.Text = Program.CharNamesJpn[46];
-            */
+
         }
 
 
@@ -7552,7 +7465,7 @@ RAIDOU=RAIDOU
                     // これは一番下に追加する処理
                     dlcData.Chars.Add(chr);
                     dgvChars.Rows.Add();
-                    dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[0].Value = Program.CharNamesJpn[chr.ID];
+                    dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[0].Value = GetCharNamesJpn(chr.ID);// Program.CharNamesJpn[chr.ID];
                     dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[1].Value = chr.CostumeSlot.ToString();
                     dgvChars.Rows[dgvChars.Rows.Count - 1].Cells[2].Value = chr.AddTexsCount.ToString();
                     showComment(dgvChars.Rows.Count - 1);
@@ -7647,6 +7560,46 @@ RAIDOU=RAIDOU
         {
             // オリジナルを参考にしてるから問題無いでしょう
             return Program.CharNames[chr.ID] + "_DLCU_" + (chr.CostumeSlot + 1).ToString("D3");
+        }
+        
+        private string GetCharNamesJpn(byte ID)
+        {
+            return GetCharNamesJpn(ID, true);
+        }
+        private string GetCharNamesJpn(byte ID, bool ShowError)
+        {
+            try
+            {
+                return Program.CharNamesJpn[ID];
+            }
+            catch(System.Collections.Generic.KeyNotFoundException e)
+            {
+                if (ShowError)
+                {
+
+                    var CharInfoPath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"CharactersInfo");
+                    var subPath = Path.Combine(Path.GetFileName(Path.GetDirectoryName(CharInfoPath)), Path.GetFileName(CharInfoPath));
+
+                    System.Text.RegularExpressions.Regex regexReplace = new System.Text.RegularExpressions.Regex(@"(.+)");
+                    var msg = regexReplace.Replace(ID.ToString(), Program.dicLanguage["IDXIsUnknown"]) + "\n" +
+                         regexReplace.Replace(subPath, Program.dicLanguage["ProblemMayBeSolvedByEditingX"]);
+
+                    // アウトオブレンジな ID があった場合のエラー処理をすべてやるのは大変なのでプログラムを終わっちゃおう
+
+                    MessageBox.Show(msg, Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    Environment.Exit(0);
+                    return "";
+                    //throw new System.Collections.Generic.KeyNotFoundException(msg);
+                }
+                else
+                {
+                    return "Unknown";
+                }
+            }
+            catch(Exception e)
+            {
+                throw e;
+            }
         }
     }
 

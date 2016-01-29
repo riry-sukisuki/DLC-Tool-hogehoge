@@ -541,7 +541,8 @@
             }
         }
 
-        public static DLCData OpenState(string fileName)
+        public static DLCData OpenState(string fileName) { return OpenState(fileName, true); }
+        public static DLCData OpenState(string fileName, bool ShowBadNameNotice)
         {
             var dlcData = new DLCData();
             string group = "";
@@ -553,7 +554,7 @@
 
             using (StreamReader sr = new StreamReader(fileName))
             {
-
+                var BadNameList = new List<string>();
                 while (sr.Peek() >= 0) 
                 {
                     string s = sr.ReadLine();
@@ -615,20 +616,26 @@
                                 }
                                 skipChar = true;
                             }
-                            if (skipChar)
+                            if (skipChar && ShowBadNameNotice)
                             {
                                 /*
                                 MessageBox.Show("[" + s + "]の名前に問題があるため読込はスキップされました", "注意", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                 */
 
-                                var CharInfoPath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"CharactersInfo");
-                                var subPath = Path.Combine(Path.GetFileName(Path.GetDirectoryName(CharInfoPath)), Path.GetFileName(CharInfoPath));
+                                if(BadNameList.IndexOf(s) < 0)
+                                {
+                                    BadNameList.Add(s);
 
-                                System.Text.RegularExpressions.Regex regexReplace = new System.Text.RegularExpressions.Regex(@"(.+)");
-                                string mes = regexReplace.Replace("[" + s + "]", dicLanguage["SkippedBadNameX"]) + "\n" +
-                                     regexReplace.Replace(subPath, dicLanguage["ProblemMyBeSolvedByEditingX"]);
+                                    var CharInfoPath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"CharactersInfo");
+                                    var subPath = Path.Combine(Path.GetFileName(Path.GetDirectoryName(CharInfoPath)), Path.GetFileName(CharInfoPath));
 
-                                MessageBox.Show(mes, dicLanguage["Notice"], MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    System.Text.RegularExpressions.Regex regexReplace = new System.Text.RegularExpressions.Regex(@"(.+)");
+                                    string mes = regexReplace.Replace("[" + s + "]", dicLanguage["SkippedBadNameX"]) + "\n" +
+                                         regexReplace.Replace(subPath, dicLanguage["ProblemMayBeSolvedByEditingX"]);
+
+                                    MessageBox.Show(mes, dicLanguage["Notice"], MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                }
+
                             }
                         }
                         else if (groupLine == 1)
@@ -827,6 +834,7 @@
             bool skipChar = false;
             Character charEntry = null;
 
+            var BadNameList = new List<string>();
             while (index < astr.Length)
             {
                 string s = astr[index++];
@@ -892,11 +900,12 @@
                             }
                             skipChar = true;
                         }
-                        if (skipChar)
+                        if (skipChar && BadNameList.IndexOf(s) < 0)
                         {
                             /*
                             MessageBox.Show("[" + s + "]の名前に問題があるため読込はスキップされました", "注意", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                             */
+                            BadNameList.Add(s);
 
                             System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\$1");
                             string mes = regex.Replace(dicLanguage["SkippedBadNameX"], "[" + s + "]");
