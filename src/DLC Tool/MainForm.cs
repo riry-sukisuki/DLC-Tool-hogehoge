@@ -5264,12 +5264,14 @@
                             if (m.Groups[3].Value == "Male")
                             {
                                 catMale.DropDownItems.Add(Name);
+                                catMale.DropDownItems[catMale.DropDownItems.Count - 1].Name = "id" + ID;
                                 catMale.DropDownItems[catMale.DropDownItems.Count - 1].Click += AddCharacter;
                             }
                             else
                             {
                                 Program.FemaleIDs.Add(ID);
                                 catFemale.DropDownItems.Add(Name);
+                                catFemale.DropDownItems[catFemale.DropDownItems.Count - 1].Name = "id" + ID;
                                 catFemale.DropDownItems[catFemale.DropDownItems.Count - 1].Click += AddCharacter;
                             }
 
