@@ -1406,8 +1406,6 @@
                 return;
             }
 
-            // SelectedRows は必要最低限の使用に留めるべき
-            idx = dgvChars.SelectedRows[0].Index;
 
             if (e.FormattedValue.ToString() == "")
             {
@@ -1419,32 +1417,48 @@
             }
 
 
+            // // SelectedRows は必要最低限の使用に留めるべき
+            // idx = dgvChars.SelectedRows[0].Index;
 
-            if (dgv.Columns[e.ColumnIndex].Name == "clmHair")
+            // 1.3.1 の修正時に↑を↓に書き換えた。
+
+            if(dgvChars.SelectedRows.Count > 0)
             {
-                try
-                {
-                    dlcData.Chars[idx].HStyles[e.RowIndex].Hair = Byte.Parse(e.FormattedValue.ToString());
-                }
-                catch
-                {
-                    dgv.CancelEdit();
-                    //e.Cancel = true;
-                    return;
-                }
+                idx = dgvChars.SelectedRows[0].Index;
+            }
+            else
+            {
+                idx = dgvChars_MouseDown_LastSelectedCharIndex;
             }
 
-            if (dgv.Columns[e.ColumnIndex].Name == "clmFace")
+            if (idx >= 0)
             {
-                try
+                if (dgv.Columns[e.ColumnIndex].Name == "clmHair")
                 {
-                    dlcData.Chars[idx].HStyles[e.RowIndex].Face = Byte.Parse(e.FormattedValue.ToString());
+                    try
+                    {
+                        dlcData.Chars[idx].HStyles[e.RowIndex].Hair = Byte.Parse(e.FormattedValue.ToString());
+                    }
+                    catch
+                    {
+                        dgv.CancelEdit();
+                        //e.Cancel = true;
+                        return;
+                    }
                 }
-                catch
+
+                if (dgv.Columns[e.ColumnIndex].Name == "clmFace")
                 {
-                    dgv.CancelEdit();
-                    //e.Cancel = true;
-                    return;
+                    try
+                    {
+                        dlcData.Chars[idx].HStyles[e.RowIndex].Face = Byte.Parse(e.FormattedValue.ToString());
+                    }
+                    catch
+                    {
+                        dgv.CancelEdit();
+                        //e.Cancel = true;
+                        return;
+                    }
                 }
             }
 
@@ -2602,6 +2616,7 @@
         private bool dgvChars_MouseDown_dontSelectOne = false;
         private SortOrder[] dgvChars_MouseDown_SortDirectionList = null;
         private int dgvChars_MouseDown_LeftShiftPreClickedIndex = -1;
+        private int dgvChars_MouseDown_LastSelectedCharIndex = -1;
         private void dgvChars_MouseDown(object sender, MouseEventArgs e)
         {
             // マウスの左ボタンが押されている場合
@@ -2899,6 +2914,17 @@
                     // 該当行を選択状態にする
                     if (index >= 0)
                     {
+                        // 1.3.1 の修正において、ここで選択前のインデックスを忘れるとマズイことが分かったので覚えておく
+                        if (dgvChars.SelectedRows.Count == 1)
+                        {
+                            dgvChars_MouseDown_LastSelectedCharIndex = dgvChars.SelectedRows[0].Index;
+                        }
+                        else
+                        {
+                            dgvChars_MouseDown_LastSelectedCharIndex = -1;
+                        }
+
+
                         dgvChars.ClearSelection();
                         dgvChars.Rows[index].Selected = true;
                     }
