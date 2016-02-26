@@ -30,12 +30,12 @@ namespace DLC_Tool
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.btnOpenBCM = new System.Windows.Forms.Button();
             this.btnSave = new System.Windows.Forms.Button();
@@ -138,6 +138,7 @@ namespace DLC_Tool
             this.smiAddComColumn = new System.Windows.Forms.ToolStripMenuItem();
             this.smiDelComColumn = new System.Windows.Forms.ToolStripMenuItem();
             this.saveFileDialogTMC = new System.Windows.Forms.SaveFileDialog();
+            this.btnInstantMode = new System.Windows.Forms.Button();
             this.gbChars.SuspendLayout();
             this.gbHairs2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvHStyles)).BeginInit();
@@ -153,10 +154,10 @@ namespace DLC_Tool
             // btnOpenBCM
             // 
             this.btnOpenBCM.Font = new System.Drawing.Font("メイリオ", 9F);
-            this.btnOpenBCM.Location = new System.Drawing.Point(100, 7);
+            this.btnOpenBCM.Location = new System.Drawing.Point(6, 35);
             this.btnOpenBCM.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnOpenBCM.Name = "btnOpenBCM";
-            this.btnOpenBCM.Size = new System.Drawing.Size(88, 31);
+            this.btnOpenBCM.Size = new System.Drawing.Size(100, 25);
             this.btnOpenBCM.TabIndex = 1;
             this.btnOpenBCM.Text = "BCMを開く";
             this.btnOpenBCM.UseVisualStyleBackColor = true;
@@ -164,12 +165,13 @@ namespace DLC_Tool
             // 
             // btnSave
             // 
+            this.btnSave.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.btnSave.Enabled = false;
             this.btnSave.Font = new System.Drawing.Font("メイリオ", 9F);
-            this.btnSave.Location = new System.Drawing.Point(194, 7);
+            this.btnSave.Location = new System.Drawing.Point(178, 6);
             this.btnSave.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(88, 31);
+            this.btnSave.Size = new System.Drawing.Size(256, 25);
             this.btnSave.TabIndex = 2;
             this.btnSave.Text = "保存";
             this.btnSave.UseVisualStyleBackColor = true;
@@ -186,10 +188,10 @@ namespace DLC_Tool
             // btnNewDLC
             // 
             this.btnNewDLC.Font = new System.Drawing.Font("メイリオ", 9F);
-            this.btnNewDLC.Location = new System.Drawing.Point(6, 7);
+            this.btnNewDLC.Location = new System.Drawing.Point(6, 6);
             this.btnNewDLC.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnNewDLC.Name = "btnNewDLC";
-            this.btnNewDLC.Size = new System.Drawing.Size(88, 31);
+            this.btnNewDLC.Size = new System.Drawing.Size(100, 25);
             this.btnNewDLC.TabIndex = 0;
             this.btnNewDLC.Text = "新規作成";
             this.btnNewDLC.UseVisualStyleBackColor = true;
@@ -199,7 +201,7 @@ namespace DLC_Tool
             // 
             this.tbSavePath.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.tbSavePath.Location = new System.Drawing.Point(6, 46);
+            this.tbSavePath.Location = new System.Drawing.Point(6, 69);
             this.tbSavePath.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.tbSavePath.Name = "tbSavePath";
             this.tbSavePath.Size = new System.Drawing.Size(612, 25);
@@ -211,7 +213,7 @@ namespace DLC_Tool
             // 
             this.label1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(538, 13);
+            this.label1.Location = new System.Drawing.Point(538, 41);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(59, 18);
             this.label1.TabIndex = 4;
@@ -220,7 +222,7 @@ namespace DLC_Tool
             // tbBCMVer
             // 
             this.tbBCMVer.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.tbBCMVer.Location = new System.Drawing.Point(594, 10);
+            this.tbBCMVer.Location = new System.Drawing.Point(594, 38);
             this.tbBCMVer.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.tbBCMVer.MaxLength = 3;
             this.tbBCMVer.Name = "tbBCMVer";
@@ -245,11 +247,11 @@ namespace DLC_Tool
             this.gbChars.Controls.Add(this.gbFiles);
             this.gbChars.Controls.Add(this.dgvChars);
             this.gbChars.Controls.Add(this.btnSaveState);
-            this.gbChars.Location = new System.Drawing.Point(6, 78);
+            this.gbChars.Location = new System.Drawing.Point(6, 102);
             this.gbChars.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.gbChars.Name = "gbChars";
             this.gbChars.Padding = new System.Windows.Forms.Padding(3, 4, 3, 4);
-            this.gbChars.Size = new System.Drawing.Size(612, 660);
+            this.gbChars.Size = new System.Drawing.Size(612, 654);
             this.gbChars.TabIndex = 8;
             this.gbChars.TabStop = false;
             this.gbChars.Text = "キャラクター";
@@ -307,7 +309,7 @@ namespace DLC_Tool
             this.gbHairs2.Controls.Add(this.btnHStylesDelete);
             this.gbHairs2.Controls.Add(this.btnHStylesAdd);
             this.gbHairs2.Controls.Add(this.dgvHStyles);
-            this.gbHairs2.Location = new System.Drawing.Point(469, 361);
+            this.gbHairs2.Location = new System.Drawing.Point(469, 355);
             this.gbHairs2.Name = "gbHairs2";
             this.gbHairs2.Size = new System.Drawing.Size(136, 291);
             this.gbHairs2.TabIndex = 10;
@@ -351,28 +353,28 @@ namespace DLC_Tool
             this.dgvHStyles.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.SingleHorizontal;
             this.dgvHStyles.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.Disable;
             this.dgvHStyles.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle7.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle7.Font = new System.Drawing.Font("メイリオ", 9F);
-            dataGridViewCellStyle7.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle7.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle7.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle7.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgvHStyles.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("メイリオ", 9F);
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgvHStyles.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
             this.dgvHStyles.ColumnHeadersHeight = 25;
             this.dgvHStyles.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             this.dgvHStyles.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.clmType,
             this.clmHair,
             this.clmFace});
-            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle8.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle8.Font = new System.Drawing.Font("メイリオ", 9F);
-            dataGridViewCellStyle8.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle8.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle8.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle8.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgvHStyles.DefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle2.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle2.Font = new System.Drawing.Font("メイリオ", 9F);
+            dataGridViewCellStyle2.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle2.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgvHStyles.DefaultCellStyle = dataGridViewCellStyle2;
             this.dgvHStyles.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
             this.dgvHStyles.GridColor = System.Drawing.SystemColors.Control;
             this.dgvHStyles.ImeMode = System.Windows.Forms.ImeMode.Disable;
@@ -462,7 +464,7 @@ namespace DLC_Tool
             this.gbFiles.Controls.Add(this.cbC);
             this.gbFiles.Controls.Add(this.btnFilesDelete);
             this.gbFiles.Controls.Add(this.lbFiles);
-            this.gbFiles.Location = new System.Drawing.Point(7, 361);
+            this.gbFiles.Location = new System.Drawing.Point(7, 355);
             this.gbFiles.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.gbFiles.Name = "gbFiles";
             this.gbFiles.Padding = new System.Windows.Forms.Padding(3, 4, 3, 4);
@@ -710,14 +712,14 @@ namespace DLC_Tool
             this.dgvChars.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.SingleHorizontal;
             this.dgvChars.ClipboardCopyMode = System.Windows.Forms.DataGridViewClipboardCopyMode.Disable;
             this.dgvChars.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
-            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle9.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle9.Font = new System.Drawing.Font("メイリオ", 9F);
-            dataGridViewCellStyle9.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle9.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle9.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle9.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgvChars.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle3.Font = new System.Drawing.Font("メイリオ", 9F);
+            dataGridViewCellStyle3.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle3.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle3.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle3.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgvChars.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle3;
             this.dgvChars.ColumnHeadersHeight = 25;
             this.dgvChars.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             this.dgvChars.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
@@ -725,14 +727,14 @@ namespace DLC_Tool
             this.clmCos,
             this.clmInner,
             this.clmComment});
-            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle12.BackColor = System.Drawing.SystemColors.Window;
-            dataGridViewCellStyle12.Font = new System.Drawing.Font("メイリオ", 9F);
-            dataGridViewCellStyle12.ForeColor = System.Drawing.SystemColors.ControlText;
-            dataGridViewCellStyle12.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle12.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle12.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgvChars.DefaultCellStyle = dataGridViewCellStyle12;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Window;
+            dataGridViewCellStyle6.Font = new System.Drawing.Font("メイリオ", 9F);
+            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.ControlText;
+            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
+            this.dgvChars.DefaultCellStyle = dataGridViewCellStyle6;
             this.dgvChars.EditMode = System.Windows.Forms.DataGridViewEditMode.EditOnEnter;
             this.dgvChars.GridColor = System.Drawing.SystemColors.Control;
             this.dgvChars.ImeMode = System.Windows.Forms.ImeMode.Disable;
@@ -743,7 +745,7 @@ namespace DLC_Tool
             this.dgvChars.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.dgvChars.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvChars.ShowCellToolTips = false;
-            this.dgvChars.Size = new System.Drawing.Size(598, 291);
+            this.dgvChars.Size = new System.Drawing.Size(598, 285);
             this.dgvChars.TabIndex = 0;
             this.dgvChars.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvChars_CellEnter);
             this.dgvChars.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.gv_CellValidated);
@@ -760,8 +762,8 @@ namespace DLC_Tool
             // 
             // clmName
             // 
-            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            this.clmName.DefaultCellStyle = dataGridViewCellStyle10;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            this.clmName.DefaultCellStyle = dataGridViewCellStyle4;
             this.clmName.Frozen = true;
             this.clmName.HeaderText = "名前";
             this.clmName.Name = "clmName";
@@ -793,8 +795,8 @@ namespace DLC_Tool
             // clmComment
             // 
             this.clmComment.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
-            this.clmComment.DefaultCellStyle = dataGridViewCellStyle11;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
+            this.clmComment.DefaultCellStyle = dataGridViewCellStyle5;
             this.clmComment.HeaderText = "コメント";
             this.clmComment.Name = "clmComment";
             this.clmComment.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Programmatic;
@@ -825,7 +827,7 @@ namespace DLC_Tool
             this.コピーToolStripMenuItem,
             this.リストの追加読み込みToolStripMenuItem});
             this.contextMenuStrip.Name = "contextMenuStrip";
-            this.contextMenuStrip.Size = new System.Drawing.Size(159, 114);
+            this.contextMenuStrip.Size = new System.Drawing.Size(159, 92);
             // 
             // catMale
             // 
@@ -1190,19 +1192,20 @@ namespace DLC_Tool
             // 
             this.progressBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
-            this.progressBar.Location = new System.Drawing.Point(6, 43);
+            this.progressBar.Location = new System.Drawing.Point(6, 66);
             this.progressBar.Name = "progressBar";
             this.progressBar.Size = new System.Drawing.Size(612, 31);
             this.progressBar.TabIndex = 21;
             // 
             // btnCmpSave
             // 
+            this.btnCmpSave.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.btnCmpSave.Enabled = false;
             this.btnCmpSave.Font = new System.Drawing.Font("メイリオ", 9F);
-            this.btnCmpSave.Location = new System.Drawing.Point(288, 7);
+            this.btnCmpSave.Location = new System.Drawing.Point(178, 35);
             this.btnCmpSave.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnCmpSave.Name = "btnCmpSave";
-            this.btnCmpSave.Size = new System.Drawing.Size(88, 31);
+            this.btnCmpSave.Size = new System.Drawing.Size(121, 25);
             this.btnCmpSave.TabIndex = 22;
             this.btnCmpSave.Text = "圧縮保存";
             this.btnCmpSave.UseVisualStyleBackColor = true;
@@ -1212,7 +1215,7 @@ namespace DLC_Tool
             // 
             this.cbDAT.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.cbDAT.FormattingEnabled = true;
-            this.cbDAT.Location = new System.Drawing.Point(411, 9);
+            this.cbDAT.Location = new System.Drawing.Point(497, 6);
             this.cbDAT.Name = "cbDAT";
             this.cbDAT.Size = new System.Drawing.Size(121, 26);
             this.cbDAT.TabIndex = 23;
@@ -1221,7 +1224,7 @@ namespace DLC_Tool
             // label2
             // 
             this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.label2.Location = new System.Drawing.Point(308, 13);
+            this.label2.Location = new System.Drawing.Point(394, 10);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(106, 18);
             this.label2.TabIndex = 24;
@@ -1254,12 +1257,27 @@ namespace DLC_Tool
             // 
             this.saveFileDialogTMC.AddExtension = false;
             // 
+            // btnInstantMode
+            // 
+            this.btnInstantMode.Anchor = System.Windows.Forms.AnchorStyles.Top;
+            this.btnInstantMode.Enabled = false;
+            this.btnInstantMode.Font = new System.Drawing.Font("メイリオ", 9F);
+            this.btnInstantMode.Location = new System.Drawing.Point(304, 35);
+            this.btnInstantMode.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.btnInstantMode.Name = "btnInstantMode";
+            this.btnInstantMode.Size = new System.Drawing.Size(130, 25);
+            this.btnInstantMode.TabIndex = 25;
+            this.btnInstantMode.Text = "インスタントモード";
+            this.btnInstantMode.UseVisualStyleBackColor = true;
+            this.btnInstantMode.Click += new System.EventHandler(this.btnInstantMode_Click);
+            // 
             // MainForm
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(624, 743);
+            this.ClientSize = new System.Drawing.Size(624, 761);
+            this.Controls.Add(this.btnInstantMode);
             this.Controls.Add(this.cbDAT);
             this.Controls.Add(this.btnCmpSave);
             this.Controls.Add(this.tbSavePath);
@@ -1401,6 +1419,7 @@ namespace DLC_Tool
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.SaveFileDialog saveFileDialogTMC;
+        private System.Windows.Forms.Button btnInstantMode;
     }
 }
 

@@ -10,9 +10,8 @@
     // ini 用
     using System.Text;
     using System.Runtime.InteropServices;
-
-
-
+    using System.Collections.Generic;
+    using System.Linq;
 
     public partial class MainForm : Form
     {
@@ -904,33 +903,127 @@
             btnFilesDelete.Enabled = false;
         }
 
-
-
-
-        private void SaveDLC(bool Compression)
+        private string GetGameShortcut()
         {
-
             try
             {
-                /* この仕様はリストを DLC に保存機能を使わない人にとっては迷惑極まりないので廃止
-                if (cbSaveListInDLC.Enabled && cbSaveListInDLC.Checked)
+                // ショートカットを探す
+                System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\\DLC\\\d+$");
+                string shortcut = "";
+
+                // ゲームフォルダ内のショートカットを探す
+                if (shortcut == "" && regex.IsMatch(tbSavePath.Text))
                 {
-                    string name;
-                    try
+                    shortcut = regex.Replace(tbSavePath.Text, @"\game");
+                    if (!OpenWithShortcut(shortcut, "", true))
                     {
-                        name = Path.GetFileName(tbListPath.Text);
-                    }
-                    catch
-                    {
-                        name = "";
-                    }
-                    bool GoodName = (name != "" && name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0);
-                    if (!GoodName)
-                    {
-                        throw new Exception(Program.dicLanguage["InputCorrectListFileName"]);
+                        shortcut = "";
                     }
                 }
-                */
+
+
+                // Applications フォルダ内のショートカットを探す
+                if (shortcut == "")
+                {
+                    shortcut = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"Applications\game");
+                    if (!OpenWithShortcut(shortcut, "", true))
+                    {
+                        shortcut = "";
+                    }
+                }
+
+                return shortcut;
+            }
+            catch
+            {
+                return "";
+            }
+            
+        }
+
+        private string GetGameExe()
+        {
+            try
+            {
+                System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\\DLC\\\d+$");
+                string DOA5EXE = "";
+                if (regex.IsMatch(tbSavePath.Text))
+                {
+                    DOA5EXE = regex.Replace(tbSavePath.Text, @"\game.exe");
+                    if (!File.Exists(DOA5EXE))
+                    {
+                        DOA5EXE = "";
+                    }
+                }
+
+                return DOA5EXE;
+            }
+            catch
+            {
+                return "";
+            }
+            
+        }
+
+        private string GetBackupPath(string path)
+        {
+
+            // 確実に存在しない保存用フォルダパスの作成
+            string saveTempPathBase = path + ".temp";
+            string saveTempPath = saveTempPathBase;
+            for (int i = 2; Directory.Exists(saveTempPath) || File.Exists(saveTempPath); i++)
+            {
+                saveTempPath = saveTempPathBase + i;
+            }
+            return saveTempPath;
+        }
+        
+
+        private void SaveDLC(bool Compression, bool Instant)
+        {
+
+            List<string[]> FassingFolderList = null;
+            try
+            {
+                if(Instant && GetGameShortcut() =="" && GetGameExe() == "")
+                {
+                    var e = new FileNotFoundException(null, "game.exe");
+                        MessageBox.Show(e.Message, Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    tbSavePath_TextChanged(null, null);//念のため
+                    return;
+                }
+
+
+                Program.SlotTable<string> ComIniSlotCommentTable = GetComIniSlotCommentTable();
+                //Program.SlotTable<bool> NotComIniSlotTable = new Program.SlotTable<bool>(true);
+                var NotthingComIni = true;
+                for(var i = 0; i < dlcData.Chars.Count; i++)
+                {
+
+                    if (ComIniSlotCommentTable[dlcData.Chars[i]] != "")
+                    {
+                        NotthingComIni = false;
+                        break;
+                    }
+                }
+
+                /*
+                for (int i = 0; i < ComIniSlotCommentTable.Count(); i++)
+                {
+                    for (int j = 0; j < ComIniSlotCommentTable[i].Length; j++)
+                    {
+                        if(ComIniSlotCommentTable[i, j] != "")
+                        {
+                            NotthingComIni = false;
+                            break;
+                        }
+                    }
+                    if (!NotthingComIni) break;
+                }*/
+                if(!NotthingComIni)
+                {
+                    throw new Exception(Program.dicLanguage["CharaCommonKillInstant"]);
+                }
 
 
 
@@ -1015,6 +1108,41 @@
                     {
                         bool comp = Compression;// cbComp.Checked;
 
+
+                        if (Instant)
+                        {
+                            FassingFolderList = new List<string[]>();
+
+                            // 今から保存しようとしているフォルダが存在していれば
+                            if (Directory.Exists(tbSavePath.Text))
+                            {
+                                var src = tbSavePath.Text;
+                                var back = GetBackupPath(src);
+                                Directory.Move(src, back);
+                                FassingFolderList.Add(new string[2] { src, back });
+                            }
+
+                            // 既存の DLC で邪魔になるものを排除
+                            var sot = GetSlotOwnerTable(true);
+                            var JamaPath = new SortedSet<string>();
+                            for(var i = 0; i < dlcData.Chars.Count; i++)
+                            {
+                                    if (!string.IsNullOrEmpty(sot[dlcData.Chars[i]]))
+                                    {
+                                        JamaPath.Add(Path.GetDirectoryName(sot[dlcData.Chars[i]]));
+                                    }
+                            }
+                            for(var i = 0; i < JamaPath.Count; i++)
+                            {
+                                var src = JamaPath.ElementAt(i);
+                                var back = GetBackupPath(src);
+                                Directory.Move(src, back);
+                                FassingFolderList.Add(new string[2] { src, back });
+                            }
+                        }
+
+
+
                         // DLC Tool 1.1 より
                         if (!Program.SaveDLC(dlcData4Save, tbSavePath.Text, dlcName, comp))
                         {
@@ -1022,16 +1150,7 @@
                             return;
                         }
 
-
-
-                        /*
-                        Directory.CreateDirectory(tbSavePath.Text + @"\data\");
-                        Program.SaveBCM(dlcData4Save, tbSavePath.Text + @"\" + dlcName + ".bcm", dlcName);
-                        var nameIndexes = Program.SaveBIN(dlcData4Save, tbSavePath.Text + @"\data\" + dlcName + ".bin", dlcName);
-                        var fileSizes = Program.SaveLNK(dlcData4Save, tbSavePath.Text + @"\data\" + dlcName + ".lnk", nameIndexes.Count);
-                        Program.SaveBLP(tbSavePath.Text + @"\data\" + dlcName + ".blp", nameIndexes, fileSizes);
-                        */
-
+                        
 
                         string message;
                         if (dlcData4Save.Chars.Count == dlcData.Chars.Count)
@@ -1044,7 +1163,7 @@
                         }
 
                         string path = tbSavePath.Text + @"\" + Path.GetFileName(tbListPath.Text) + ".lst";
-                        if (cbSaveListInDLC.Enabled && cbSaveListInDLC.Checked)
+                        if (cbSaveListInDLC.Enabled && cbSaveListInDLC.Checked && !Instant)
                         {
 
                             string name;
@@ -1081,51 +1200,76 @@
 
                         // ショートカットを探す
                         System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\\DLC\\\d+$");
-                        string shortcut = "";
-
-                        // ゲームフォルダ内のショートカットを探す
-                        if (shortcut == "" && regex.IsMatch(tbSavePath.Text))
-                        {
-                            shortcut = regex.Replace(tbSavePath.Text, @"\game");
-                            if (!OpenWithShortcut(shortcut, "", true))
-                            {
-                                shortcut = "";
-                            }
-                        }
-
-
-                        // Applications フォルダ内のショートカットを探す
-                        if (shortcut == "")
-                        {
-                            shortcut = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"Applications\game");
-                            if (!OpenWithShortcut(shortcut, "", true))
-                            {
-                                shortcut = "";
-                            }
-                        }
+                        string shortcut = GetGameShortcut();
+                        
 
                         // ゲームそのものを探す
                         string DOA5EXE = "";
-                        if (shortcut == "" && regex.IsMatch(tbSavePath.Text))
+                        if (shortcut == "")
                         {
-                            DOA5EXE = regex.Replace(tbSavePath.Text, @"\game.exe");
-                            if (!File.Exists(DOA5EXE))
-                            {
-                                DOA5EXE = "";
-                            }
+                            DOA5EXE = GetGameExe();
                         }
 
 
                         if (shortcut == "" && DOA5EXE == "")
                         {
-                            MessageBox.Show(message, "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            if (!Instant)
+                            {
+                                MessageBox.Show(message, "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            }
+                            else
+                            {
+                                throw new FileNotFoundException(null, "game.exe"); // ファイルの復元はエラー後に行われる
+                            }
                         }
                         else
                         {
-                            if (MessageBox.Show(message + "\n\n" + Program.dicLanguage["DoYouStartDOA5"], "Info", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                            if (!Instant)
                             {
-                                //System.Diagnostics.Process.Start( "\"" + DOA5EXE + "\"");
+                                if (MessageBox.Show(message + "\n\n" + Program.dicLanguage["DoYouStartDOA5"], "Info", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                                {
 
+                                    if (shortcut != "")
+                                    {
+                                        OpenWithShortcut(shortcut, "", false);
+                                    }
+                                    else
+                                    {
+                                        // 念のためカレントディレクトリを動かしておく
+                                        string sCD = System.Environment.CurrentDirectory;
+                                        System.Environment.CurrentDirectory = Path.GetDirectoryName(DOA5EXE); ;//System.IO.Path.GetDirectoryName(fileName);
+                                        System.Diagnostics.Process.Start("\"" + DOA5EXE + "\"");
+                                        System.Environment.CurrentDirectory = sCD;
+                                    }
+                                }
+                            }
+                            else
+                            {
+
+                                System.Diagnostics.Process DOAProcess = null;
+
+
+                                /*
+                                btnCharsAdd.Enabled = false;
+                                btnCharsDelete.Enabled = false;
+                                btnCmpSave.Enabled = false;
+                                btnFilesAdd.Enabled = false;
+                                btnFilesDelete.Enabled = false;
+                                btnHStylesAdd.Enabled = false;
+                                btnHStylesDelete.Enabled = false;
+                                btnInstantMode.Enabled = false;
+                                btnNewDLC.Enabled = false;
+                                btnOpenBCM.Enabled = false;
+                                btnOpenState.Enabled = false;
+                                btnSave.Enabled = false;
+                                btnSaveState.Enabled = false;
+                                dgvChars.Enabled = false;
+                                dgvFiles.Enabled = false;
+                                dgvHStyles.Enabled = false;
+                                */
+                                Enabled = false;
+
+                                // ゲーム起動
                                 if (shortcut != "")
                                 {
                                     OpenWithShortcut(shortcut, "", false);
@@ -1136,68 +1280,152 @@
                                     string sCD = System.Environment.CurrentDirectory;
                                     System.Environment.CurrentDirectory = Path.GetDirectoryName(DOA5EXE); ;//System.IO.Path.GetDirectoryName(fileName);
                                     System.Diagnostics.Process.Start("\"" + DOA5EXE + "\"");
+                                    // コイツの戻り値は使えない模様（一度直ぐに閉じる）
                                     System.Environment.CurrentDirectory = sCD;
                                 }
-                            }
-                        }
 
-                        /*
-                        // 色んな所からゲームを探す
-                        string DOA5EXE = "";
-                        System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\\DLC\\\d+$");
 
-                        // ゲームフォルダ内のショートカットを探す
-                        if (DOA5EXE == "" && regex.IsMatch(tbSavePath.Text))
-                        {
-                            DOA5EXE = regex.Replace(tbSavePath.Text, @"\default.lnk");
-                            if (!File.Exists(DOA5EXE))
-                            {
-                                DOA5EXE = "";
-                            }
-                        }
 
-                        // ツールフォルダ内のショートカットを探す
-                        if (DOA5EXE == "")
-                        {
-                            string defaultLNK = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"default.lnk");
-                            if (DOA5EXE == "" && File.Exists(defaultLNK))
-                            {
-                                DOA5EXE = defaultLNK;
+                                // スクリプト経由で起動する場合、ゲームの起動を動的に補足する
+                                var foundAtLeastOne = false;
+                                if (DOAProcess == null)
+                                {
+                                    var step = 0.1; // 秒
+                                    var seekingTime = 10; // 秒
+                                    DateTime dtNow = DateTime.Now;
+                                    for (double t = 0; t < seekingTime; t += step)
+                                    {
+
+                                        //ローカルコンピュータ上で実行されているすべてのプロセスを取得
+                                        System.Diagnostics.Process[] ps =
+                                            System.Diagnostics.Process.GetProcesses();
+                                        //"machinename"という名前のコンピュータで実行されている
+                                        //すべてのプロセスを取得するには次のようにする。
+                                        //System.Diagnostics.Process[] ps =
+                                        //    System.Diagnostics.Process.GetProcesses("machinename");
+
+                                        //配列から1つずつ取り出す
+                                        foreach (System.Diagnostics.Process p in ps)
+                                        {
+                                            Application.DoEvents();
+                                            try
+                                            {
+                                                if (p.ProcessName == "game" &&
+                                                    (Path.GetFileName(p.MainModule.FileName) == "game.exe") &&
+                                                    p.TotalProcessorTime < TimeSpan.FromSeconds(1.2 * (DateTime.Now - dtNow).TotalSeconds + 1)
+
+                                                    )
+                                                {
+                                                    DOAProcess = p;
+                                                    /*
+                                                    var s = "";
+                                                    //プロセス名を出力する
+                                                    s += string.Format("プロセス名: {0}\n", p.ProcessName);
+                                                    //ID
+                                                    s += string.Format("ID: {0}", p.Id);
+                                                    //メインモジュールのパス
+                                                    s += string.Format("ファイル名: {0}\n", p.MainModule.FileName);
+                                                    //合計プロセッサ時間
+                                                    s += string.Format("合計プロセッサ時間: {0}\n", p.TotalProcessorTime);
+                                                    //物理メモリ使用量
+                                                    s += string.Format("物理メモリ使用量: {0}\n", p.WorkingSet64);
+                                                    //.NET Framework 1.1以前では次のようにする
+                                                    //Console.WriteLine("物理メモリ使用量: {0}", p.WorkingSet);
+
+                                                    MessageBox.Show(s);
+                                                    */
+
+
+
+                                                }
+                                            }
+                                            catch
+                                            {
+                                            }
+                                            if (DOAProcess != null)
+                                            {
+                                                foundAtLeastOne = true;
+                                                break;
+                                            }
+                                        }
+
+
+                                        System.Threading.Thread.Sleep((int)(step * 1000));
+
+
+                                        // 起動後一度すぐに閉じるので、
+                                        // ２秒ほどは待つ
+                                        if (t < 2)
+                                        {
+                                            DOAProcess = null;
+                                            continue;
+                                        }
+                                        else if (DOAProcess != null)
+                                        {
+                                            break;
+                                        }
+
+                                    }
+
+                                }
+
+
+                                if (DOAProcess == null && !foundAtLeastOne)
+                                {
+                                    Enabled = true;
+                                    throw new Exception("Dead or alive process is not found.");
+                                }
+                                else if(DOAProcess != null)
+                                {
+
+                                    // プロセスが終了するのを待つ
+                                    //this.WindowState = FormWindowState.Minimized;
+
+                                    while (!DOAProcess.WaitForExit((int)(10)))
+                                    {
+                                        Application.DoEvents();
+                                    }
+                                }
+
+                                var DLCName = Path.GetFileName(FassingFolderList[0][0]);
+                                File.Delete(FassingFolderList[0][0]  + @"\data\" + DLCName + ".bin");
+                                File.Delete(FassingFolderList[0][0] +  @"\data\" + DLCName + ".blp");
+                                File.Delete(FassingFolderList[0][0] +  @"\data\" + DLCName + ".lnk");
+                                Directory.Delete(FassingFolderList[0][0] + @"\data");
+                                File.Delete(FassingFolderList[0][0] +  @"\" + DLCName + ".bcm");
+                                Directory.Delete(FassingFolderList[0][0]);
+                                for (var i = 0; i < FassingFolderList.Count; i++)
+                                {
+                                    // 失敗したら残りはエラー処理で。
+                                    Directory.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
+                                }
+                                /*
+                                btnCharsAdd.Enabled = true;
+                                btnCharsDelete.Enabled = true;
+                                btnCmpSave.Enabled = true;
+                                btnFilesAdd.Enabled = true;
+                                btnFilesDelete.Enabled = true;
+                                btnHStylesAdd.Enabled = true;
+                                btnHStylesDelete.Enabled = true;
+                                btnInstantMode.Enabled = true;
+                                btnNewDLC.Enabled = true;
+                                btnOpenBCM.Enabled = true;
+                                btnOpenState.Enabled = true;
+                                btnSave.Enabled = true;
+                                btnSaveState.Enabled = true;
+                                dgvChars.Enabled = true;
+                                dgvFiles.Enabled = true;
+                                dgvHStyles.Enabled = true;
+                                */
+                                Enabled = true;
+                                Activate();
                             }
                         }
                         
-                        // ゲームそのものを探す
-                        if (DOA5EXE == "" && regex.IsMatch(tbSavePath.Text))
-                        {
-                            DOA5EXE = regex.Replace(tbSavePath.Text, @"\game.exe");
-                            if (!File.Exists(DOA5EXE))
-                            {
-                                DOA5EXE = "";
-                            }
-                        }
-
-                        if (DOA5EXE == "")
-                        {
-                            MessageBox.Show(message, "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        }
-                        else
-                        {
-                            if (MessageBox.Show(message + "\n\n" + Program.dicLanguage["DoYouStartDOA5"], "Info", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
-                            {
-                                //System.Diagnostics.Process.Start( "\"" + DOA5EXE + "\"");
-
-                                // 念のためカレントディレクトリを動かしておく
-                                string sCD = System.Environment.CurrentDirectory;
-                                System.Environment.CurrentDirectory = Path.GetDirectoryName(DOA5EXE); ;//System.IO.Path.GetDirectoryName(fileName);
-                                System.Diagnostics.Process.Start("\"" + DOA5EXE + "\"");
-                                System.Environment.CurrentDirectory = sCD;
-                            }
-                        }
-                        */
+                        
                     }
                     else
                     {
-                        //MessageBox.Show(Program.dicLanguage["NotSavedDLC"], "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         throw new Exception(Program.dicLanguage["NotSavedDLC"]);
                     }
                 }
@@ -1237,6 +1465,7 @@
                     }
 
 
+
                     if (!DirectoryIsPureDLC(Path.GetDirectoryName(tbSavePath.Text)))
                     {
                         MessageBox.Show(Program.dicLanguage["NotPureDLCFolder"], Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -1252,6 +1481,55 @@
             }
             catch (Exception ex)
             {
+
+                if (FassingFolderList != null)
+                {
+                    if(FassingFolderList.Count > 0)
+                    {
+                        try
+                        {
+                            if (Directory.Exists(FassingFolderList[0][0]) && Directory.Exists(FassingFolderList[0][1]))
+                            {
+                                var DLCName = Path.GetFileName(FassingFolderList[0][0]);
+                                try { File.Delete(FassingFolderList[0][0]  + @"\data\" + DLCName + ".bin"); } catch { }
+                                try
+                                {
+                                    File.Delete(FassingFolderList[0][0]  + @"\data\" + DLCName + ".blp");
+                                }
+                                catch { }
+                                try
+                                    {
+                                        File.Delete(FassingFolderList[0][0]   + @"\data\" + DLCName + ".lnk"); } catch { }
+                                        try
+                                        {
+                                            Directory.Delete(FassingFolderList[0][0] + @"\data");
+                                }
+                                catch { }
+                                try
+                                            {
+                                                File.Delete(FassingFolderList[0][0] + @"\" + DLCName + ".bcm");
+                                }
+                                catch { }
+                                try
+                                                {
+                                                    Directory.Delete(FassingFolderList[0][0]);
+                                }
+                                catch { }
+                            }
+                        }
+                        catch { }
+                    }
+
+                    for (var i = 0; i < FassingFolderList.Count; i++)
+                    {
+                        try
+                        {
+                            Directory.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
+                        }
+                        catch { }
+                    }
+                }
+
                 if (ex is OverflowException)
                 {
                     MessageBox.Show(Program.dicLanguage["DecreaseDLCNum"], Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -1266,7 +1544,7 @@
 
         private void btnSave_Click(object sender, EventArgs e)
         {
-            SaveDLC(false);
+            SaveDLC(false, false);
         }
 
 
@@ -1274,7 +1552,7 @@
         {
             if (newDlc)
             {
-                SaveDLC(true);
+                SaveDLC(true, false);
             }
             else
             {
@@ -4817,6 +5095,8 @@
 
         }
 
+        
+
         // よく考えると全キャラ分取得するのは無駄な気もするが、
         // ボトルネックはおそらくファイル読み込みであって、
         // その部分はキャラを限定してもほとんど速くならないと思うから
@@ -4888,15 +5168,7 @@
                 }
             }
 
-
-            // listdata を先頭のものに設定して残りの Char を AddRage する
-            /*
-            DLCData listdata = LCands[0];
-            for (int i = 1; i < LCands.Count; i++)
-            {
-                listdata.Chars.AddRange(LCands[i].Chars);
-            }
-            */
+            
 
             // 先頭の listdata のみを用いる
             DLCData listdata = LCands[0];
@@ -4927,40 +5199,7 @@
                     ComIniSlotCommentTable[listdata.Chars[i]] = defaultTitle;
                 }
             }
-
-            /*
-
-            // 各 com/ini のキャラに対して
-            for(int i = 0; i < NotComIniSlotTable.Count(); i++)
-            {
-                for(int j = 0; j < NotComIniSlotTable[i].Length; j++)
-                {
-                    if(NotComIniSlotTable[i,j])
-                    {
-                        
-                    }
-                }
-            }
-
-            // リストファイル内のコメントから設定する
-            for (int k = 0; k < listdata.Chars.Count; k++)
-            {
-                if (dlcData2.Chars[j].CostumeSlot == listdata.Chars[k].CostumeSlot && dlcData2.Chars[j].ID == listdata.Chars[k].ID && listdata.Chars[k].Comment != "")
-                {
-                    name = listdata.Chars[k].Comment;
-                    break;
-                }
-            }
-
-            if (SlotOwnerTable[dlcData2.Chars[j]] == "")
-            {
-                SlotOwnerTable[dlcData2.Chars[j]] = name;
-            }
-            else
-            {
-                SlotOwnerTable[dlcData2.Chars[j]] += ", " + name;
-            }
-            */
+            
 
             return ComIniSlotCommentTable;
         }
@@ -4969,7 +5208,8 @@
         // ボトルネックはおそらくファイル読み込みであって、
         // その部分はキャラを限定してもほとんど速くならないと思うから
         // このままでいいことにしよう。
-        private Program.SlotTable<string> GetSlotOwnerTable()
+        private Program.SlotTable<string> GetSlotOwnerTable() { return GetSlotOwnerTable(false); }
+        private Program.SlotTable<string> GetSlotOwnerTable(bool BCMPathMode)
         {
             Program.SlotTable<string> SlotOwnerTable = new Program.SlotTable<string>("");
 
@@ -5223,13 +5463,20 @@
                             }
                         }
 
-                        if (SlotOwnerTable[dlcData2.Chars[j]] == "")
+                        if (BCMPathMode)
                         {
-                            SlotOwnerTable[dlcData2.Chars[j]] = name;
+                            SlotOwnerTable[dlcData2.Chars[j]] = brotherBCM;
                         }
                         else
                         {
-                            SlotOwnerTable[dlcData2.Chars[j]] += ", " + name;
+                            if (SlotOwnerTable[dlcData2.Chars[j]] == "")
+                            {
+                                SlotOwnerTable[dlcData2.Chars[j]] = name;
+                            }
+                            else
+                            {
+                                SlotOwnerTable[dlcData2.Chars[j]] += ", " + name;
+                            }
                         }
                     }
                 }
@@ -5346,6 +5593,7 @@ SaveDLC=Save DLC
 OverwriteDLC=Overwrite
 SaveCompressedDLC=Save Cmp.
 OverwriteCompressedDLC=Ovwt Cmp.
+InstantMode=Instant mode
 ExtractFiles=Extract TMC
 Characters=Characters
 Hairstyles=Hairstyles
@@ -5394,6 +5642,7 @@ ProblemMayBeSolvedByEditingX =The Problem may be solved by editing ""$1.""
 NeedDAT =This program requires at least one ""DAT\*.dat"" file.
 NotPureDLCFolder = Save path has unknown items. DLC is not saved.
 FormatOfLineInXIsIncorrect=The format of following line in ""$1"" is not correct.
+CharaCommonKillInstant=Instant mode does not work when common/initial slots are used.
 ZACK =ZACK
 TINA=TINA
 JANNLEE=JANNLEE
@@ -5562,6 +5811,10 @@ RAIDOU=RAIDOU
             // 圧縮して保存
             from = "SaveCompressedDLC"; def = "Save Cmp.";
             if (Program.dicLanguage.ContainsKey(from)) btnCmpSave.Text = Program.dicLanguage[from]; else btnCmpSave.Text = Program.dicLanguage[from] = def;
+            // インスタントモード
+            from = "InstantMode"; def = "Instant mode";
+            if (Program.dicLanguage.ContainsKey(from)) btnInstantMode.Text = Program.dicLanguage[from]; else btnInstantMode.Text = Program.dicLanguage[from] = def;
+
 
             // 元ツールのステートデータ
             from = "OriginalStateData"; def = "State data for original DLC Tool";
@@ -5689,6 +5942,11 @@ RAIDOU=RAIDOU
             // "$1" 内の以下の行のフォーマットが正しくありません
             from = "FormatOfLineInXIsIncorrect"; def = @"The format of following line in ""$1"" is not correct.";
             if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
+
+            // インスタントモードは chara/common のスロットが選択されていると実行できません
+            from = "CharaCommonKillInstant"; def = @"Instant mode does not work when common/initial slots are used.";
+            if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
+
 
             // キャラクター名
             if (withCharNames)
@@ -6363,15 +6621,18 @@ RAIDOU=RAIDOU
                 if ((!newDlc) || tbSavePath.Text == "" || (System.Text.RegularExpressions.Regex.IsMatch(tbSavePath.Text, @"\\\d+$") && Directory.Exists(Path.GetDirectoryName(tbSavePath.Text))))
                 {
                     tbSavePath.BackColor = System.Drawing.Color.Empty;
+                    btnInstantMode.Enabled = (newDlc && tbSavePath.Text != "" && (GetGameExe() != "" || GetGameShortcut() != ""));
                 }
                 else
                 {
                     tbSavePath.BackColor = System.Drawing.Color.LightGray;
+                    btnInstantMode.Enabled = false;
                 }
             }
             catch
             {
                 tbSavePath.BackColor = System.Drawing.Color.LightGray;
+                btnInstantMode.Enabled = false;
             }
 
             setBtnSave();
@@ -6968,6 +7229,8 @@ RAIDOU=RAIDOU
 
         private void setBtnSave()
         {
+            btnInstantMode.Enabled = (newDlc && tbSavePath.Text != "" && (GetGameExe() != "" || GetGameShortcut() != ""));
+
             if (newDlc)
             {
                 try
@@ -7628,6 +7891,11 @@ RAIDOU=RAIDOU
             {
                 throw e;
             }
+        }
+
+        private void btnInstantMode_Click(object sender, EventArgs e)
+        {
+            SaveDLC(false, true);
         }
     }
 
