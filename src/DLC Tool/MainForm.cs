@@ -969,7 +969,7 @@
         {
 
             // 確実に存在しない保存用フォルダパスの作成
-            string saveTempPathBase = path + ".temp";
+            string saveTempPathBase = path + ".back";
             string saveTempPath = saveTempPathBase;
             for (int i = 2; Directory.Exists(saveTempPath) || File.Exists(saveTempPath); i++)
             {
@@ -1123,21 +1123,49 @@
                             }
 
                             // 既存の DLC で邪魔になるものを排除
-                            var sot = GetSlotOwnerTable(true);
-                            var JamaPath = new SortedSet<string>();
+                            var sot = GetSlotOwnerPathAndDLCData();
+                            //var JamaPath = new SortedSet<string>();
+                            var Path2DLC = new Dictionary<string, DLCData>();
                             for(var i = 0; i < dlcData.Chars.Count; i++)
                             {
-                                    if (!string.IsNullOrEmpty(sot[dlcData.Chars[i]]))
-                                    {
-                                        JamaPath.Add(Path.GetDirectoryName(sot[dlcData.Chars[i]]));
-                                    }
+                                var tpl = sot[dlcData.Chars[i]];
+                                if (tpl != null)
+                                {
+                                    var jamapath = tpl.Item1;
+                                    var dlcd = tpl.Item2;
+                                    var idx = tpl.Item3;
+                                    dlcd.Chars.RemoveAt(idx);
+                                    Path2DLC[jamapath] = dlcd; // 以前の DLCData が上書きされるように見えるが、DLCdata の参照は全て同じなので問題ない。
+
+                                    //JamaPath.Add(jamapath);
+                                }
                             }
-                            for(var i = 0; i < JamaPath.Count; i++)
+                            foreach(var jamapath in Path2DLC.Keys)
                             {
-                                var src = JamaPath.ElementAt(i);
+                                //var dlcd = Path2DLC[jamapath];
+
+                                //var src = jamapath;
+                                var src = Path.GetDirectoryName(jamapath);
                                 var back = GetBackupPath(src);
-                                Directory.Move(src, back);
+
                                 FassingFolderList.Add(new string[2] { src, back });
+
+                                //File.Move(src, back);
+                                Directory.Move(src, back);
+
+
+
+
+
+
+                                var KaridlcName = Path.GetFileNameWithoutExtension(src);
+
+                                // これをやっても意味がなかったので諦める（他のフォルダの BCM ファイルからでもアクセスできちゃう）
+                                //Program.SaveBCM(dlcd, src, KaridlcName);
+
+
+
+
                             }
                         }
 
@@ -1394,9 +1422,12 @@
                                 Directory.Delete(FassingFolderList[0][0] + @"\data");
                                 File.Delete(FassingFolderList[0][0] +  @"\" + DLCName + ".bcm");
                                 Directory.Delete(FassingFolderList[0][0]);
-                                for (var i = 0; i < FassingFolderList.Count; i++)
+                                Directory.Move(FassingFolderList[0][1], FassingFolderList[0][0]);
+                                for (var i = 1; i < FassingFolderList.Count; i++)
                                 {
                                     // 失敗したら残りはエラー処理で。
+                                    //File.Delete( FassingFolderList[i][0]);
+                                    //File.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
                                     Directory.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
                                 }
                                 /*
@@ -1515,21 +1546,30 @@
                                                     Directory.Delete(FassingFolderList[0][0]);
                                 }
                                 catch { }
+                                try
+                                {
+                                Directory.Move(FassingFolderList[0][1], FassingFolderList[0][0]);
+                                }
+                                catch { }
                             }
                         }
                         catch { }
                     }
 
-                    for (var i = 0; i < FassingFolderList.Count; i++)
+                    for (var i = 1; i < FassingFolderList.Count; i++)
                     {
                         try
                         {
+                            //File.Delete(FassingFolderList[i][0]);
+                            //File.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
                             Directory.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
                         }
                         catch { }
                     }
                 }
 
+
+                Enabled = true; // 必須
                 if (ex is OverflowException)
                 {
                     MessageBox.Show(Program.dicLanguage["DecreaseDLCNum"], Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -1540,6 +1580,7 @@
                 }
             }
             tbSavePath_TextChanged(null, null);//これは念のためじゃなくて必須
+
         }
 
         private void btnSave_Click(object sender, EventArgs e)
@@ -5208,10 +5249,26 @@
         // ボトルネックはおそらくファイル読み込みであって、
         // その部分はキャラを限定してもほとんど速くならないと思うから
         // このままでいいことにしよう。
-        private Program.SlotTable<string> GetSlotOwnerTable() { return GetSlotOwnerTable(false); }
-        private Program.SlotTable<string> GetSlotOwnerTable(bool BCMPathMode)
+        private Program.SlotTable<string> GetSlotOwnerTable() { return (Program.SlotTable < string > )GetSlotOwnerInfo(0); }
+
+        /// <summary>インスタントモード用の関数
+        /// bcm のパス、DLCDData, キャラのインデックスのタプルの SlotTable を返す。同じ bcm の DLCData の参照は全て同じ
+        /// </summary>
+        private Program.SlotTable<Tuple<string, DLCData,int>> GetSlotOwnerPathAndDLCData() { return (Program.SlotTable<Tuple<string, DLCData,int>>)GetSlotOwnerInfo(1); }
+        //private Program.SlotTable<string> GetSlotOwnerTable(bool BCMPathMode)
+        private object GetSlotOwnerInfo(int Mode)
         {
-            Program.SlotTable<string> SlotOwnerTable = new Program.SlotTable<string>("");
+            object SlotOwnerInfo = null;
+            switch (Mode)
+            {
+                case 0: //GetSlotOwnerTable
+                    SlotOwnerInfo = new Program.SlotTable<string>("");
+                    break;
+                case 1: //GetSlotOwnerPathAndDLCData
+                    SlotOwnerInfo = new Program.SlotTable<Tuple<string, DLCData,int>>(null/*new Tuple<string, DLCData,int>("", null,0)*/);
+                    break;
+            }
+            //Program.SlotTable<string> SlotOwnerTable = new Program.SlotTable<string>("");
 
             // 想定される書式のパスが指定されているか
             string SavePath = tbSavePath.Text;
@@ -5222,7 +5279,7 @@
             }
             else
             {
-                return SlotOwnerTable;
+                return SlotOwnerInfo;
             }
 
             // 兄弟 DLC を取得
@@ -5233,7 +5290,7 @@
             }
             catch
             {
-                return SlotOwnerTable;
+                return SlotOwnerInfo;
             }
 
             // Lists フォルダを読んでおく
@@ -5463,6 +5520,28 @@
                             }
                         }
 
+                        switch(Mode)
+                        {
+                            case 0:
+                                var SlotOwnerTable = ((Program.SlotTable<string>)SlotOwnerInfo);
+                                if (SlotOwnerTable[dlcData2.Chars[j]] == "")
+                                {
+                                    SlotOwnerTable[dlcData2.Chars[j]] = name;
+                                }
+                                else
+                                {
+                                    SlotOwnerTable[dlcData2.Chars[j]] += ", " + name;
+                                }
+                                break;
+                            case 1:
+                                var SlotOwnerPathAndDLCData= (Program.SlotTable<Tuple<string, DLCData,int>>)SlotOwnerInfo;
+
+                                SlotOwnerPathAndDLCData[dlcData2.Chars[j]] = new Tuple<string, DLCData,int>(brotherBCM,dlcData2,j);
+
+                                break;
+        }
+
+                        /*
                         if (BCMPathMode)
                         {
                             SlotOwnerTable[dlcData2.Chars[j]] = brotherBCM;
@@ -5478,12 +5557,13 @@
                                 SlotOwnerTable[dlcData2.Chars[j]] += ", " + name;
                             }
                         }
+                        */
                     }
                 }
             }
 
 
-            return SlotOwnerTable;
+            return SlotOwnerInfo;
         }
 
 
