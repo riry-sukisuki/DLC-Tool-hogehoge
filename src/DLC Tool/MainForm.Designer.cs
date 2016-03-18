@@ -139,6 +139,8 @@ namespace DLC_Tool
             this.smiDelComColumn = new System.Windows.Forms.ToolStripMenuItem();
             this.saveFileDialogTMC = new System.Windows.Forms.SaveFileDialog();
             this.btnInstantMode = new System.Windows.Forms.Button();
+            this.btnUndo = new System.Windows.Forms.Button();
+            this.btnRedo = new System.Windows.Forms.Button();
             this.gbChars.SuspendLayout();
             this.gbHairs2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvHStyles)).BeginInit();
@@ -154,10 +156,10 @@ namespace DLC_Tool
             // btnOpenBCM
             // 
             this.btnOpenBCM.Font = new System.Drawing.Font("メイリオ", 9F);
-            this.btnOpenBCM.Location = new System.Drawing.Point(6, 35);
+            this.btnOpenBCM.Location = new System.Drawing.Point(101, 6);
             this.btnOpenBCM.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnOpenBCM.Name = "btnOpenBCM";
-            this.btnOpenBCM.Size = new System.Drawing.Size(100, 25);
+            this.btnOpenBCM.Size = new System.Drawing.Size(90, 25);
             this.btnOpenBCM.TabIndex = 1;
             this.btnOpenBCM.Text = "BCMを開く";
             this.btnOpenBCM.UseVisualStyleBackColor = true;
@@ -165,10 +167,9 @@ namespace DLC_Tool
             // 
             // btnSave
             // 
-            this.btnSave.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.btnSave.Enabled = false;
             this.btnSave.Font = new System.Drawing.Font("メイリオ", 9F);
-            this.btnSave.Location = new System.Drawing.Point(178, 6);
+            this.btnSave.Location = new System.Drawing.Point(199, 6);
             this.btnSave.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(256, 25);
@@ -191,7 +192,7 @@ namespace DLC_Tool
             this.btnNewDLC.Location = new System.Drawing.Point(6, 6);
             this.btnNewDLC.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnNewDLC.Name = "btnNewDLC";
-            this.btnNewDLC.Size = new System.Drawing.Size(100, 25);
+            this.btnNewDLC.Size = new System.Drawing.Size(90, 25);
             this.btnNewDLC.TabIndex = 0;
             this.btnNewDLC.Text = "新規作成";
             this.btnNewDLC.UseVisualStyleBackColor = true;
@@ -389,6 +390,7 @@ namespace DLC_Tool
             this.dgvHStyles.TabIndex = 3;
             this.dgvHStyles.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.gv_CellValidated);
             this.dgvHStyles.CellValidating += new System.Windows.Forms.DataGridViewCellValidatingEventHandler(this.gv_CellValidating);
+            this.dgvHStyles.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvHStyles_CellValueChanged);
             this.dgvHStyles.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvHStyles_KeyDown);
             this.dgvHStyles.KeyUp += new System.Windows.Forms.KeyEventHandler(this.dgvHStyles_KeyUp);
             this.dgvHStyles.MouseDown += new System.Windows.Forms.MouseEventHandler(this.dgvHStyles_MouseDown);
@@ -508,6 +510,7 @@ namespace DLC_Tool
             this.dgvFiles.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvFiles.Size = new System.Drawing.Size(440, 218);
             this.dgvFiles.TabIndex = 17;
+            this.dgvFiles.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvFiles_CellValueChanged);
             this.dgvFiles.SelectionChanged += new System.EventHandler(this.dgvFiles_SelectionChanged);
             this.dgvFiles.DoubleClick += new System.EventHandler(this.dgvFiles_DoubleClick);
             this.dgvFiles.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvFiles_KeyDown);
@@ -750,6 +753,7 @@ namespace DLC_Tool
             this.dgvChars.CellEnter += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvChars_CellEnter);
             this.dgvChars.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.gv_CellValidated);
             this.dgvChars.CellValidating += new System.Windows.Forms.DataGridViewCellValidatingEventHandler(this.gv_CellValidating);
+            this.dgvChars.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvChars_CellValueChanged);
             this.dgvChars.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvChars_ColumnHeaderMouseClick);
             this.dgvChars.SelectionChanged += new System.EventHandler(this.dgvChars_SelectionChanged);
             this.dgvChars.DragDrop += new System.Windows.Forms.DragEventHandler(this.dgvChars_DragDrop);
@@ -1199,10 +1203,9 @@ namespace DLC_Tool
             // 
             // btnCmpSave
             // 
-            this.btnCmpSave.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.btnCmpSave.Enabled = false;
             this.btnCmpSave.Font = new System.Drawing.Font("メイリオ", 9F);
-            this.btnCmpSave.Location = new System.Drawing.Point(178, 35);
+            this.btnCmpSave.Location = new System.Drawing.Point(199, 35);
             this.btnCmpSave.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnCmpSave.Name = "btnCmpSave";
             this.btnCmpSave.Size = new System.Drawing.Size(121, 25);
@@ -1259,10 +1262,9 @@ namespace DLC_Tool
             // 
             // btnInstantMode
             // 
-            this.btnInstantMode.Anchor = System.Windows.Forms.AnchorStyles.Top;
             this.btnInstantMode.Enabled = false;
             this.btnInstantMode.Font = new System.Drawing.Font("メイリオ", 9F);
-            this.btnInstantMode.Location = new System.Drawing.Point(304, 35);
+            this.btnInstantMode.Location = new System.Drawing.Point(325, 35);
             this.btnInstantMode.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
             this.btnInstantMode.Name = "btnInstantMode";
             this.btnInstantMode.Size = new System.Drawing.Size(130, 25);
@@ -1271,12 +1273,40 @@ namespace DLC_Tool
             this.btnInstantMode.UseVisualStyleBackColor = true;
             this.btnInstantMode.Click += new System.EventHandler(this.btnInstantMode_Click);
             // 
+            // btnUndo
+            // 
+            this.btnUndo.Enabled = false;
+            this.btnUndo.Font = new System.Drawing.Font("メイリオ", 9F);
+            this.btnUndo.Location = new System.Drawing.Point(6, 35);
+            this.btnUndo.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.btnUndo.Name = "btnUndo";
+            this.btnUndo.Size = new System.Drawing.Size(90, 25);
+            this.btnUndo.TabIndex = 27;
+            this.btnUndo.Text = "← 元に戻す";
+            this.btnUndo.UseVisualStyleBackColor = true;
+            this.btnUndo.Click += new System.EventHandler(this.btnUndo_Click);
+            // 
+            // btnRedo
+            // 
+            this.btnRedo.Enabled = false;
+            this.btnRedo.Font = new System.Drawing.Font("メイリオ", 9F);
+            this.btnRedo.Location = new System.Drawing.Point(101, 35);
+            this.btnRedo.Margin = new System.Windows.Forms.Padding(3, 4, 3, 4);
+            this.btnRedo.Name = "btnRedo";
+            this.btnRedo.Size = new System.Drawing.Size(90, 25);
+            this.btnRedo.TabIndex = 28;
+            this.btnRedo.Text = "→ やり直す";
+            this.btnRedo.UseVisualStyleBackColor = true;
+            this.btnRedo.Click += new System.EventHandler(this.btnRedo_Click);
+            // 
             // MainForm
             // 
             this.AllowDrop = true;
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 18F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(624, 761);
+            this.Controls.Add(this.btnRedo);
+            this.Controls.Add(this.btnUndo);
             this.Controls.Add(this.btnInstantMode);
             this.Controls.Add(this.cbDAT);
             this.Controls.Add(this.btnCmpSave);
@@ -1299,6 +1329,7 @@ namespace DLC_Tool
             this.SizeChanged += new System.EventHandler(this.MainForm_SizeChanged);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.MainForm_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.MainForm_DragEnter);
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.MainForm_KeyDown);
             this.gbChars.ResumeLayout(false);
             this.gbChars.PerformLayout();
             this.gbHairs2.ResumeLayout(false);
@@ -1420,6 +1451,8 @@ namespace DLC_Tool
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.SaveFileDialog saveFileDialogTMC;
         private System.Windows.Forms.Button btnInstantMode;
+        private System.Windows.Forms.Button btnUndo;
+        private System.Windows.Forms.Button btnRedo;
     }
 }
 

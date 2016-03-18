@@ -91,6 +91,8 @@
         private bool DeleteKeyUp = true;
         private bool CKeyUp = true;
         private bool VKeyUp = true;
+        private bool ZKeyUp = true;
+        private bool YKeyUp = true;
         private static string[] DATs;
         private static int DatSelectedIndex = 0;
         public static string DAT { get { return DATs[DatSelectedIndex]; } }
@@ -187,6 +189,7 @@
 
 
         private FormsTimerTest TimerForSave;
+        private UndoBuffer<DLCData> undoBuffer;
         public MainForm()
         {
 
@@ -198,7 +201,7 @@
             //dgvChars.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 
 
-            string[] cmds = System.Environment.GetCommandLineArgs();
+            string[] cmds = Environment.GetCommandLineArgs();
 
             if (cmds.Length > 1 && System.Text.RegularExpressions.Regex.IsMatch(cmds[1], @"\.[lr]st$", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
             {
@@ -208,7 +211,9 @@
             else
             {
                 string curList = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"current.lst");
+#if !DEBUG
                 try
+#endif
                 {
                     if (File.Exists(curList))
                     {
@@ -233,6 +238,7 @@
                         setEgvCharsTextsColor();
                     }
                 }
+#if !DEBUG
                 catch
                 {
                     try
@@ -241,9 +247,12 @@
                     }
                     catch { }
                 }
+#endif
 
             }
 
+            undoBuffer = new UndoBuffer<DLCData>();
+            undoBufferUpdate();
 
             // 終了時のイベントハンドラを登録
             //ApplicationExitイベントハンドラを追加
@@ -365,7 +374,7 @@
             var pt = GetOwnOFolderrExistingParent(LoadIniString("InitialDirectory", "BCM"));
             if (pt != "") openFileDialogBCM.InitialDirectory = pt;
             openFileDialogBCM.FileName = Path.GetFileName(saveFileDialogBCM.FileName);
-            if (openFileDialogBCM.ShowDialog() == DialogResult.OK)
+            if (ConformScrap() && openFileDialogBCM.ShowDialog() == DialogResult.OK)
             {
                 OpenFile(openFileDialogBCM.FileName);
 
@@ -377,7 +386,8 @@
 
                 SaveIniString("InitialDirectory", "BCM", Path.GetDirectoryName(openFileDialogBCM.FileName));
 
-
+                undoBuffer = new UndoBuffer<DLCData>();
+                undoBufferUpdate();
             }
         }
 
@@ -392,6 +402,12 @@
         private void MainForm_DragDrop(object sender, DragEventArgs e)
         {
             string[] fileNames = (string[])e.Data.GetData(DataFormats.FileDrop);
+
+            if(Path.GetExtension(fileNames[0]).ToLower() == ".bcm" && !ConformScrap())
+            {
+                return;
+            }
+
             Task.Factory.StartNew(() =>
             {
                 this.Invoke((Action)delegate
@@ -411,14 +427,21 @@
 
         private void OpenFile(string fileName)
         {
+            var StopUndoBufferUpdate_TEMP = StopUndoBufferUpdate;
+            StopUndoBufferUpdate = true;
+
+#if !DEBUG
             try
+#endif
             {
                 newDlc = false;
                 ClearMainUI();
+
+                dlcData = Program.OpenBCM_超原始的修正(fileName);
+
                 tbSavePath.Text = fileName;
                 //dlcData = Program.OpenBCM(fileName);
                 //通常のオープンファイルもこっちにしちゃおう
-                dlcData = Program.OpenBCM_超原始的修正(fileName);
 
 
                 //btnSave.Text = Program.dicLanguage["SaveBCM"];
@@ -462,10 +485,14 @@
                 dgvChars.Rows[0].Selected = true;
 
             }
+#if !DEBUG
             catch (Exception e)
             {
                 MessageBox.Show(e.Message, "エラー", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+#endif
+
+            StopUndoBufferUpdate = StopUndoBufferUpdate_TEMP;
         }
 
         private bool AddFiles(string[] fileNames, bool testMode)
@@ -560,6 +587,7 @@
                 }
             }
 
+            undoBufferUpdate();
             return add;
         }
 
@@ -1659,6 +1687,8 @@
                     }
                 }
             }
+
+            undoBufferUpdate();
         }
 
         private void gv_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
@@ -1871,6 +1901,11 @@
                 setIndex = -1;
             }
 
+            //MessageBox.Show("ted");
+            if (!StopUndoBufferUpdate && dragStartIndexes == null)
+            {
+                undoBufferUpdate();
+            }
         }
 
         private void btnHStylesAdd_Click(object sender, EventArgs e)
@@ -1880,6 +1915,9 @@
                 MessageBox.Show("コスチューム非選択または複数選択時に髪追加の操作が行われました。これは想定されない動作です。作者へご報告頂けると幸いです。");
                 return;
             }
+
+            var StopUndoBufferUpdate_TEMP = StopUndoBufferUpdate;
+            StopUndoBufferUpdate = true;
 
             dlcData.Chars[dgvChars.SelectedRows[0].Index].HStyles.Add(new Hairstyle(1, 1));
             ShowHairstyles(dgvChars.SelectedRows[0].Index);
@@ -1894,6 +1932,9 @@
             {
                 btnHStylesAdd.Enabled = false;
             }
+
+            StopUndoBufferUpdate = StopUndoBufferUpdate_TEMP;
+            undoBufferUpdate();
         }
 
         private void btnHStylesDelete_Click(object sender, EventArgs e)
@@ -1905,6 +1946,9 @@
             }
 
             // デリートキーのイベントハンドラからヌルヌルで呼び出しているので注意
+
+            var StopUndoBufferUpdate_TEMP = StopUndoBufferUpdate;
+            StopUndoBufferUpdate = true;
 
             if (dlcData.Chars[dgvChars.SelectedRows[0].Index].HStyles.Count > 1) // 他が正しければ要らないけど安全のため
             {
@@ -1967,6 +2011,8 @@
                     btnHStylesDelete.Enabled = false;
                 }
                 */
+                StopUndoBufferUpdate = StopUndoBufferUpdate_TEMP;
+                undoBufferUpdate();
             }
         }
 
@@ -1976,7 +2022,7 @@
             var pt = LoadIniString("InitialDirectory", "BCM");
             if (pt != "") saveFileDialog.InitialDirectory = GetOwnOFolderrExistingParent(Path.GetDirectoryName(pt));
             saveFileDialog.FileName = Path.GetFileName(openFileDialog.FileName);
-            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            if (ConformScrap() && saveFileDialog.ShowDialog() == DialogResult.OK)
             {
 
                 //MessageBox.Show("a");
@@ -2012,13 +2058,23 @@
                 cbSaveListInDLC.Enabled = true;
                 cbSaveListInDLC.Checked = true;
 
+                undoBuffer = new UndoBuffer<DLCData>();
+                undoBufferUpdate();
+
             }
         }
+
+        bool StopUndoBufferUpdate = false;
 
         private void OpenStateFile(string fileName) { OpenStateFile(fileName, null); }
         private void OpenStateFile(string fileName, string ListFilePath)
         {
+            var StopUndoBufferUpdate_TEMP = StopUndoBufferUpdate;
+            StopUndoBufferUpdate = true;
+
+#if !DEBUG
             try
+#endif
             {
                 newDlc = true;
                 ClearMainUI();
@@ -2121,10 +2177,14 @@
 
 
             }
+#if !DEBUG
             catch (Exception e)
             {
                 MessageBox.Show(e.Message, Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+#endif
+
+            StopUndoBufferUpdate = StopUndoBufferUpdate_TEMP;
         }
 
 
@@ -2138,7 +2198,7 @@
                 var pt = GetOwnOFolderrExistingParent(LoadIniString("InitialDirectory", "LST"));
                 if (pt != "") openFileDialogState.InitialDirectory = pt;
                 openFileDialogState.FileName = Path.GetFileName(saveFileDialogState.FileName);
-                if (openFileDialogState.ShowDialog() == DialogResult.OK)
+                if (ConformScrap() && openFileDialogState.ShowDialog() == DialogResult.OK)
                 {
                     SaveIniString("InitialDirectory", "LST", Path.GetDirectoryName(openFileDialogState.FileName));
                     //dgvChars.Columns[0].HeaderCell.SortGlyphDirection = SortOrder.None;
@@ -2214,6 +2274,10 @@
                     {
                         btnCharsDelete.Enabled = false;
                     }
+
+                    undoBuffer = new UndoBuffer<DLCData>();
+                    undoBufferUpdate();
+                    undoBuffer.SetSaved();
                 }
 
             }
@@ -2384,6 +2448,7 @@
 
 
                     MessageBox.Show(Program.dicLanguage["SavedState"], "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    undoBuffer.SetSaved();
                 }
             }
             catch (Exception ex)
@@ -2673,6 +2738,9 @@
             setEgvCharsTextsColor();
 
             ShowFiles(dgvChars.SelectedRows[0].Index);
+
+
+            undoBufferUpdate();
         }
 
 
@@ -3663,6 +3731,7 @@
                 {
                     return;
                 }
+                
 
                 int charCount;
                 try
@@ -4003,6 +4072,7 @@
 
                 dgvChars.Focus();
 
+                undoBufferUpdate();
             }
 
             // ドラッグが起こらずにマウスが離された場合選択をそこだけにする
@@ -4031,6 +4101,7 @@
 
             // 何にしてもキーが離されたらこれをヌルにする。
             // じゃないとショートカットキーとかが無効になったまま
+            var PredragStartIndexes = dragStartIndexes;
             dragStartIndexes = null;
 
 
@@ -4060,6 +4131,7 @@
                     }
                 }
             }
+            
         }
 
         private void リストの追加読み込みToolStripMenuItem_Click(object sender, EventArgs e)
@@ -5014,6 +5086,19 @@
 
 
             }
+            else if (e.KeyCode == Keys.Z && ZKeyUp && e.Control)
+            {
+                ZKeyUp = false;
+
+                btnUndo_Click(null, null);
+
+            }
+            else if (e.KeyCode == Keys.Y && YKeyUp && e.Control)
+            {
+                YKeyUp = false;
+
+                btnRedo_Click(null, null);
+            }
         }
 
         private void dgvHStyles_KeyDown(object sender, KeyEventArgs e)
@@ -5035,6 +5120,19 @@
             {
                 VKeyUp = false;
                 PasteHStyles(false);
+            }
+            else if (e.KeyCode == Keys.Z && ZKeyUp && e.Control)
+            {
+                ZKeyUp = false;
+
+                btnUndo_Click(null, null);
+
+            }
+            else if (e.KeyCode == Keys.Y && YKeyUp && e.Control)
+            {
+                YKeyUp = false;
+
+                btnRedo_Click(null, null);
             }
         }
 
@@ -5701,6 +5799,9 @@ SaveState=Save state
 OverwriteState=Overwrite
 SaveListInDLC=Save same name file in DLC folder
 AddStateSD=Add state (Shift+Drop)
+Undo=← Undo
+Redo=→ Redo
+NotSavedDoYouContinue=You may have some unsaved data. Are you sure you want to proceed?
 OriginalStateData=State data for original DLC Tool
 FileNameMustBeDigits=File name must be digits.
 DoYouStartDOA5=Do you start DEAD OR ALIVE 5 Last Round?
@@ -5876,6 +5977,15 @@ RAIDOU=RAIDOU
             // リストの追加読込
             from = "AddStateSD"; def = "Add state (Shift+Drop)";
             if (Program.dicLanguage.ContainsKey(from)) this.リストの追加読み込みToolStripMenuItem.Text = Program.dicLanguage[from]; else this.リストの追加読み込みToolStripMenuItem.Text = Program.dicLanguage[from] = def;
+
+            // ← 元に戻す
+            from = "Undo"; def = "← Undo";
+            if (Program.dicLanguage.ContainsKey(from)) btnUndo.Text = Program.dicLanguage[from]; else btnUndo.Text = Program.dicLanguage[from] = def;
+            // → やり直す
+            from = "Redo"; def = "→ Redo";
+            if (Program.dicLanguage.ContainsKey(from)) btnRedo.Text = Program.dicLanguage[from]; else btnRedo.Text = Program.dicLanguage[from] = def;
+
+
             // コピー (Ctrl+C)
             from = "CopyC"; def = "Copy (Ctrl+C)";
             if (Program.dicLanguage.ContainsKey(from)) コピーCtrlCToolStripMenuItem.Text = Program.dicLanguage[from]; else コピーCtrlCToolStripMenuItem.Text = Program.dicLanguage[from] = def;
@@ -6025,6 +6135,10 @@ RAIDOU=RAIDOU
 
             // インスタントモードは chara/common のスロットが選択されていると実行できません
             from = "CharaCommonKillInstant"; def = @"Instant mode does not work when common/initial slots are used.";
+            if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
+
+            // 保存されていないデータがあります。本当に続けてもよろしいですか？
+            from = "NotSavedDoYouContinue"; def = @"You may have some unsaved data. Are you sure you want to proceed?";
             if (!Program.dicLanguage.ContainsKey(from)) Program.dicLanguage[from] = def;
 
 
@@ -6367,6 +6481,14 @@ RAIDOU=RAIDOU
             {
                 VKeyUp = true;
             }
+            else if (e.KeyCode == Keys.Z)
+            {
+                ZKeyUp = true;
+            }
+            else if (e.KeyCode == Keys.Y)
+            {
+                YKeyUp = true;
+            }
         }
 
         private void dgvHStyles_KeyUp(object sender, KeyEventArgs e)
@@ -6383,6 +6505,14 @@ RAIDOU=RAIDOU
             else if (e.KeyCode == Keys.V)
             {
                 VKeyUp = true;
+            }
+            else if (e.KeyCode == Keys.Z)
+            {
+                ZKeyUp = true;
+            }
+            else if (e.KeyCode == Keys.Y)
+            {
+                YKeyUp = true;
             }
         }
 
@@ -6715,6 +6845,8 @@ RAIDOU=RAIDOU
                 btnInstantMode.Enabled = false;
             }
 
+            dlcData.SavePath = tbSavePath.Text;
+            undoBufferUpdate();
             setBtnSave();
         }
 
@@ -7595,6 +7727,19 @@ RAIDOU=RAIDOU
                 btnFilesDelete_Click(null, null);
                 DeleteKeyUp = false;
             }
+            else if (e.KeyCode == Keys.Z && ZKeyUp && e.Control)
+            {
+                ZKeyUp = false;
+
+                btnUndo_Click(null, null);
+
+            }
+            else if (e.KeyCode == Keys.Y && YKeyUp && e.Control)
+            {
+                YKeyUp = false;
+
+                btnRedo_Click(null, null);
+            }
 
             // これは ListBox だった頃は必要だった
             /*
@@ -7631,6 +7776,14 @@ RAIDOU=RAIDOU
             else if (e.KeyCode == Keys.V)
             {
                 VKeyUp = true;
+            }
+            else if (e.KeyCode == Keys.Z)
+            {
+                ZKeyUp = true;
+            }
+            else if (e.KeyCode == Keys.Y)
+            {
+                YKeyUp = true;
             }
         }
 
@@ -7976,6 +8129,279 @@ RAIDOU=RAIDOU
         private void btnInstantMode_Click(object sender, EventArgs e)
         {
             SaveDLC(false, true);
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            MessageBox.Show(undoBuffer.NextIndex.ToString());
+        }
+
+        private void dgvChars_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            /*
+            if (!StopUndoBufferUpdate && dragStartIndexes == null && dlcData != null)
+            {
+                MessageBox.Show("ちぇんじど");
+            }
+            */
+        }
+
+        private void dgvFiles_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+        }
+
+        private void dgvHStyles_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (!StopUndoBufferUpdate && dragStartIndexes == null && dlcData != null)
+            {
+                //MessageBox.Show("ちぇんじど");
+                undoBufferUpdate();
+            }
+        }
+
+        private void undoBufferUpdate()
+        {
+            if (undoBuffer != null && dlcData != null)
+            {
+                if(undoBuffer.Update(dlcData))
+                {
+                    btnUndo.Enabled = undoBuffer.Undoable();
+                    btnRedo.Enabled = undoBuffer.Redoable();
+                }
+            }
+        }
+
+        int[] GetSelectedRowsIndex(DataGridView dgv)
+        {
+            var result = new int[dgv.SelectedRows.Count];
+            var i = 0;
+            foreach(DataGridViewRow row in dgv.SelectedRows)
+            {
+                result[i++] = row.Index;
+            }
+            return result;
+        }
+
+        Character[] GetSelectedCharacters()
+        {
+            if (dlcData != null)
+            {
+                var result = new Character[dgvChars.SelectedRows.Count];
+                var i = 0;
+                foreach (DataGridViewRow row in dgvChars.SelectedRows)
+                {
+                    result[i++] = dlcData.Chars[row.Index];
+                }
+                return result;
+            }
+            else
+            {
+                return new Character[0];
+            }
+        }
+
+        private void ApplyFullDLCDataInfoToUI(Character[] SelectedChars)
+        {
+
+            var StopUndoBufferUpdate_TEMP = StopUndoBufferUpdate;
+            StopUndoBufferUpdate = true;
+
+
+#if !DEBUG
+            try
+#endif
+            {
+                // 書き換える前の時点でのフォーカスなどをできるだけ覚えておく
+                var dgvCharsFocused = dgvChars.Focused;
+                var dgvFilesForcused = dgvFiles.Focused;
+                var dgvHStylesForcused = dgvHStyles.Focused;
+                var dgvCharsSelectedRowsIndex = GetSelectedRowsIndex(dgvChars);
+                var dgvFilesSelectedRowsIndex = GetSelectedRowsIndex(dgvFiles);
+                var dgvHStylesSelectedRowsIndex = GetSelectedRowsIndex(dgvHStyles);
+                var dgvCharsRowsCount = dgvChars.Rows.Count;
+                var dgvFilesRowsCount = dgvFiles.Rows.Count;
+                var dgvHStylesRowsCount = dgvHStyles.Rows.Count;
+                var dgvCharsFirstDisplayedScrollingRowIndext = dgvChars.FirstDisplayedScrollingRowIndex;
+
+                var fileName = tbListPath.Text;
+                if (string.IsNullOrEmpty(fileName))
+                {
+                    fileName = "";
+                }
+                string ListFilePath = null;
+
+                //newDlc = true;
+                ClearMainUI();
+                //dlcData = Program.OpenState(fileName);
+
+                MakeColumnsFromDLCData(dlcData);
+
+                //btnSave.Text = Program.dicLanguage["SaveDLC"];
+                setBtnSave();
+                btnCmpSave.Enabled = btnSave.Enabled = true;
+                btnSaveState.Enabled = true;
+                btnCharsAdd.Enabled = true;
+                btnHStylesAdd.Enabled = true;
+                //clmCos.ReadOnly = false;
+                clmInner.ReadOnly = false;
+                if (dlcData.Chars.Count > 0)
+                {
+                    tbSavePath.Text = dlcData.SavePath;
+                    setBtnSave(); // もう一回
+                    tbBCMVer.Text = dlcData.BcmVer.ToString();
+                    for (int i = 0; i < dlcData.Chars.Count; i++)
+                    {
+                        dgvChars.Rows.Add();
+                        dgvChars.Rows[i].Cells[0].Value = GetCharNamesJpn(dlcData.Chars[i].ID);// Program.CharNamesJpn[dlcData.Chars[i].ID];
+                        dgvChars.Rows[i].Cells[1].Value = dlcData.Chars[i].CostumeSlot.ToString();
+                        dgvChars.Rows[i].Cells[2].Value = dlcData.Chars[i].AddTexsCount.ToString();
+                        
+                        showComment(i);
+                        
+                    }
+
+                    // フォーカス関係をできるだけ修復する
+                    if(dgvCharsRowsCount != dgvChars.Rows.Count)
+                    {
+                        // キャラクターの追加や削除が行われていたら修復は不可能
+                        dgvChars.Rows[0].Selected = true;
+                    }
+                    else
+                    {
+                        dgvChars.Rows[0].Selected = false;
+                        dgvChars.FirstDisplayedScrollingRowIndex = dgvCharsFirstDisplayedScrollingRowIndext;
+
+                        // 以前キャラクターが選択されていて、そのキャラクターが一つでも残っていればそれを選択
+                        var FoundChar = false;
+                        if(SelectedChars.Length > 0)
+                        {
+                            var SelectedCharsSet = new HashSet<Character>(SelectedChars);
+                            for( var i = 0; i < dlcData.Chars.Count; i++)
+                            {
+                                if(SelectedCharsSet.Contains(dlcData.Chars[i]))
+                                {
+                                    dgvChars.Rows[i].Selected = true;
+                                    FoundChar = true;
+                                }
+                            }
+                        }
+
+                        if (!FoundChar)
+                        {
+                            // そうでなければ単純に選択状況を修復
+                            foreach (int i in dgvCharsSelectedRowsIndex)
+                            {
+                                dgvChars.Rows[i].Selected = true;
+                            }
+                        }
+
+                        // 以前と同じキャラを選択しているらしい場合はファイルと髪型の選択状況も修復
+                        if(SelectedChars.Length == 1)
+                        {
+                            if (dgvFilesRowsCount == dgvFiles.Rows.Count)
+                            {
+                                foreach (int i in dgvFilesSelectedRowsIndex)
+                                {
+                                    dgvFiles.Rows[i].Selected = true;
+                                }
+                            }
+                            if (dgvHStylesRowsCount == dgvHStyles.Rows.Count)
+                            {
+                                foreach (int i in dgvHStylesSelectedRowsIndex)
+                                {
+                                    dgvHStyles.Rows[i].Selected = true;
+                                    btnHStylesDelete.Enabled = true; // なんかこっちはダメっぽい
+                                }
+                            }
+
+                        }
+                    }
+
+
+                    
+
+                }
+
+                // リストファイルのパスを表示
+                string ext = Path.GetExtension(fileName).ToLower();
+                if (ext == ".lst" || ext == ".rst")
+                {
+                    tbListPath.Text = fileName.Substring(0, fileName.Length - 4);
+                }
+                else
+                {
+                    tbListPath.Text = fileName;
+                }
+                tbListPath.Select(tbListPath.Text.Length, 0);
+                tbListPath.ScrollToCaret();
+                
+                try
+                {
+                    if (ListFilePath == null)
+                    {
+                        string listInDLC = Path.Combine(dlcData.SavePath, Path.GetFileName(fileName));
+                        cbSaveListInDLC.Checked = (listInDLC == fileName || (!Directory.Exists(dlcData.SavePath)) || File.Exists(listInDLC));
+                    }
+                    else
+                    {
+                        string listInDLC = Path.Combine(dlcData.SavePath, Path.GetFileName(ListFilePath));
+                        cbSaveListInDLC.Checked = (listInDLC == fileName || (!Directory.Exists(dlcData.SavePath)) || File.Exists(listInDLC));
+                    }
+                }
+                catch
+                {
+                    cbSaveListInDLC.Checked = true;
+                }
+
+
+            }
+#if !DEBUG
+            catch (Exception e)
+            {
+                MessageBox.Show(e.Message, Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+#endif
+
+            StopUndoBufferUpdate = StopUndoBufferUpdate_TEMP;
+        }
+
+        private void btnUndo_Click(object sender, EventArgs e)
+        {
+            if (undoBuffer == null || !undoBuffer.Undoable()) return;
+
+            var c = GetSelectedCharacters();
+
+            dlcData = undoBuffer.Undo();
+            ApplyFullDLCDataInfoToUI(c);
+            btnUndo.Enabled = undoBuffer.Undoable();
+            btnRedo.Enabled = undoBuffer.Redoable();
+        }
+
+        private void btnRedo_Click(object sender, EventArgs e)
+        {
+            if (undoBuffer == null || !undoBuffer.Redoable()) return;
+
+            var c = GetSelectedCharacters();
+
+            dlcData = undoBuffer.Redo();
+            ApplyFullDLCDataInfoToUI(c);
+            btnUndo.Enabled = undoBuffer.Undoable();
+            btnRedo.Enabled = undoBuffer.Redoable();
+        }
+
+        private void MainForm_KeyDown(object sender, KeyEventArgs e)
+        {
+        }
+
+        private bool ConformScrap()
+        {
+            if(dlcData == null || undoBuffer == null || undoBuffer.GetSaved())
+            {
+                return true;
+            }
+
+            return MessageBox.Show(Program.dicLanguage["NotSavedDoYouContinue"], Program.dicLanguage["Notice"], MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.OK;
+
         }
     }
 
