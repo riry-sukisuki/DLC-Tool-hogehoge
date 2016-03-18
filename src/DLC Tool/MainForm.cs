@@ -388,6 +388,7 @@
 
                 undoBuffer = new UndoBuffer<DLCData>();
                 undoBufferUpdate();
+                undoBuffer.SetSaved();
             }
         }
 
@@ -2060,6 +2061,7 @@
 
                 undoBuffer = new UndoBuffer<DLCData>();
                 undoBufferUpdate();
+                undoBuffer.SetSaved();
 
             }
         }
@@ -3743,6 +3745,14 @@
                     charCount = 0;
                 }
 
+                var subu = StopUndoBufferUpdate;
+                StopUndoBufferUpdate = true;
+
+                if ((Control.ModifierKeys & Keys.Shift) != Keys.Shift || !newDlc)
+                {
+                    undoBuffer = new UndoBuffer<DLCData>(); // シフトが押されてなければ過去の履歴は忘れる。BCM 読み込みモードでも忘れる。
+                }
+
                 int index = 0;
                 if (charCount > 0)
                 {
@@ -3784,6 +3794,8 @@
                     AddStateFile(fileName[index++]);
                 }
 
+                StopUndoBufferUpdate = subu;
+                undoBufferUpdate();
 
 
             }
