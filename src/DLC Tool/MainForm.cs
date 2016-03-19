@@ -253,6 +253,7 @@
 
             undoBuffer = new UndoBuffer<DLCData>();
             undoBufferUpdate();
+            undoBuffer.SetSaved();
 
             // 終了時のイベントハンドラを登録
             //ApplicationExitイベントハンドラを追加
@@ -1012,7 +1013,9 @@
         {
 
             List<string[]> FassingFolderList = null;
+#if !DEBUG
             try
+#endif
             {
                 if(Instant && GetGameShortcut() =="" && GetGameExe() == "")
                 {
@@ -1539,6 +1542,7 @@
                     MessageBox.Show(Program.dicLanguage["SavedBCM"], "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
             }
+#if !DEBUG
             catch (Exception ex)
             {
 
@@ -1608,6 +1612,7 @@
                     MessageBox.Show(ex.Message, Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
+#endif
             tbSavePath_TextChanged(null, null);//これは念のためじゃなくて必須
 
         }
@@ -2495,6 +2500,27 @@
             return result;
         }
 
+        Program.SlotTable<bool> GetCurrentUsableSlotTable()
+        {
+            var CurrentUsableSlotTable = GetUsableSlotTable();
+            var ComIniSlotCommentTable = GetComIniSlotCommentTable();
+
+            for (int i = 0; i < ComIniSlotCommentTable.Count(); i++)
+            {
+                for (int j = 0; j < ComIniSlotCommentTable[i].Length; j++)
+                {
+                    CurrentUsableSlotTable[i, j] = CurrentUsableSlotTable[i, j] && (ComIniSlotCommentTable[i, j] == "");
+                }
+            }
+
+            for (int i = 0; i < dgvChars.Rows.Count; i++)
+            {
+                CurrentUsableSlotTable[dlcData.Chars[i]] = false;
+            }
+
+            return CurrentUsableSlotTable;
+        }
+
         private void AddCharacter(object sender, EventArgs e)
         {
 
@@ -2543,6 +2569,7 @@
                     }
                 }
             }
+            ResetToUsableSlotIfAble(newChar, GetCurrentUsableSlotTable());
             /* ここまで追加処理 */
 
 
@@ -5002,6 +5029,8 @@
                             dlcData3.Chars.AddRange(dlcData2.Chars);
                             MakeColumnsFromDLCData(dlcData3);
 
+                            Program.SlotTable<bool> CurrentUsableSlotTable = GetCurrentUsableSlotTable();
+
                             for (int j = 0; j < dlcData2.Chars.Count; j++)
                             {
                                 Character curChar;
@@ -5028,6 +5057,8 @@
                                 {
                                     continue;
                                 }
+
+                                ResetToUsableSlotIfAble(newChar, CurrentUsableSlotTable);
 
                                 // 挿入。今はこっち
                                 // ボタンでのコピーだけ index + 1 だけどあっちは index == Length を許してないから間違いではない。
@@ -8414,6 +8445,87 @@ RAIDOU=RAIDOU
 
             return MessageBox.Show(Program.dicLanguage["NotSavedDoYouContinue"], Program.dicLanguage["Notice"], MessageBoxButtons.OKCancel, MessageBoxIcon.Warning) == DialogResult.OK;
 
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            e.Cancel = !ConformScrap();
+        }
+
+        private void ResetToUsableSlotIfAble(Character chr, Program.SlotTable<bool> CurrentUsableSlotTable)
+        {
+            var NumOfSlots = Program.NumOfSlots[chr.ID];
+
+            var defaultSlot = chr.CostumeSlot;
+
+            while (!CurrentUsableSlotTable[chr] && chr.CostumeSlot < NumOfSlots - 1)
+            {
+                chr.CostumeSlot++;
+            }
+
+            if(!CurrentUsableSlotTable[chr])
+            {
+                chr.CostumeSlot = (byte)Math.Max(0, defaultSlot - 1);
+            }
+
+            while (!CurrentUsableSlotTable[chr] && chr.CostumeSlot > 0)
+            {
+                chr.CostumeSlot--;
+            }
+
+            if (!CurrentUsableSlotTable[chr])
+            {
+                chr.CostumeSlot = defaultSlot;
+            }
+
+
+            CurrentUsableSlotTable[chr] = false;
+        }
+        
+        private void dgvChars_RowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
+        {
+            //SetDataGridViewRowCount((DataGridView)sender, lbCharCount);
+            gbChars.Text = Program.dicLanguage["Characters"] + " (" + dgvChars.Rows.Count + ")";
+        }
+
+        private void dgvChars_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
+        {
+            //SetDataGridViewRowCount((DataGridView)sender, lbCharCount);
+            dgvChars_RowsAdded(null, null);
+        }
+
+        private void dgvFiles_RowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
+        {
+            if (dgvChars.SelectedRows.Count == 1)
+            {
+                gbFiles.Text = Program.dicLanguage["Files"] + " (" + dgvFiles.Rows.Count + ")";
+            }
+            else
+            {
+                gbFiles.Text = Program.dicLanguage["Files"];
+            }
+        }
+
+        private void dgvFiles_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
+        {
+            dgvFiles_RowsAdded(null, null);
+        }
+
+        private void dgvHStyles_RowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
+        {
+            if (dgvChars.SelectedRows.Count == 1)
+            {
+                gbHairs2.Text = Program.dicLanguage["Hairstyles"] + " (" + dgvHStyles.Rows.Count + ")";
+            }
+            else
+            {
+                gbHairs2.Text = Program.dicLanguage["Hairstyles"];
+            }
+        }
+
+        private void dgvHStyles_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e)
+        {
+            dgvHStyles_RowsAdded(null, null);
         }
     }
 

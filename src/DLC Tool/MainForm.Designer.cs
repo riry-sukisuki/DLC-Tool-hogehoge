@@ -391,6 +391,8 @@ namespace DLC_Tool
             this.dgvHStyles.CellValidated += new System.Windows.Forms.DataGridViewCellEventHandler(this.gv_CellValidated);
             this.dgvHStyles.CellValidating += new System.Windows.Forms.DataGridViewCellValidatingEventHandler(this.gv_CellValidating);
             this.dgvHStyles.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvHStyles_CellValueChanged);
+            this.dgvHStyles.RowsAdded += new System.Windows.Forms.DataGridViewRowsAddedEventHandler(this.dgvHStyles_RowsAdded);
+            this.dgvHStyles.RowsRemoved += new System.Windows.Forms.DataGridViewRowsRemovedEventHandler(this.dgvHStyles_RowsRemoved);
             this.dgvHStyles.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvHStyles_KeyDown);
             this.dgvHStyles.KeyUp += new System.Windows.Forms.KeyEventHandler(this.dgvHStyles_KeyUp);
             this.dgvHStyles.MouseDown += new System.Windows.Forms.MouseEventHandler(this.dgvHStyles_MouseDown);
@@ -511,6 +513,8 @@ namespace DLC_Tool
             this.dgvFiles.Size = new System.Drawing.Size(440, 218);
             this.dgvFiles.TabIndex = 17;
             this.dgvFiles.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvFiles_CellValueChanged);
+            this.dgvFiles.RowsAdded += new System.Windows.Forms.DataGridViewRowsAddedEventHandler(this.dgvFiles_RowsAdded);
+            this.dgvFiles.RowsRemoved += new System.Windows.Forms.DataGridViewRowsRemovedEventHandler(this.dgvFiles_RowsRemoved);
             this.dgvFiles.SelectionChanged += new System.EventHandler(this.dgvFiles_SelectionChanged);
             this.dgvFiles.DoubleClick += new System.EventHandler(this.dgvFiles_DoubleClick);
             this.dgvFiles.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvFiles_KeyDown);
@@ -755,6 +759,8 @@ namespace DLC_Tool
             this.dgvChars.CellValidating += new System.Windows.Forms.DataGridViewCellValidatingEventHandler(this.gv_CellValidating);
             this.dgvChars.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvChars_CellValueChanged);
             this.dgvChars.ColumnHeaderMouseClick += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvChars_ColumnHeaderMouseClick);
+            this.dgvChars.RowsAdded += new System.Windows.Forms.DataGridViewRowsAddedEventHandler(this.dgvChars_RowsAdded);
+            this.dgvChars.RowsRemoved += new System.Windows.Forms.DataGridViewRowsRemovedEventHandler(this.dgvChars_RowsRemoved);
             this.dgvChars.SelectionChanged += new System.EventHandler(this.dgvChars_SelectionChanged);
             this.dgvChars.DragDrop += new System.Windows.Forms.DragEventHandler(this.dgvChars_DragDrop);
             this.dgvChars.DragEnter += new System.Windows.Forms.DragEventHandler(this.dgvChars_DragEnter);
@@ -1326,6 +1332,7 @@ namespace DLC_Tool
             this.Name = "MainForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "DLC Tool hogehoge2015";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.MainForm_FormClosing);
             this.SizeChanged += new System.EventHandler(this.MainForm_SizeChanged);
             this.DragDrop += new System.Windows.Forms.DragEventHandler(this.MainForm_DragDrop);
             this.DragEnter += new System.Windows.Forms.DragEventHandler(this.MainForm_DragEnter);
