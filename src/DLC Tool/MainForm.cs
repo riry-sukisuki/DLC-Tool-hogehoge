@@ -8397,6 +8397,15 @@ RAIDOU=RAIDOU
                 }
 
 
+                setEgvCharsSlotColor();
+                setEgvCharsNameColor();
+                setEgvCharsTextsColor();
+                if (dgvChars.Rows.Count <= 0)
+                {
+                    btnCharsDelete.Enabled = false;
+                }
+
+
             }
 #if !DEBUG
             catch (Exception e)
