@@ -194,10 +194,10 @@
         {
 
             InitializeComponent();
-            setVersion();
+            setVersion(); SetDATList();
             SetCharNames();
             TranslateInitialUI(true);
-            SetDATList();
+            //SetDATList();
             //dgvChars.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 
 
@@ -5711,7 +5711,9 @@
         public void SetCharNames()
         {
             bool LoadLanguage = false;
+#if !DEBUG
             try
+#endif
             {
                 // リストファイルを読み込み、「追加」のところに追加する
 
@@ -5719,7 +5721,7 @@
                 catFemale.DropDownItems.Clear();
                 var CharInfoPath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"CharactersInfo");
                 System.Text.RegularExpressions.Regex regexIgnore = new System.Text.RegularExpressions.Regex(@"^\s*\/\/|^\s*$");
-                System.Text.RegularExpressions.Regex regexRead = new System.Text.RegularExpressions.Regex(@"^([A-Z0-9]+)\s*=\s*(\d+)\s*,\s*(Male|Female)\s*,\s*(\d+)\s*$");
+                System.Text.RegularExpressions.Regex regexRead = new System.Text.RegularExpressions.Regex(@"^([A-Z0-9]+)\s*=\s*(\d+)\s*,\s*(Male|Female)\s*$");
                 using (var sr = new StreamReader(CharInfoPath))
                 {
                     Program.CharNames = new System.Collections.Generic.Dictionary<byte, string>();
@@ -5754,7 +5756,7 @@
                             var Name = m.Groups[1].Value;
                             var ID = byte.Parse(m.Groups[2].Value);
                             Program.CharNames[ID] = Name;
-                            Program.NumOfSlots[ID] = byte.Parse(m.Groups[4].Value);
+                            Program.NumOfSlots[ID] = Program.getCharCostumeSlotCount(ID);//byte.Parse(m.Groups[4].Value);
                             if (m.Groups[3].Value == "Male")
                             {
                                 catMale.DropDownItems.Add(Name);
@@ -5781,9 +5783,10 @@
                 // 表示用の追加
                 Program.CharNamesJpn = new System.Collections.Generic.Dictionary<byte, string>(Program.CharNames);
             }
+#if !DEBUG
             catch (Exception e)
             {
-               if(!LoadLanguage)
+                if(!LoadLanguage)
                 {
                     TranslateInitialUI(false);
                 }
@@ -5792,6 +5795,7 @@
                 // プログラムを終了
                 Environment.Exit(0);
             }
+#endif
         }
 
         private void TranslateInitialUI(bool withCharNames)
@@ -5901,6 +5905,7 @@ PHASE4=PHASE4
 NYOTENGU=NYOTENGU
 HONOKA=HONOKA
 RAIDOU=RAIDOU
+NAOTORA=NAOTORA
 ";
 
             if (!File.Exists(lngPath) && !File.Exists(lngPathDefault))
@@ -8082,7 +8087,11 @@ RAIDOU=RAIDOU
             }
             catch (Exception e)
             {
+#if DEBUG
+                throw;
+#else
                 MessageBox.Show(e.Message, Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+#endif
             }
         }
 

@@ -78,13 +78,13 @@
         public struct SlotTable<T>
         {
             private T[][] CharSlot;
-            public const int Length = 47;
+            public const int Length = 256;
             public SlotTable( T default_value )
             {
                 CharSlot = new T[Length][];
-                for(byte i = 0; i < Length; i++)
+                for(int i = 0; i < Length; i++)
                 {
-                    CharSlot[i] = new T[NumOfSlots.ContainsKey(i) ? NumOfSlots[i] : 0];
+                    CharSlot[i] = new T[NumOfSlots.ContainsKey((byte)i) ? NumOfSlots[(byte)i] : 0];
                 }
                 for(int i = 0; i < Length; i++)
                 {
@@ -1239,6 +1239,23 @@
 
         }
 
+        public static byte getCharCostumeSlotCount(byte ID)
+        {
+            if (nameDB == null)
+            {
+                LoadDB();
+            }
+            NameEntry nameEntry;
+            for (int CostumeSlot = 0; CostumeSlot < 255; CostumeSlot++)
+            {
+                string decName = CharNames[ID] + "_DLCU_" + (CostumeSlot + 1).ToString("D3");
+                if (!nameDB.TryGetValue(decName + ".TMC", out nameEntry))
+                {
+                    return (byte)CostumeSlot;
+                }
+            }
+            return 255;
+        }
 
         private static List<FileData> CollectFileData(DLCData dlcData, bool compressDLC)
         {
