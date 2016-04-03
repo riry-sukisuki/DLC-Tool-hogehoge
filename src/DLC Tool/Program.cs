@@ -1558,7 +1558,7 @@
 
         private static AppDomain currentDomain;
         private static MainForm mainForm;
-        private static Dictionary<string, NameEntry> nameDB;
+        public static Dictionary<string, NameEntry> nameDB;
 
         private static readonly string[] CharacterFiles = new string[] { ".TMC", ".TMCL", ".---C", "_001.--H", "_001.--HL", "_002.--H", "_002.--HL", "_003.--H", "_003.--HL",
             "_004.--H", "_004.--HL", ".--P"};

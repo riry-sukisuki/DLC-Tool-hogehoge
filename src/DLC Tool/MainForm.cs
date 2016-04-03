@@ -195,7 +195,7 @@
 
             InitializeComponent();
             setVersion(); SetDATList();
-            SetCharNames();
+            //SetCharNames(); // SetDatList → DAT リスト変更イベントで勝手に呼ばれる
             TranslateInitialUI(true);
             //SetDATList();
             //dgvChars.Columns[3].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
@@ -1013,6 +1013,7 @@
         {
 
             List<string[]> FassingFolderList = null;
+            bool BackupOriginal = false;
 #if !DEBUG
             try
 #endif
@@ -1140,7 +1141,6 @@
                     {
                         bool comp = Compression;// cbComp.Checked;
 
-
                         if (Instant)
                         {
                             FassingFolderList = new List<string[]>();
@@ -1152,6 +1152,7 @@
                                 var back = GetBackupPath(src);
                                 Directory.Move(src, back);
                                 FassingFolderList.Add(new string[2] { src, back });
+                                BackupOriginal = true;
                             }
 
                             // 既存の DLC で邪魔になるものを排除
@@ -1447,15 +1448,18 @@
                                     }
                                 }
 
-                                var DLCName = Path.GetFileName(FassingFolderList[0][0]);
-                                File.Delete(FassingFolderList[0][0]  + @"\data\" + DLCName + ".bin");
-                                File.Delete(FassingFolderList[0][0] +  @"\data\" + DLCName + ".blp");
-                                File.Delete(FassingFolderList[0][0] +  @"\data\" + DLCName + ".lnk");
-                                Directory.Delete(FassingFolderList[0][0] + @"\data");
-                                File.Delete(FassingFolderList[0][0] +  @"\" + DLCName + ".bcm");
-                                Directory.Delete(FassingFolderList[0][0]);
-                                Directory.Move(FassingFolderList[0][1], FassingFolderList[0][0]);
-                                for (var i = 1; i < FassingFolderList.Count; i++)
+                                if (BackupOriginal)
+                                {
+                                    var DLCName = Path.GetFileName(FassingFolderList[0][0]);
+                                    File.Delete(FassingFolderList[0][0] + @"\data\" + DLCName + ".bin");
+                                    File.Delete(FassingFolderList[0][0] + @"\data\" + DLCName + ".blp");
+                                    File.Delete(FassingFolderList[0][0] + @"\data\" + DLCName + ".lnk");
+                                    Directory.Delete(FassingFolderList[0][0] + @"\data");
+                                    File.Delete(FassingFolderList[0][0] + @"\" + DLCName + ".bcm");
+                                    Directory.Delete(FassingFolderList[0][0]);
+                                    Directory.Move(FassingFolderList[0][1], FassingFolderList[0][0]);
+                                }
+                                for (var i = BackupOriginal ? 1 : 0; i < FassingFolderList.Count; i++)
                                 {
                                     // 失敗したら残りはエラー処理で。
                                     //File.Delete( FassingFolderList[i][0]);
@@ -1548,7 +1552,7 @@
 
                 if (FassingFolderList != null)
                 {
-                    if(FassingFolderList.Count > 0)
+                    if(FassingFolderList.Count > 0 && BackupOriginal)
                     {
                         try
                         {
@@ -1589,7 +1593,7 @@
                         catch { }
                     }
 
-                    for (var i = 1; i < FassingFolderList.Count; i++)
+                    for (var i = BackupOriginal ? 1 : 0; i < FassingFolderList.Count; i++)
                     {
                         try
                         {
@@ -3181,8 +3185,7 @@
 
 
                     }
-
-
+                    
                     // 直ぐに元に戻す
                     Char.CostumeSlot = tempCostumeSlot;
 
@@ -3191,16 +3194,18 @@
 
 
                     // フォント変更（と言うか下線付加）
-                    //現在のフォントを覚えておく
-                    var oldFont = cmsSlot.Items[tempCostumeSlot].Font;
-                    //現在のフォントにBoldを付加したフォントを作成する
-                    //なおBoldを取り消す場合は、「oldFont.Style & ~FontStyle.Bold」とする
-                    var newFont = new System.Drawing.Font(oldFont, oldFont.Style | System.Drawing.FontStyle.Underline | System.Drawing.FontStyle.Bold);
-                    //Boldを付加したフォントを設定する
-                    cmsSlot.Items[tempCostumeSlot].Font = newFont;
-                    //前のフォントを解放する
-                    oldFont.Dispose();
-
+                    if (tempCostumeSlot < cmsSlot.Items.Count) // 何らかの理由で現在のスロット番号が有効範囲の外にあると false
+                    {
+                        //現在のフォントを覚えておく
+                        var oldFont = cmsSlot.Items[tempCostumeSlot].Font;
+                        //現在のフォントにBoldを付加したフォントを作成する
+                        //なおBoldを取り消す場合は、「oldFont.Style & ~FontStyle.Bold」とする
+                        var newFont = new System.Drawing.Font(oldFont, oldFont.Style | System.Drawing.FontStyle.Underline | System.Drawing.FontStyle.Bold);
+                        //Boldを付加したフォントを設定する
+                        cmsSlot.Items[tempCostumeSlot].Font = newFont;
+                        //前のフォントを解放する
+                        oldFont.Dispose();
+                    }
 
 
                     System.Drawing.Point location = dgvChars.PointToScreen(r.Location);
@@ -5721,7 +5726,7 @@
                 catFemale.DropDownItems.Clear();
                 var CharInfoPath = Path.Combine(Path.GetDirectoryName(Application.ExecutablePath), @"CharactersInfo");
                 System.Text.RegularExpressions.Regex regexIgnore = new System.Text.RegularExpressions.Regex(@"^\s*\/\/|^\s*$");
-                System.Text.RegularExpressions.Regex regexRead = new System.Text.RegularExpressions.Regex(@"^([A-Z0-9]+)\s*=\s*(\d+)\s*,\s*(Male|Female)\s*$");
+                System.Text.RegularExpressions.Regex regexRead = new System.Text.RegularExpressions.Regex(@"^([A-Z0-9]+)\s*=\s*(\d+)\s*,\s*(Male|Female)\s*,?\s*(?:(\d+)\s*)?$");
                 using (var sr = new StreamReader(CharInfoPath))
                 {
                     Program.CharNames = new System.Collections.Generic.Dictionary<byte, string>();
@@ -5756,7 +5761,14 @@
                             var Name = m.Groups[1].Value;
                             var ID = byte.Parse(m.Groups[2].Value);
                             Program.CharNames[ID] = Name;
-                            Program.NumOfSlots[ID] = Program.getCharCostumeSlotCount(ID);//byte.Parse(m.Groups[4].Value);
+                            try
+                            {
+                                Program.NumOfSlots[ID] = byte.Parse(m.Groups[4].Value);
+                            }
+                            catch
+                            {
+                                Program.NumOfSlots[ID] = Program.getCharCostumeSlotCount(ID);
+                            }
                             if (m.Groups[3].Value == "Male")
                             {
                                 catMale.DropDownItems.Add(Name);
@@ -6683,6 +6695,8 @@ NAOTORA=NAOTORA
             }
             catch
             {
+
+                TranslateInitialUI(false);
                 MessageBox.Show(Program.dicLanguage["NeedDAT"], Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                 // プログラムを終了
@@ -6690,6 +6704,8 @@ NAOTORA=NAOTORA
             }
             if (DATs.Length <= 0)
             {
+
+                TranslateInitialUI(false);
                 MessageBox.Show(Program.dicLanguage["NeedDAT"], Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
 
                 // プログラムを終了
@@ -6731,7 +6747,9 @@ NAOTORA=NAOTORA
 
         private void cbDAT_SelectedIndexChanged(object sender, EventArgs e)
         {
+            Program.nameDB = null;
             DatSelectedIndex = cbDAT.SelectedIndex;
+            SetCharNames();
         }
 
         public static string tbListPath_Text_static = "";
