@@ -1013,7 +1013,8 @@
         {
 
             List<string[]> FassingFolderList = null;
-            bool BackupOriginal = false;
+            //bool BackupOriginal = false;
+            string errorMessage = "";
 #if !DEBUG
             try
 #endif
@@ -1152,7 +1153,7 @@
                                 var back = GetBackupPath(src);
                                 Directory.Move(src, back);
                                 FassingFolderList.Add(new string[2] { src, back });
-                                BackupOriginal = true;
+                                //BackupOriginal = true;
                             }
 
                             // 既存の DLC で邪魔になるものを排除
@@ -1331,6 +1332,7 @@
                                 Enabled = false;
 
                                 // ゲーム起動
+                                DateTime startTime = DateTime.Now;
                                 if (shortcut != "")
                                 {
                                     OpenWithShortcut(shortcut, "", false);
@@ -1344,16 +1346,14 @@
                                     // コイツの戻り値は使えない模様（一度直ぐに閉じる）
                                     System.Environment.CurrentDirectory = sCD;
                                 }
-
-
-
+                                
                                 // スクリプト経由で起動する場合、ゲームの起動を動的に補足する
                                 var foundAtLeastOne = false;
                                 if (DOAProcess == null)
                                 {
                                     var step = 0.1; // 秒
                                     var seekingTime = 10; // 秒
-                                    DateTime dtNow = DateTime.Now;
+                                    double tFromFirstFound = 0;
                                     for (double t = 0; t < seekingTime; t += step)
                                     {
 
@@ -1372,8 +1372,12 @@
                                             try
                                             {
                                                 if (p.ProcessName == "game" &&
-                                                    (Path.GetFileName(p.MainModule.FileName) == "game.exe") &&
-                                                    p.TotalProcessorTime < TimeSpan.FromSeconds(1.2 * (DateTime.Now - dtNow).TotalSeconds + 1)
+                                                    (Path.GetFileName(p.MainModule.FileName) == "game.exe")
+                                                    && p.StartTime >= startTime
+
+                                                    //&& p.TotalProcessorTime < TimeSpan.FromSeconds(1.2 * (DateTime.Now - dtNow).TotalSeconds + 1)
+                                                    // TotalProcessorTime は全く不正確で、処理が行われないと増えないしヘビーな処理中は実時間よりも増えるので
+                                                    // こういう使い方をしてはいけない
 
                                                     )
                                                 {
@@ -1395,8 +1399,7 @@
 
                                                     MessageBox.Show(s);
                                                     */
-
-
+                                                    
 
                                                 }
                                             }
@@ -1409,16 +1412,17 @@
                                                 break;
                                             }
                                         }
-
-
-                                        System.Threading.Thread.Sleep((int)(step * 1000));
-
+                                        
 
                                         // 起動後一度すぐに閉じるので、
                                         // ２秒ほどは待つ
-                                        if (t < 2)
+                                        if (tFromFirstFound < 2)
                                         {
                                             DOAProcess = null;
+
+                                            System.Threading.Thread.Sleep((int)(step * 1000));
+                                            if (foundAtLeastOne) tFromFirstFound += step;
+
                                             continue;
                                         }
                                         else if (DOAProcess != null)
@@ -1426,9 +1430,13 @@
                                             break;
                                         }
 
+                                        System.Threading.Thread.Sleep((int)(step * 1000));
+                                        if (foundAtLeastOne) tFromFirstFound += step;
                                     }
 
                                 }
+
+                                //MessageBox.Show((DOAProcess == null).ToString());
 
 
                                 if (DOAProcess == null && !foundAtLeastOne)
@@ -1436,7 +1444,7 @@
                                     Enabled = true;
                                     throw new Exception("Dead or alive process is not found.");
                                 }
-                                else if(DOAProcess != null)
+                                else if (DOAProcess != null)
                                 {
 
                                     // プロセスが終了するのを待つ
@@ -1446,8 +1454,30 @@
                                     {
                                         Application.DoEvents();
                                     }
+                                    errorMessage = "Found proccess exited.";
+                                }
+                                else
+                                {
+                                    errorMessage = "The process was estimated to exit.";
                                 }
 
+                                //MessageBox.Show((DOAProcess == null).ToString());
+
+
+                                var DLCDir = tbSavePath.Text;
+                                var DLCName = Path.GetFileName(DLCDir);
+                                File.Delete(DLCDir + @"\data\" + DLCName + ".bin");
+                                File.Delete(DLCDir + @"\data\" + DLCName + ".blp");
+                                File.Delete(DLCDir + @"\data\" + DLCName + ".lnk");
+                                Directory.Delete(DLCDir + @"\data");
+                                File.Delete(DLCDir + @"\" + DLCName + ".bcm");
+                                Directory.Delete(DLCDir);
+                                for (var i = 0; i < FassingFolderList.Count; i++)
+                                {
+                                    Directory.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
+                                }
+
+                                /*
                                 if (BackupOriginal)
                                 {
                                     var DLCName = Path.GetFileName(FassingFolderList[0][0]);
@@ -1466,6 +1496,7 @@
                                     //File.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
                                     Directory.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
                                 }
+                                */
                                 /*
                                 btnCharsAdd.Enabled = true;
                                 btnCharsDelete.Enabled = true;
@@ -1552,6 +1583,17 @@
 
                 if (FassingFolderList != null)
                 {
+
+                    for (var i = 0; i < FassingFolderList.Count; i++)
+                    {
+                        try
+                        {
+                            Directory.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
+                        }
+                        catch { }
+                    }
+
+                    /*
                     if(FassingFolderList.Count > 0 && BackupOriginal)
                     {
                         try
@@ -1603,6 +1645,7 @@
                         }
                         catch { }
                     }
+                */
                 }
 
 
@@ -1613,7 +1656,7 @@
                 }
                 else
                 {
-                    MessageBox.Show(ex.Message, Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(ex.Message + (!string.IsNullOrEmpty(errorMessage) ? $"\r\n\r\n{errorMessage})" : ""), Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
 #endif
@@ -5134,6 +5177,7 @@
 
 
             }
+            /*
             else if (e.KeyCode == Keys.Z && ZKeyUp && e.Control)
             {
                 ZKeyUp = false;
@@ -5147,6 +5191,7 @@
 
                 btnRedo_Click(null, null);
             }
+            */
         }
 
         private void dgvHStyles_KeyDown(object sender, KeyEventArgs e)
@@ -5169,6 +5214,7 @@
                 VKeyUp = false;
                 PasteHStyles(false);
             }
+            /*
             else if (e.KeyCode == Keys.Z && ZKeyUp && e.Control)
             {
                 ZKeyUp = false;
@@ -5182,6 +5228,7 @@
 
                 btnRedo_Click(null, null);
             }
+            */
         }
 
         /*
@@ -7793,6 +7840,7 @@ NAOTORA=NAOTORA
                 btnFilesDelete_Click(null, null);
                 DeleteKeyUp = false;
             }
+            /*
             else if (e.KeyCode == Keys.Z && ZKeyUp && e.Control)
             {
                 ZKeyUp = false;
@@ -7806,6 +7854,7 @@ NAOTORA=NAOTORA
 
                 btnRedo_Click(null, null);
             }
+            */
 
             // これは ListBox だった頃は必要だった
             /*
@@ -8470,6 +8519,19 @@ NAOTORA=NAOTORA
 
         private void MainForm_KeyDown(object sender, KeyEventArgs e)
         {
+            if (e.KeyCode == Keys.Z && ZKeyUp && e.Control)
+            {
+                ZKeyUp = false;
+
+                btnUndo_Click(null, null);
+
+            }
+            else if (e.KeyCode == Keys.Y && YKeyUp && e.Control)
+            {
+                YKeyUp = false;
+
+                btnRedo_Click(null, null);
+            }
         }
 
         private bool ConformScrap()
