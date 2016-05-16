@@ -1013,8 +1013,6 @@
         {
 
             List<string[]> FassingFolderList = null;
-            //bool BackupOriginal = false;
-            string errorMessage = "";
 #if !DEBUG
             try
 #endif
@@ -1029,7 +1027,6 @@
 
 
                 Program.SlotTable<string> ComIniSlotCommentTable = GetComIniSlotCommentTable();
-                //Program.SlotTable<bool> NotComIniSlotTable = new Program.SlotTable<bool>(true);
                 var NotthingComIni = true;
                 for(var i = 0; i < dlcData.Chars.Count; i++)
                 {
@@ -1040,27 +1037,12 @@
                         break;
                     }
                 }
-
-                /*
-                for (int i = 0; i < ComIniSlotCommentTable.Count(); i++)
-                {
-                    for (int j = 0; j < ComIniSlotCommentTable[i].Length; j++)
-                    {
-                        if(ComIniSlotCommentTable[i, j] != "")
-                        {
-                            NotthingComIni = false;
-                            break;
-                        }
-                    }
-                    if (!NotthingComIni) break;
-                }*/
+                
                 if(!NotthingComIni)
                 {
                     throw new Exception(Program.dicLanguage["CharaCommonKillInstant"]);
                 }
-
-
-
+                
                 if (dgvChars.Rows.Count == 0)
                 {
                     throw new Exception(Program.dicLanguage["AddCharacter"]);
@@ -1129,7 +1111,7 @@
                     {
                         slotCount[dlcData.Chars[i]]++;
                     }
-                    //int k = 0;
+                    
                     for (int i = 0; i < dlcData.Chars.Count; i++)
                     {
                         if (CheckCharFile(dlcData.Chars[i]) && slotCount[dlcData.Chars[i]] == 1 && dlcData.Chars[i].AddTexsCount <= getAvailableTextsCount(dlcData.Chars[i]))
@@ -1158,7 +1140,6 @@
 
                             // 既存の DLC で邪魔になるものを排除
                             var sot = GetSlotOwnerPathAndDLCData();
-                            //var JamaPath = new SortedSet<string>();
                             var Path2DLC = new Dictionary<string, DLCData>();
                             for(var i = 0; i < dlcData.Chars.Count; i++)
                             {
@@ -1170,50 +1151,26 @@
                                     var idx = tpl.Item3;
                                     dlcd.Chars.RemoveAt(idx);
                                     Path2DLC[jamapath] = dlcd; // 以前の DLCData が上書きされるように見えるが、DLCdata の参照は全て同じなので問題ない。
-
-                                    //JamaPath.Add(jamapath);
                                 }
                             }
                             foreach(var jamapath in Path2DLC.Keys)
                             {
-                                //var dlcd = Path2DLC[jamapath];
-
-                                //var src = jamapath;
                                 var src = Path.GetDirectoryName(jamapath);
                                 var back = GetBackupPath(src);
 
                                 FassingFolderList.Add(new string[2] { src, back });
-
-                                //File.Move(src, back);
                                 Directory.Move(src, back);
-
-
-
-
-
-
                                 var KaridlcName = Path.GetFileNameWithoutExtension(src);
-
-                                // これをやっても意味がなかったので諦める（他のフォルダの BCM ファイルからでもアクセスできちゃう）
-                                //Program.SaveBCM(dlcd, src, KaridlcName);
-
-
-
-
                             }
                         }
-
-
-
+                        
                         // DLC Tool 1.1 より
                         if (!Program.SaveDLC(dlcData4Save, tbSavePath.Text, dlcName, comp))
                         {
                             tbSavePath_TextChanged(null, null);//念のため
                             return;
                         }
-
                         
-
                         string message;
                         if (dlcData4Save.Chars.Count == dlcData.Chars.Count)
                         {
@@ -1240,10 +1197,7 @@
                             bool GoodName = (name != "" && name.IndexOfAny(Path.GetInvalidFileNameChars()) < 0);
                             if (GoodName)
                             {
-
                                 dlcData.SavePath = tbSavePath.Text;
-
-
                                 Program.SaveState(dlcData, path); //dlcData4Save とどっちか迷うところだけど、バックアップ機能を兼ねると思えばオリジナルのほうで良いのでは。
                             }
                         }
@@ -1309,26 +1263,6 @@
                             {
 
                                 System.Diagnostics.Process DOAProcess = null;
-
-
-                                /*
-                                btnCharsAdd.Enabled = false;
-                                btnCharsDelete.Enabled = false;
-                                btnCmpSave.Enabled = false;
-                                btnFilesAdd.Enabled = false;
-                                btnFilesDelete.Enabled = false;
-                                btnHStylesAdd.Enabled = false;
-                                btnHStylesDelete.Enabled = false;
-                                btnInstantMode.Enabled = false;
-                                btnNewDLC.Enabled = false;
-                                btnOpenBCM.Enabled = false;
-                                btnOpenState.Enabled = false;
-                                btnSave.Enabled = false;
-                                btnSaveState.Enabled = false;
-                                dgvChars.Enabled = false;
-                                dgvFiles.Enabled = false;
-                                dgvHStyles.Enabled = false;
-                                */
                                 Enabled = false;
 
                                 // ゲーム起動
@@ -1340,30 +1274,26 @@
                                 else
                                 {
                                     // 念のためカレントディレクトリを動かしておく
-                                    string sCD = System.Environment.CurrentDirectory;
-                                    System.Environment.CurrentDirectory = Path.GetDirectoryName(DOA5EXE); ;//System.IO.Path.GetDirectoryName(fileName);
+                                    string sCD = Environment.CurrentDirectory;
+                                    Environment.CurrentDirectory = Path.GetDirectoryName(DOA5EXE); ;//System.IO.Path.GetDirectoryName(fileName);
                                     System.Diagnostics.Process.Start("\"" + DOA5EXE + "\"");
                                     // コイツの戻り値は使えない模様（一度直ぐに閉じる）
-                                    System.Environment.CurrentDirectory = sCD;
+                                    Environment.CurrentDirectory = sCD;
                                 }
                                 
                                 // スクリプト経由で起動する場合、ゲームの起動を動的に補足する
-                                var foundAtLeastOne = false;
+                                //var foundAtLeastOne = false;
                                 if (DOAProcess == null)
                                 {
                                     var step = 0.1; // 秒
                                     var seekingTime = 10; // 秒
-                                    double tFromFirstFound = 0;
+                                    //double tFromFirstFound = 3;
                                     for (double t = 0; t < seekingTime; t += step)
                                     {
 
                                         //ローカルコンピュータ上で実行されているすべてのプロセスを取得
                                         System.Diagnostics.Process[] ps =
                                             System.Diagnostics.Process.GetProcesses();
-                                        //"machinename"という名前のコンピュータで実行されている
-                                        //すべてのプロセスを取得するには次のようにする。
-                                        //System.Diagnostics.Process[] ps =
-                                        //    System.Diagnostics.Process.GetProcesses("machinename");
 
                                         //配列から1つずつ取り出す
                                         foreach (System.Diagnostics.Process p in ps)
@@ -1371,36 +1301,9 @@
                                             Application.DoEvents();
                                             try
                                             {
-                                                if (p.ProcessName == "game" &&
-                                                    (Path.GetFileName(p.MainModule.FileName) == "game.exe")
-                                                    && p.StartTime >= startTime
-
-                                                    //&& p.TotalProcessorTime < TimeSpan.FromSeconds(1.2 * (DateTime.Now - dtNow).TotalSeconds + 1)
-                                                    // TotalProcessorTime は全く不正確で、処理が行われないと増えないしヘビーな処理中は実時間よりも増えるので
-                                                    // こういう使い方をしてはいけない
-
-                                                    )
+                                                if (p.ProcessName == "game" && Path.GetFileName(p.MainModule.FileName) == "game.exe" && p.StartTime >= startTime)
                                                 {
                                                     DOAProcess = p;
-                                                    /*
-                                                    var s = "";
-                                                    //プロセス名を出力する
-                                                    s += string.Format("プロセス名: {0}\n", p.ProcessName);
-                                                    //ID
-                                                    s += string.Format("ID: {0}", p.Id);
-                                                    //メインモジュールのパス
-                                                    s += string.Format("ファイル名: {0}\n", p.MainModule.FileName);
-                                                    //合計プロセッサ時間
-                                                    s += string.Format("合計プロセッサ時間: {0}\n", p.TotalProcessorTime);
-                                                    //物理メモリ使用量
-                                                    s += string.Format("物理メモリ使用量: {0}\n", p.WorkingSet64);
-                                                    //.NET Framework 1.1以前では次のようにする
-                                                    //Console.WriteLine("物理メモリ使用量: {0}", p.WorkingSet);
-
-                                                    MessageBox.Show(s);
-                                                    */
-                                                    
-
                                                 }
                                             }
                                             catch
@@ -1408,62 +1311,34 @@
                                             }
                                             if (DOAProcess != null)
                                             {
-                                                foundAtLeastOne = true;
                                                 break;
                                             }
                                         }
                                         
-
-                                        // 起動後一度すぐに閉じるので、
-                                        // ２秒ほどは待つ
-                                        if (tFromFirstFound < 2)
-                                        {
-                                            DOAProcess = null;
-
-                                            System.Threading.Thread.Sleep((int)(step * 1000));
-                                            if (foundAtLeastOne) tFromFirstFound += step;
-
-                                            continue;
-                                        }
-                                        else if (DOAProcess != null)
+                                        if (DOAProcess != null)
                                         {
                                             break;
                                         }
 
                                         System.Threading.Thread.Sleep((int)(step * 1000));
-                                        if (foundAtLeastOne) tFromFirstFound += step;
                                     }
 
                                 }
-
-                                //MessageBox.Show((DOAProcess == null).ToString());
-
-
-                                if (DOAProcess == null && !foundAtLeastOne)
+                                
+                                if (DOAProcess == null)
                                 {
                                     Enabled = true;
                                     throw new Exception("Dead or alive process is not found.");
                                 }
-                                else if (DOAProcess != null)
+                                else
                                 {
-
                                     // プロセスが終了するのを待つ
-                                    //this.WindowState = FormWindowState.Minimized;
-
                                     while (!DOAProcess.WaitForExit((int)(10)))
                                     {
                                         Application.DoEvents();
                                     }
-                                    errorMessage = "Found proccess exited.";
                                 }
-                                else
-                                {
-                                    errorMessage = "The process was estimated to exit.";
-                                }
-
-                                //MessageBox.Show((DOAProcess == null).ToString());
-
-
+                                
                                 var DLCDir = tbSavePath.Text;
                                 var DLCName = Path.GetFileName(DLCDir);
                                 File.Delete(DLCDir + @"\data\" + DLCName + ".bin");
@@ -1476,47 +1351,10 @@
                                 {
                                     Directory.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
                                 }
-
-                                /*
-                                if (BackupOriginal)
-                                {
-                                    var DLCName = Path.GetFileName(FassingFolderList[0][0]);
-                                    File.Delete(FassingFolderList[0][0] + @"\data\" + DLCName + ".bin");
-                                    File.Delete(FassingFolderList[0][0] + @"\data\" + DLCName + ".blp");
-                                    File.Delete(FassingFolderList[0][0] + @"\data\" + DLCName + ".lnk");
-                                    Directory.Delete(FassingFolderList[0][0] + @"\data");
-                                    File.Delete(FassingFolderList[0][0] + @"\" + DLCName + ".bcm");
-                                    Directory.Delete(FassingFolderList[0][0]);
-                                    Directory.Move(FassingFolderList[0][1], FassingFolderList[0][0]);
-                                }
-                                for (var i = BackupOriginal ? 1 : 0; i < FassingFolderList.Count; i++)
-                                {
-                                    // 失敗したら残りはエラー処理で。
-                                    //File.Delete( FassingFolderList[i][0]);
-                                    //File.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
-                                    Directory.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
-                                }
-                                */
-                                /*
-                                btnCharsAdd.Enabled = true;
-                                btnCharsDelete.Enabled = true;
-                                btnCmpSave.Enabled = true;
-                                btnFilesAdd.Enabled = true;
-                                btnFilesDelete.Enabled = true;
-                                btnHStylesAdd.Enabled = true;
-                                btnHStylesDelete.Enabled = true;
-                                btnInstantMode.Enabled = true;
-                                btnNewDLC.Enabled = true;
-                                btnOpenBCM.Enabled = true;
-                                btnOpenState.Enabled = true;
-                                btnSave.Enabled = true;
-                                btnSaveState.Enabled = true;
-                                dgvChars.Enabled = true;
-                                dgvFiles.Enabled = true;
-                                dgvHStyles.Enabled = true;
-                                */
                                 Enabled = true;
+                                this.TopMost = true;
                                 Activate();
+                                this.TopMost = false;
                             }
                         }
                         
@@ -1592,60 +1430,6 @@
                         }
                         catch { }
                     }
-
-                    /*
-                    if(FassingFolderList.Count > 0 && BackupOriginal)
-                    {
-                        try
-                        {
-                            if (Directory.Exists(FassingFolderList[0][0]) && Directory.Exists(FassingFolderList[0][1]))
-                            {
-                                var DLCName = Path.GetFileName(FassingFolderList[0][0]);
-                                try { File.Delete(FassingFolderList[0][0]  + @"\data\" + DLCName + ".bin"); } catch { }
-                                try
-                                {
-                                    File.Delete(FassingFolderList[0][0]  + @"\data\" + DLCName + ".blp");
-                                }
-                                catch { }
-                                try
-                                    {
-                                        File.Delete(FassingFolderList[0][0]   + @"\data\" + DLCName + ".lnk"); } catch { }
-                                        try
-                                        {
-                                            Directory.Delete(FassingFolderList[0][0] + @"\data");
-                                }
-                                catch { }
-                                try
-                                            {
-                                                File.Delete(FassingFolderList[0][0] + @"\" + DLCName + ".bcm");
-                                }
-                                catch { }
-                                try
-                                                {
-                                                    Directory.Delete(FassingFolderList[0][0]);
-                                }
-                                catch { }
-                                try
-                                {
-                                Directory.Move(FassingFolderList[0][1], FassingFolderList[0][0]);
-                                }
-                                catch { }
-                            }
-                        }
-                        catch { }
-                    }
-
-                    for (var i = BackupOriginal ? 1 : 0; i < FassingFolderList.Count; i++)
-                    {
-                        try
-                        {
-                            //File.Delete(FassingFolderList[i][0]);
-                            //File.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
-                            Directory.Move(FassingFolderList[i][1], FassingFolderList[i][0]);
-                        }
-                        catch { }
-                    }
-                */
                 }
 
 
@@ -1656,7 +1440,7 @@
                 }
                 else
                 {
-                    MessageBox.Show(ex.Message + (!string.IsNullOrEmpty(errorMessage) ? $"\r\n\r\n{errorMessage})" : ""), Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show(ex.Message, Program.dicLanguage["Error"], MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
 #endif
