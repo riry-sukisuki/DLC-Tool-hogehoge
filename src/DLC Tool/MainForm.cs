@@ -1282,12 +1282,12 @@
                                 }
                                 
                                 // スクリプト経由で起動する場合、ゲームの起動を動的に補足する
-                                //var foundAtLeastOne = false;
+                                var foundAtLeastOne = false;
                                 if (DOAProcess == null)
                                 {
                                     var step = 0.1; // 秒
                                     var seekingTime = 10; // 秒
-                                    //double tFromFirstFound = 3;
+                                    double tFromFirstFound = 0;
                                     for (double t = 0; t < seekingTime; t += step)
                                     {
 
@@ -1301,7 +1301,7 @@
                                             Application.DoEvents();
                                             try
                                             {
-                                                if (p.ProcessName == "game" && Path.GetFileName(p.MainModule.FileName) == "game.exe" && p.StartTime >= startTime)
+                                                if (p.ProcessName == "game" && Path.GetFileName(p.MainModule.FileName) == "game.exe" /*&& p.StartTime >= startTime*/)
                                                 {
                                                     DOAProcess = p;
                                                 }
@@ -1311,26 +1311,44 @@
                                             }
                                             if (DOAProcess != null)
                                             {
+                                                foundAtLeastOne = true;
                                                 break;
                                             }
                                         }
-                                        
-                                        if (DOAProcess != null)
+
+                                        if(foundAtLeastOne && DOAProcess == null)
+                                        {
+                                            tFromFirstFound = double.PositiveInfinity;
+                                        }
+
+                                        // 起動後一度すぐに閉じるので、
+                                        // ２秒ほどは待つ
+                                        if (tFromFirstFound < 2)
+                                        {
+                                            DOAProcess = null;
+
+                                            System.Threading.Thread.Sleep((int)(step * 1000 + 0.5));
+                                            if (foundAtLeastOne) tFromFirstFound += step;
+
+                                            continue;
+                                        }
+                                        else if (DOAProcess != null)
                                         {
                                             break;
                                         }
 
-                                        System.Threading.Thread.Sleep((int)(step * 1000));
+                                        System.Threading.Thread.Sleep((int)(step * 1000 + 0.5));
+                                        if (foundAtLeastOne) tFromFirstFound += step;
                                     }
 
                                 }
-                                
-                                if (DOAProcess == null)
+
+                                if (DOAProcess == null && !foundAtLeastOne)
                                 {
                                     Enabled = true;
                                     throw new Exception("Dead or alive process is not found.");
                                 }
-                                else
+                                else if(DOAProcess != null)
                                 {
                                     // プロセスが終了するのを待つ
                                     while (!DOAProcess.WaitForExit((int)(10)))
