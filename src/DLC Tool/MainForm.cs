@@ -76,7 +76,7 @@
             return sb.ToString();
         }
 
-        public static readonly string[] FileOrder = new string[12] { ".TMC", ".TMCL", ".---C", "1.--H", "1.--HL", "2.--H", "2.--HL", "3.--H", "3.--HL", "4.--H", "4.--HL", ".--P" };
+        public static readonly string[] FileOrder = Program.CharacterFiles;
 
         private static DLCData dlcData;
 
@@ -4452,9 +4452,7 @@
         {
             string[] Files = Char.Files;
             bool TMC = false, TMCL = false, C = false, P = false;
-
-            //public static readonly string[] FileOrder = new string[12] { ".TMC", ".TMCL", ".---C", "1.--H", "1.--HL", "2.--H", "2.--HL", "3.--H", "3.--HL", "4.--H", "4.--HL", ".--P" };
-
+            
             cbTMC.Enabled = cbTMCL.Enabled = cbC.Enabled = cbP.Enabled = cb1H.Enabled = cb2H.Enabled = cb3H.Enabled = cb4H.Enabled = true;
 
             if (Files[0] == null)
@@ -6690,8 +6688,7 @@ NAOTORA=NAOTORA
                 }
             }
         }
-
-        // public static readonly string[] FileOrder = new string[12] { ".TMC", ".TMCL", ".---C", "1.--H", "1.--HL", "2.--H", "2.--HL", "3.--H", "3.--HL", "4.--H", "4.--HL", ".--P" };
+        
 
         private void cbC_Click(object sender, EventArgs e)
         {

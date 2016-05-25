@@ -11,65 +11,6 @@
 
     internal static class Program
     {
-        // これらは外部ファイルで指定するように仕様変更
-        /*
-        public static readonly Dictionary<byte, string> CharNames = new Dictionary<byte, string>()
-        {
-            { 0, "ZACK" }, { 1, "TINA" }, { 2, "JANNLEE" }, { 3, "EIN" }, { 4, "HAYABUSA" }, { 5, "KASUMI" }, { 6, "GENFU" }, { 7, "HELENA" }, { 8, "LEON" }, { 9, "BASS" },
-            { 10, "KOKORO" }, { 11, "HAYATE" }, { 12, "LEIFANG" }, { 13, "AYANE" }, { 14, "ELIOT" }, { 15, "LISA" }, { 16, "ALPHA152" }, { 19, "BRAD" }, { 20, "CHRISTIE" },
-            { 21, "HITOMI" }, { 24, "BAYMAN" }, { 29, "RIG" }, { 30, "MILA" }, { 31, "AKIRA" }, { 32, "SARAH" }, { 33, "PAI" }, { 39, "MOMIJI" }, { 40, "RACHEL" },
-            { 41, "JACKY" }, { 42, "MARIE" }, { 43, "PHASE4" }, { 44, "NYOTENGU" }, { 45, "HONOKA" }, { 46, "RAIDOU" }
-        };
-
-        public static readonly Dictionary<byte, string> CharNamesJpn = new Dictionary<byte, string>()
-        {
-            { 0, "ザック" }, { 1, "ティナ" }, { 2, "ジャン・リー" }, { 3, "アイン" }, { 4, "リュウ・ハヤブサ" }, { 5, "かすみ" }, { 6, "ゲン・フー" }, { 7, "エレナ" }, { 8, "レオン" }, { 9, "バース" },
-            { 10, "こころ" }, { 11, "ハヤテ" }, { 12, "レイファン" }, { 13, "あやね" }, { 14, "エリオット" }, { 15, "リサ" }, { 16, "Alpha-152" }, { 19, "ブラッド・ウォン" }, { 20, "クリスティ" },
-            { 21, "ヒトミ" }, { 24, "バイマン" }, { 29, "リグ" }, { 30, "ミラ" }, { 31, "アキラ" }, { 32, "サラ" }, { 33, "パイ・チェン" }, { 39, "紅葉" }, { 40, "レイチェル" },
-            { 41, "ジャッキー" }, { 42, "マリー・ローズ" }, { 43, "PHASE-4" }, { 44, "女天狗" }, { 45, "ほのか" }, { 46, "雷道" }
-        };
-
-        public static readonly Dictionary<byte, byte> NumOfSlots = new Dictionary<byte, byte>()
-        {
-            {0, 10}, // ザック
-            {1, 40}, // ティナ
-            {2, 10}, // ジャン・リー
-            {3, 10}, // アイン
-            {4, 10}, // リュウ・ハヤブサ
-            {5, 40}, // かすみ
-            {6, 10}, // ゲン・フー
-            {7, 40}, // エレナ
-            {8, 10}, // レオン
-            {9, 10}, // バース
-            {10, 40}, // こころ
-            {11, 10}, // ハヤテ
-            {12, 40}, // レイファン
-            {13, 40}, // あやね
-            {14, 10}, // エリオット
-            {15, 40}, // リサ
-            {16, 21}, // Alpha-152
-            {19, 10}, // ブラッド・ウォン
-            {20, 40}, // クリスティ
-            {21, 40}, // ヒトミ
-            {24, 10}, // バイマン
-            {29, 10}, // リグ
-            {30, 40}, // ミラ
-            {31, 10}, // アキラ
-            {32, 15}, // サラ
-            {33, 15}, // パイ・チェン
-            {39, 40}, // 紅葉
-            {40, 40}, // レイチェル
-            {41, 10}, // ジャッキー
-            {42, 32}, // マリー・ローズ
-            {43, 32}, // PHASE-4
-            {44, 32}, // 女天狗
-            {45, 32}, // ほのか
-            {46, 10}  // 雷道
-        };
-
-            
-        public static readonly List<byte> FemaleIDs = new List<byte> { 1, 5, 7, 10, 12, 13, 15, 16, 20, 21, 30, 32, 33, 39, 40, 42, 43, 44, 45 };
-        */
         public static Dictionary<byte, string> CharNames;
         public static Dictionary<byte, string> CharNamesJpn;
         public static Dictionary<byte, byte> NumOfSlots;
@@ -297,148 +238,7 @@
                 }
             }
         }
-
         
-        public static List<int> SaveBIN(DLCData dlcData, string savePath, string dlcName)
-        {
-            if (decNames == null)
-            {
-                string datname;
-                string parent = Path.GetDirectoryName(Application.ExecutablePath);
-                /*
-                if (File.Exists(parent + @"\file5lr.dat"))
-                {
-                    datname = parent + @"\file5lr.dat";
-                }
-                else
-                {
-                    datname = parent + @"\dlc5lr.dat";
-                }
-                */
-                datname = MainForm.DAT;
-
-                using (var sr = new StreamReader(datname))
-                {
-                    decNames = new List<string>();
-                    encNames = new List<string>();
-                    while (!sr.EndOfStream)
-                    {
-                        string[] inLine = sr.ReadLine().Split('\t');
-                        encNames.Add(inLine[0]);
-                        decNames.Add(inLine[1]);
-                    }
-                }
-            }
-
-            var nameIndexes = new List<int>();
-            var fileNames = new List<string>();
-            for (int i = 0; i < dlcData.Chars.Count; i++)
-            {
-                if ((dlcData.Chars[i].Files[0] == null) || (dlcData.Chars[i].Files[1] == null)
-                    || (dlcData.Chars[i].Files[2] == null) || (dlcData.Chars[i].Files[11] == null))
-                {
-
-                    System.Text.RegularExpressions.Regex regex1 = new System.Text.RegularExpressions.Regex(@"\$1");
-                    System.Text.RegularExpressions.Regex regex2 = new System.Text.RegularExpressions.Regex(@"\$2");
-                    string mes = regex1.Replace(regex2.Replace(dicLanguage["NotFoundSomeOfFilesXOfCharY"], CharNames[dlcData.Chars[i].ID] + "[" + dlcData.Chars[i].CostumeSlot + "]"), "TMC/TMCL/---C/--P");
-
-                    throw new Exception(mes);
-                }
-
-                string decTmcName = CharNames[dlcData.Chars[i].ID] + "_DLCU_" + (dlcData.Chars[i].CostumeSlot + 1).ToString("D3") + ".TMC";
-                int nameIndex = decNames.IndexOf(decTmcName);
-                if (nameIndex == -1)
-                {
-                    /*
-                    throw new Exception(CharNames[dlcData.Chars[i].ID] + "[" + dlcData.Chars[i].CostumeSlot + "] の名前はデータベースに存在しません");
-                    */
-
-                    System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(@"\$1");
-                    string mes = regex.Replace(dicLanguage["NotFoundNameX"], CharNames[dlcData.Chars[i].ID] + "[" + dlcData.Chars[i].CostumeSlot + "]");
-
-                }
-
-                nameIndexes.Add(nameIndex);
-                nameIndexes.Add(nameIndex + 1);
-                nameIndexes.Add(nameIndex + 2);
-                fileNames.Add(encNames[nameIndex]);
-                fileNames.Add(encNames[nameIndex + 1]);
-                fileNames.Add(encNames[nameIndex + 2]);
-                if (dlcData.Chars[i].AddTexsCount > 1)
-                {
-                    for (int j = 0; j < dlcData.Chars[i].AddTexsCount; j++)
-                    {
-                        if ((dlcData.Chars[i].Files[3 + (j * 2)] == null) || (dlcData.Chars[i].Files[4 + (j * 2)] == null))
-                        {
-                            /*
-                            throw new Exception(CharNames[dlcData.Chars[i].ID] + "["
-                                + dlcData.Chars[i].CostumeSlot + "]の" + (j + 1).ToString("D3") + ".--H/--HLファイルのいずれかが見つかりません");
-                                */
-
-
-                            System.Text.RegularExpressions.Regex regex1 = new System.Text.RegularExpressions.Regex(@"\$1");
-                            System.Text.RegularExpressions.Regex regex2 = new System.Text.RegularExpressions.Regex(@"\$2");
-                            string mes = regex1.Replace(regex2.Replace(dicLanguage["NotFoundSomeOfFilesXOfCharY"], CharNames[dlcData.Chars[i].ID] + "["
-                                + dlcData.Chars[i].CostumeSlot + "]"), ".--H/--HL");
-
-
-                            throw new Exception(mes);
-
-                        }
-
-                        nameIndexes.Add(nameIndex + 3 + (j * 2));
-                        nameIndexes.Add(nameIndex + 4 + (j * 2));
-                        fileNames.Add(encNames[nameIndex + 3 + (j * 2)]);
-                        fileNames.Add(encNames[nameIndex + 4 + (j * 2)]);
-                    }
-                }
-
-                nameIndex = decNames.IndexOf(Path.ChangeExtension(decTmcName, ".--P"), nameIndex + 3);
-                nameIndexes.Add(nameIndex);
-                fileNames.Add(encNames[nameIndex]);
-            }
-
-            int headerSize = 40 + (fileNames.Count * 12);
-            using (var ms = new MemoryStream())
-            {
-                var bw = new BinaryWriter(ms, new ASCIIEncoding());
-                bw.BaseStream.Position = headerSize;
-                bw.Write(("_output/costume_pack_" + dlcName + char.MinValue + "order" + char.MinValue).ToCharArray());
-                var namesOffs = new List<int>();
-                foreach (string fileName in fileNames)
-                {
-                    namesOffs.Add((int)bw.BaseStream.Position);
-                    bw.Write((@"/" + fileName + char.MinValue).ToCharArray());
-                }
-
-                bw.BaseStream.Position = 0;
-                bw.Write(0x4F4D464C);
-                bw.Write(1);
-                bw.Write(fileNames.Count);
-                bw.Write(0x20);
-                bw.Write(0x28);
-                bw.Write(headerSize);
-                bw.Write(namesOffs[0]);
-                bw.Write(0);
-                bw.Write(0);
-                bw.Write(headerSize);
-                for (int i = 0; i < namesOffs.Count; i++)
-                {
-                    bw.Write(0);
-                    bw.Write(i);
-                    bw.Write(namesOffs[i]);
-                }
-
-                bw.BaseStream.Position = 0;
-                using (var fs = new FileStream(savePath, FileMode.Create, FileAccess.Write, FileShare.Read))
-                {
-                    bw.BaseStream.CopyTo(fs);
-                }
-            }
-
-            return nameIndexes;
-        }
-
         public static List<uint> SaveLNK(DLCData dlcData, string savePath, int fileCount)
         {
             int headerSize = 32 + (fileCount * 32);
@@ -460,7 +260,7 @@
                         orderLimit += dlcData.Chars[i].AddTexsCount * 2;
                     }
 
-                    for (int j = 0; j < 12; j++)
+                    for (int j = 0; j < CharacterFiles.Length; j++)
                     {
                         if ((j > orderLimit) && (j < 11))
                         {
@@ -1274,9 +1074,9 @@
                     nameLimit += dlcData.Chars[i].AddTexsCount * 2;
                 }
 
-                for (int j = 0; j < 12; j++)
+                for (int j = 0; j < CharacterFiles.Length; j++)
                 {
-                    if ((j < nameLimit) || (j == 11))
+                    if ((j < nameLimit) || (j >= 11))
                     {
                         string fileName;
                         if (dlcData.Chars[i].Files[j] != null)
@@ -1292,6 +1092,10 @@
                             else if (j == 11)
                             {
                                 fileName = "pStub";
+                            }
+                            else if (j >= 12)
+                            {
+                                continue;
                             }
                             else
                             {
@@ -1560,8 +1364,8 @@
         private static MainForm mainForm;
         public static Dictionary<string, NameEntry> nameDB;
 
-        private static readonly string[] CharacterFiles = new string[] { ".TMC", ".TMCL", ".---C", "_001.--H", "_001.--HL", "_002.--H", "_002.--HL", "_003.--H", "_003.--HL",
-            "_004.--H", "_004.--HL", ".--P"};
+        public static readonly string[] CharacterFiles = new string[] { ".TMC", ".TMCL", ".---C", "_001.--H", "_001.--HL", "_002.--H", "_002.--HL", "_003.--H", "_003.--HL",
+            "_004.--H", "_004.--HL", ".--P" };//, ".PHYD"};
 
         private static Assembly ResolveEventHandler(Object sender, ResolveEventArgs args)
         {

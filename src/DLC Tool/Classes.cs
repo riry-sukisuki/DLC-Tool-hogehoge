@@ -187,7 +187,7 @@
         public Character()
         {
             this.HStyles = new List<Hairstyle>();
-            this.Files = new string[12];
+            this.Files = new string[Program.CharacterFiles.Length];
         }
 
         public byte ID { get; set; }
